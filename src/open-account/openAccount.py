@@ -85,17 +85,17 @@ def get_valid_input(prompt, validator):
 
 create_table()
 
-name = get_valid_input("Enter your name: ", lambda x: len(x) > 0)
-dob = get_valid_input("Enter your date of birth (YYYY-MM-DD): ", _validate_dob)
-mobile_no = get_valid_input("Enter your mobile number: ", _validate_mobile_no)
-email = get_valid_input("Enter your Email: ", _validate_email)
-address = get_valid_input("Enter your address: ", lambda x: len(x) > 0)
-pan_card = get_valid_input("Enter your PAN card number: ", _validate_pan_card)
+# name = get_valid_input("Enter your name: ", lambda x: len(x) > 0)
+# dob = get_valid_input("Enter your date of birth (YYYY-MM-DD): ", _validate_dob)
+# mobile_no = get_valid_input("Enter your mobile number: ", _validate_mobile_no)
+# email = get_valid_input("Enter your Email: ", _validate_email)
+# address = get_valid_input("Enter your address: ", lambda x: len(x) > 0)
+# pan_card = get_valid_input("Enter your PAN card number: ", _validate_pan_card)
+name="John Doe"
+dob="1990-01-01"
+mobile_no="1234567890"
+pan_card="ABCDE1234F"
+email="john.doe@example.com"
+address="123 Main St, City, Country"
 
 open_account(name, dob, mobile_no, pan_card, email, address)
-# name="John Doe"
-# dob="1990-01-01"
-# mobile_no="1234567890"
-# pan_card="ABCDE1234F"
-# email="john.doe@example.com"
-# address="123 Main St, City, Country"
