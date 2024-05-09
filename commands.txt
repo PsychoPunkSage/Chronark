@@ -1,9 +1,9 @@
 1. sudo docker swarm init --advertise-addr 192.168.56.1  ::> Inintialize the node
-2. sudo docker swarm join --token SWMTKN-1-5fi5hgl6teq8gitxhw2995fnfw12uboie2l76z92a3cevxg9ta-1q6dxdt1pnvuoxcl7hv2jhzvz 192.168.56.1:2377 ::> Join a Swarm
+2. sudo docker swarm join --token <TOKEN_ID> 192.168.56.1:2377 ::> Join a Swarm
 3. sudo docker info ::> Get info of the docker node
 4. sudo docker node ls ::> Get list of nodes in a swarm
 5. sudo docker swarm leave --force ::> To make a node inactive
-6. sudo docker node rm 5ut4yq9l674fhi38vg0bq47gk ::> To remove a node.
+6. sudo docker node rm <NODE_ID> ::> To remove a node.
 
 7. sudo docker swarm join-token worker ::> to get the Joining token
 8. sudo docker service create --name pps_test_service --replicas 3 -p 80:80 nginx:latest ::> to create service <only in MANAGER node>
