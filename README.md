@@ -13,22 +13,24 @@ databases consist of **in-memory `memcached`**, and **persistent `MongoDB`** ins
 (BankInfoDB) that includes information about the bank, its
 services, and representatives.
 
+-> 1st Compose
+
 ### Resources:
 
 - **Load-balancer**: `HAProxy`
 - **Front-end**: `Flask`, `HTML`, `CSS` 
-- **Wealth-management**: NO IDEA `Memcached`
+- **Wealth-management**: `MongoDB`/`NOSql`
 - **Open-credit-card**: `nginx`
 - **Open-account**: `nginx`
 - **Authentication**: 
   * `Apache-spark` - Big Data
 - **Payments**: `Apache Server`
-  * **ACL**: 
+  * **ACL**: `LDAP`
   * **Customer-info**: `Apache-spark`
   * **Transaction-posting**: `Redis`
 - **Ads**: `redis`
 - **Offer-banners**: `Apache`
-  * **OfferDB**: `MongoDB`/`Redis`/`memcached`
+  * **OfferDB**: `Redis`/`memcached`
 - **Search**: `elastic-search`
 - **Contact**: `MongoDB`
 - **Bank-info-db**: `Apache-spark`
