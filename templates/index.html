@@ -14,16 +14,16 @@
             <h1 class="text-center mt-2 mb-4">VittMitra</h1>
         </div>
         <div class="add_banner">
-            {{banners}}
-            {% for banner in banners %}
+            <img src="{{ url_for('static', filename='offer-banner/' ~ banner) }}" class="rounded mx-auto d-block" id="banner-img">
+            <!-- {% for banner in banners %}
                 <img src="{{ url_for('static', filename='offer-banner/' ~ banner) }}" class="rounded mx-auto d-block" id="banner-img">
-            {% endfor %}
+            {% endfor %} -->
         </div>
-        <div class="about">
+        <div class="border-bottom" id="about">
             <h2 class="text-center mt-2">About</h2>
             <p class="lead">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
         </div>
-        <div class="form">
+        <div class="border-bottom form" style=" padding-bottom:12px;" id="open-account">
             <h2>Open Account</h2>
             <form class="row g-3">
                 <div class="col-md-6">
@@ -71,7 +71,7 @@
                 </div>
               </form>
         </div>
-        <div class="form">
+        <div class="border-bottom form" style=" padding-bottom:12px;" id="open-credit-card">
             <h2>Generate Credit Card</h2>
             <form class="row row-cols-lg-auto g-3 align-items-center">
                 <div class="col-12">
