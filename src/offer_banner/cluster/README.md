@@ -86,9 +86,9 @@ docker run -d --rm --name redis-2 --net redis -v ${PWD}/redis-2:/etc/redis/ redi
 <summary>sentinel-0 config</summary>
 
 ```
-port 5002
+port 5001
 sentinel monitor mymaster redis-0 6379 2
-sentinel down-after-milliseconds mymaster 5002
+sentinel down-after-milliseconds mymaster 5001
 sentinel failover-timeout mymaster 60000
 sentinel parallel-syncs mymaster 1
 sentinel auth-pass mymaster a-very-complex-password-here
@@ -105,9 +105,9 @@ docker run -d --rm --name sentinel-0 --net redis -v ${PWD}/sentinel-0:/etc/redis
 <summary>sentinel-1 config</summary>
 
 ```
-port 5002
+port 5001
 sentinel monitor mymaster redis-0 6379 2
-sentinel down-after-milliseconds mymaster 5002
+sentinel down-after-milliseconds mymaster 5001
 sentinel failover-timeout mymaster 60000
 sentinel parallel-syncs mymaster 1
 sentinel auth-pass mymaster a-very-complex-password-here
@@ -124,9 +124,9 @@ docker run -d --rm --name sentinel-1 --net redis -v ${PWD}/sentinel-1:/etc/redis
 <summary>sentinel-1 config</summary>
 
 ```
-port 5002
+port 5001
 sentinel monitor mymaster redis-0 6379 2
-sentinel down-after-milliseconds mymaster 5002
+sentinel down-after-milliseconds mymaster 5001
 sentinel failover-timeout mymaster 60000
 sentinel parallel-syncs mymaster 1
 sentinel auth-pass mymaster a-very-complex-password-here
