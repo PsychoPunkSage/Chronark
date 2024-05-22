@@ -1,11 +1,18 @@
 import json
+import redis
+from helper import redis
 from flask import Flask, render_template, request, redirect, url_for
 
-from src.offer_banner.ads import getAds, getAd, updateAds, Ad
+from src.offer_banner.ads import getAds, getAd, updateAds, updateAd, Ad
 from src.offer_banner.offerBanner import get_offer_banner
 
 app = Flask(__name__)
 
+print("Running Redis Setup test")
+print(redis.redis_command(redis.redis_master.set, 'foo', 'bar'))
+print(redis.redis_command(redis.redis_master.get, 'foo'))
+
+# Ads....
 BANNER_DIR = 'static/offer-banner'
 
 @app.route('/', methods=['GET'])
@@ -41,10 +48,13 @@ def add_ad():
     if "time" not in jsonData:
         return "time required", 400
     
-    ads = get_ads()
+    # ads = get_ads()
 
-    ads[jsonData["adID"]] = Ad(jsonData["adID"], jsonData["alt"], jsonData["image_path"], jsonData["category"], jsonData["date"], jsonData["time"]).__dict__
-    updateAds(ads)
+    # ads[jsonData["adID"]] = Ad(jsonData["adID"], jsonData["alt"], jsonData["image_path"], jsonData["category"], jsonData["date"], jsonData["time"]).__dict__
+    # updateAds(ads)
+    # return "success", 200
+    ad = Ad(jsonData["adID"], jsonData["alt"], jsonData["image_path"], jsonData["category"], jsonData["date"], jsonData["time"]).__dict__
+    updateAd(ad)
     return "success", 200
 
 @app.route('/open-account', methods=['POST'])
