@@ -1,0 +1,51 @@
+{
+  "11111": {
+    "alt": "modern art",
+    "image_path": "static/offer-banner/add2.png",
+    "category": "modern art",
+    "date": "",
+    "time": ""
+  },
+  "22222": {
+    "alt": "modern art",
+    "image_path": "static/offer-banner/add3.png",
+    "category": "modern art",
+    "date": "",
+    "time": ""
+  },
+  "33333": {
+    "alt": "flower",
+    "image_path": "static/offer-banner/add4.png",
+    "category": "flower",
+    "date": "",
+    "time": ""
+  },
+  "44444": {
+    "alt": "NFT",
+    "image_path": "static/offer-banner/add5.png",
+    "category": "NFT",
+    "date": "",
+    "time": ""
+  },
+  "55555": {
+    "alt": "fire",
+    "image_path": "static/offer-banner/add6.png",
+    "category": "fire",
+    "date": "",
+    "time": ""
+  },
+  "66666": {
+    "alt": "banner",
+    "image_path": "static/offer-banner/add7.png",
+    "category": "banner",
+    "date": "",
+    "time": ""
+  },
+  "77777": {
+    "alt": "blossom",
+    "image_path": "static/offer-banner/add7.png",
+    "category": "blossom",
+    "date": "",
+    "time": ""
+  }
+}
