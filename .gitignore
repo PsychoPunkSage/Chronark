@@ -1,1 +1,7 @@
 .env
+redis-0/
+redis-1/
+redis-2/
+sentinel-0/
+sentinel-1/
+sentinel-2/
