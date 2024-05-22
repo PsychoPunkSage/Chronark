@@ -38,3 +38,6 @@ docker volume create redis
 # Make sure you are inside `offer_banner` folder
 docker run -it --rm --name redis --net redis -v ${PWD}/config:/etc/redis/ -v redis:/data/ redis:6.0-alpine redis-server /etc/redis/redis.conf
 ```
+
+# My Deployment:
+
