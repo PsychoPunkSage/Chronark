@@ -2,12 +2,8 @@ import os
 import random
 import redis
 
-def get_offer_banner():
-    ad_path = 'static/offer-banner'
-    banners = os.listdir(ad_path)
-    
-    if not banners:
+def get_offer_banner(banner_list):
+    if not banner_list:
         return None
-    
-    random_banner = random.choice(banners)
+    random_banner = random.choice(banner_list)
     return random_banner
