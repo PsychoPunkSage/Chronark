@@ -2,8 +2,6 @@ import os
 import time
 import redis
 from dotenv import load_dotenv
-from redis.sentinel import Sentinel
-
 
 # Env variables
 load_dotenv()
