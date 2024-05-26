@@ -30,7 +30,7 @@ services, and representatives.
   * **Transaction-posting**: `Redis`
 - **Ads**: `redis`
 - **Offer-banners**: `Apache`
-  * **OfferDB**: `Redis`/`memcached`
+  * **OfferDB**: `Redis`
 - **Search**: `elastic-search`
 - **Contact**: `MongoDB`
 - **Bank-info-db**: `Apache-spark`
@@ -72,4 +72,7 @@ services, and representatives.
 - 
 
 #### Apache Kafka
-- 
+
+
+## DOCKER LOGS
+## Telnet++
