@@ -14,10 +14,8 @@
             <h1 class="text-center mt-2 mb-4">VittMitra</h1>
         </div>
         <div class="add_banner">
-            <img src="{{ url_for('static', filename='offer-banner/' ~ banner) }}" class="rounded mx-auto d-block" id="banner-img">
-            <!-- {% for banner in banners %}
-                <img src="{{ url_for('static', filename='offer-banner/' ~ banner) }}" class="rounded mx-auto d-block" id="banner-img">
-            {% endfor %} -->
+            <img src="{{ banner.url }}" class="rounded mx-auto d-block" id="banner-img" alt="{{banner.alt}}">
+            <!-- <img src="https://imgs.search.brave.com/y4VVO83JJUlqmW3AOgyRXrzrCF6bysDD_yb_kThAERs/rs:fit:860:0:0/g:ce/aHR0cHM6Ly93YWxs/cGFwZXJhY2Nlc3Mu/Y29tL2Z1bGwvMTEy/NzU1LmpwZw" class="rounded mx-auto d-block" id="banner-img" alt="mikasa"> -->
         </div>
         <div class="border-bottom" id="about">
             <h2 class="text-center mt-2">About</h2>
