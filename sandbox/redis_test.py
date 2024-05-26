@@ -15,7 +15,7 @@ r.set("examiner", "examinee")
 # print(type(r.get("test")))
 result = r.get("test")
 
-string_data = result.decode('utf-8')
 # print(string_data)
+string_data = result.decode('utf-8')
 json_data = json.loads(string_data)
 print(json_data, type(json_data))
