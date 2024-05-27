@@ -20,6 +20,8 @@ docker run -it --rm --name redis --net redis -p 6379:6379 redis:6.0-alpine
 ```bash
 # Make sure you are inside `offer_banner` folder
 docker run -it --rm --name redis --net redis -v ${PWD}/config:/etc/redis/ redis:6.0-alpine redis-server /etc/redis/redis.conf
+
+docker run -d --rm --name redis-0 --net redis -v ${PWD}/redis-0:/etc/redis/ -p 6379:6379 redis:6.0-alpine redis-server /etc/redis/redis.conf
 ```
 
 ## Security
