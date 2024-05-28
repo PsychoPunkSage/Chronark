@@ -1,3 +1,5 @@
+# DEPRECATED (ONLY FOR INFO PURPOSE)
+
 ## Deployment
 
 ### Configuration:

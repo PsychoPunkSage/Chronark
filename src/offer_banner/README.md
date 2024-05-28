@@ -12,17 +12,27 @@ docker network create redis
 ```
 
 > Launch Redis
+<details>
+<summary>Normal Launch</summary>
+
 ```bash
 docker run -it --rm --name redis --net redis -p 6379:6379 redis:6.0-alpine
 ```
 
-> Launching Redis with Custom Config
-```bash
-# Make sure you are inside `offer_banner` folder
-docker run -it --rm --name redis --net redis -v ${PWD}/config:/etc/redis/ redis:6.0-alpine redis-server /etc/redis/redis.conf
+</details><br>
 
-docker run -d --rm --name redis-0 --net redis -v ${PWD}/redis-0:/etc/redis/ -p 6379:6379 redis:6.0-alpine redis-server /etc/redis/redis.conf
+
+> Launching Redis with Custom Config (better)
+
+<details>
+<summary>Custom Launch</summary>
+
+```bash
+# Make sure you are inside `offer_banner/conf` folder
+docker run -d --rm --name db-redis-offer-banner --net redis -v ${PWD}:/etc/redis/ -p 6379:6379 redis:6.0-alpine redis-server /etc/redis/redis.conf
 ```
+
+</details><br>
 
 ## Security
 
@@ -32,7 +42,7 @@ docker run -d --rm --name redis-0 --net redis -v ${PWD}/redis-0:/etc/redis/ -p 6
 requirepass SuperSecretSecureStrongPass
 ```
 
-## Persistence
+## Persistence (Optional)
 > I have turned on both `rdb` ans `aof` mode.
 
 ```bash
@@ -41,5 +51,5 @@ docker volume create redis
 docker run -it --rm --name redis --net redis -v ${PWD}/config:/etc/redis/ -v redis:/data/ redis:6.0-alpine redis-server /etc/redis/redis.conf
 ```
 
-# My Deployment:
+<!-- # My Deployment: -->
 
