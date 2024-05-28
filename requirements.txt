@@ -1,4 +1,0 @@
-Flask
-redis
-python-dotenv
-# gunicorn
