@@ -1,0 +1,148 @@
+ms-frontend            | Traceback (most recent call last):
+ms-frontend            |   File "/app/src/frontend/app.py", line 8, in <module>
+ms-offer-banner        | python: can't open file '/app/ads.py': [Errno 2] No such file or directory
+ms-offer-banner        | python: can't open file '/app/ads.py': [Errno 2] No such file or directory
+ms-offer-banner        | python: can't open file '/app/ads.py': [Errno 2] No such file or directory
+db-redis-offer-banner  | 1:C 28 May 2024 07:49:01.406 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+ms-frontend            |     from src.offer_banner.ads import getAds, getAd, updateAd, get_offer_banner, Ad
+db-redis-offer-banner  | 1:C 28 May 2024 07:49:01.406 # Redis version=6.0.20, bits=64, commit=00000000, modified=0, pid=1, just started
+ms-frontend            | ModuleNotFoundError: No module named 'src.offer_banner'
+ms-frontend            | Traceback (most recent call last):
+ms-frontend            |   File "/app/src/frontend/app.py", line 8, in <module>
+ms-frontend            |     from src.offer_banner.ads import getAds, getAd, updateAd, get_offer_banner, Ad
+ms-frontend            | ModuleNotFoundError: No module named 'src.offer_banner'
+ms-frontend            | Traceback (most recent call last):
+ms-frontend            |   File "/app/src/frontend/app.py", line 8, in <module>
+ms-frontend            |     from src.offer_banner.ads import getAds, getAd, updateAd, get_offer_banner, Ad
+ms-frontend            | ModuleNotFoundError: No module named 'src.offer_banner'
+ms-frontend            | Traceback (most recent call last):
+ms-frontend            |   File "/app/src/frontend/app.py", line 8, in <module>
+db-redis-offer-banner  | 1:C 28 May 2024 07:49:01.406 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+ms-offer-banner        | python: can't open file '/app/ads.py': [Errno 2] No such file or directory
+db-redis-offer-banner  | 1:M 28 May 2024 07:49:01.410 * Running mode=standalone, port=6379.
+ms-offer-banner        | python: can't open file '/app/ads.py': [Errno 2] No such file or directory
+ms-offer-banner        | python: can't open file '/app/ads.py': [Errno 2] No such file or directory
+ms-offer-banner        | python: can't open file '/app/ads.py': [Errno 2] No such file or directory
+ms-offer-banner        | python: can't open file '/app/ads.py': [Errno 2] No such file or directory
+ms-offer-banner        | python: can't open file '/app/ads.py': [Errno 2] No such file or directory
+db-redis-offer-banner  | 1:M 28 May 2024 07:49:01.410 # Server initialized
+db-redis-offer-banner  | 1:M 28 May 2024 07:49:01.410 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+ms-frontend            |     from src.offer_banner.ads import getAds, getAd, updateAd, get_offer_banner, Ad
+db-redis-offer-banner  | 1:M 28 May 2024 07:49:01.411 * Ready to accept connections
+ms-frontend            | ModuleNotFoundError: No module named 'src.offer_banner'
+ms-frontend            | Traceback (most recent call last):
+ms-frontend            |   File "/app/src/frontend/app.py", line 8, in <module>
+ms-frontend            |     from src.offer_banner.ads import getAds, getAd, updateAd, get_offer_banner, Ad
+ms-frontend            | ModuleNotFoundError: No module named 'src.offer_banner'
+ms-frontend            | Traceback (most recent call last):
+ms-frontend            |   File "/app/src/frontend/app.py", line 8, in <module>
+ms-frontend            |     from src.offer_banner.ads import getAds, getAd, updateAd, get_offer_banner, Ad
+ms-frontend            | ModuleNotFoundError: No module named 'src.offer_banner'
+ms-frontend            | Traceback (most recent call last):
+db-redis-offer-banner  | 1:signal-handler (1716882643) Received SIGTERM scheduling shutdown...
+db-redis-offer-banner  | 1:M 28 May 2024 07:50:43.453 # User requested shutdown...
+db-redis-offer-banner  | 1:M 28 May 2024 07:50:43.454 * Saving the final RDB snapshot before exiting.
+db-redis-offer-banner  | 1:M 28 May 2024 07:50:43.458 * DB saved on disk
+db-redis-offer-banner  | 1:M 28 May 2024 07:50:43.459 # Redis is now ready to exit, bye bye...
+db-redis-offer-banner  | 1:C 28 May 2024 07:50:48.565 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+db-redis-offer-banner  | 1:C 28 May 2024 07:50:48.565 # Redis version=6.0.20, bits=64, commit=00000000, modified=0, pid=1, just started
+db-redis-offer-banner  | 1:C 28 May 2024 07:50:48.565 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+db-redis-offer-banner  | 1:M 28 May 2024 07:50:48.568 * Running mode=standalone, port=6379.
+ms-frontend            |   File "/app/src/frontend/app.py", line 8, in <module>
+ms-frontend            |     from src.offer_banner.ads import getAds, getAd, updateAd, get_offer_banner, Ad
+ms-frontend            | ModuleNotFoundError: No module named 'src.offer_banner'
+ms-frontend            | Traceback (most recent call last):
+ms-frontend            |   File "/app/src/frontend/app.py", line 8, in <module>
+ms-frontend            |     from src.offer_banner.ads import getAds, getAd, updateAd, get_offer_banner, Ad
+ms-frontend            | ModuleNotFoundError: No module named 'src.offer_banner'
+ms-frontend            | Traceback (most recent call last):
+db-redis-offer-banner  | 1:M 28 May 2024 07:50:48.568 # Server initialized
+ms-frontend            |   File "/app/src/frontend/app.py", line 8, in <module>
+ms-frontend            |     from src.offer_banner.ads import getAds, getAd, updateAd, get_offer_banner, Ad
+ms-frontend            | ModuleNotFoundError: No module named 'src.offer_banner'
+db-redis-offer-banner  | 1:M 28 May 2024 07:50:48.568 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+db-redis-offer-banner  | 1:M 28 May 2024 07:50:48.569 * Loading RDB produced by version 6.0.20
+db-redis-offer-banner  | 1:M 28 May 2024 07:50:48.569 * RDB age 5 seconds
+db-redis-offer-banner  | 1:M 28 May 2024 07:50:48.569 * RDB memory usage when created 0.76 Mb
+db-redis-offer-banner  | 1:M 28 May 2024 07:50:48.569 * DB loaded from disk: 0.000 seconds
+db-redis-offer-banner  | 1:M 28 May 2024 07:50:48.569 * Ready to accept connections
+db-redis-offer-banner  | 1:signal-handler (1716882698) Received SIGTERM scheduling shutdown...
+db-redis-offer-banner  | 1:M 28 May 2024 07:51:38.063 # User requested shutdown...
+db-redis-offer-banner  | 1:M 28 May 2024 07:51:38.063 * Saving the final RDB snapshot before exiting.
+db-redis-offer-banner  | 1:M 28 May 2024 07:51:38.065 * DB saved on disk
+db-redis-offer-banner  | 1:M 28 May 2024 07:51:38.065 # Redis is now ready to exit, bye bye...
+db-redis-offer-banner  | 1:C 28 May 2024 07:51:42.774 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+db-redis-offer-banner  | 1:C 28 May 2024 07:51:42.774 # Redis version=6.0.20, bits=64, commit=00000000, modified=0, pid=1, just started
+db-redis-offer-banner  | 1:C 28 May 2024 07:51:42.774 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+db-redis-offer-banner  | 1:M 28 May 2024 07:51:42.776 * Running mode=standalone, port=6379.
+db-redis-offer-banner  | 1:M 28 May 2024 07:51:42.776 # Server initialized
+db-redis-offer-banner  | 1:M 28 May 2024 07:51:42.776 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+db-redis-offer-banner  | 1:M 28 May 2024 07:51:42.777 * Loading RDB produced by version 6.0.20
+db-redis-offer-banner  | 1:M 28 May 2024 07:51:42.777 * RDB age 4 seconds
+db-redis-offer-banner  | 1:M 28 May 2024 07:51:42.777 * RDB memory usage when created 0.77 Mb
+db-redis-offer-banner  | 1:M 28 May 2024 07:51:42.777 * DB loaded from disk: 0.000 seconds
+db-redis-offer-banner  | 1:M 28 May 2024 07:51:42.777 * Ready to accept connections
+db-redis-offer-banner  | 1:signal-handler (1716882738) Received SIGTERM scheduling shutdown...
+db-redis-offer-banner  | 1:M 28 May 2024 07:52:18.224 # User requested shutdown...
+db-redis-offer-banner  | 1:M 28 May 2024 07:52:18.224 * Saving the final RDB snapshot before exiting.
+db-redis-offer-banner  | 1:M 28 May 2024 07:52:18.226 * DB saved on disk
+db-redis-offer-banner  | 1:M 28 May 2024 07:52:18.226 # Redis is now ready to exit, bye bye...
+db-redis-offer-banner  | 1:C 28 May 2024 07:52:33.316 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+db-redis-offer-banner  | 1:C 28 May 2024 07:52:33.316 # Redis version=6.0.20, bits=64, commit=00000000, modified=0, pid=1, just started
+db-redis-offer-banner  | 1:C 28 May 2024 07:52:33.316 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+db-redis-offer-banner  | 1:M 28 May 2024 07:52:33.318 * Running mode=standalone, port=6379.
+db-redis-offer-banner  | 1:M 28 May 2024 07:52:33.318 # Server initialized
+db-redis-offer-banner  | 1:M 28 May 2024 07:52:33.318 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+db-redis-offer-banner  | 1:M 28 May 2024 07:52:33.319 * Loading RDB produced by version 6.0.20
+db-redis-offer-banner  | 1:M 28 May 2024 07:52:33.319 * RDB age 15 seconds
+db-redis-offer-banner  | 1:M 28 May 2024 07:52:33.319 * RDB memory usage when created 0.77 Mb
+db-redis-offer-banner  | 1:M 28 May 2024 07:52:33.319 * DB loaded from disk: 0.000 seconds
+db-redis-offer-banner  | 1:M 28 May 2024 07:52:33.319 * Ready to accept connections
+db-redis-offer-banner  | 1:signal-handler (1716883335) Received SIGTERM scheduling shutdown...
+db-redis-offer-banner  | 1:M 28 May 2024 08:02:15.407 # User requested shutdown...
+db-redis-offer-banner  | 1:M 28 May 2024 08:02:15.407 * Saving the final RDB snapshot before exiting.
+db-redis-offer-banner  | 1:M 28 May 2024 08:02:15.409 * DB saved on disk
+db-redis-offer-banner  | 1:M 28 May 2024 08:02:15.409 # Redis is now ready to exit, bye bye...
+db-redis-offer-banner  | 1:C 28 May 2024 08:10:42.387 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+db-redis-offer-banner  | 1:C 28 May 2024 08:10:42.387 # Redis version=6.0.20, bits=64, commit=00000000, modified=0, pid=1, just started
+db-redis-offer-banner  | 1:C 28 May 2024 08:10:42.387 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+db-redis-offer-banner  | 1:M 28 May 2024 08:10:42.389 * Running mode=standalone, port=6379.
+db-redis-offer-banner  | 1:M 28 May 2024 08:10:42.389 # Server initialized
+db-redis-offer-banner  | 1:M 28 May 2024 08:10:42.389 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+db-redis-offer-banner  | 1:M 28 May 2024 08:10:42.390 * Loading RDB produced by version 6.0.20
+db-redis-offer-banner  | 1:M 28 May 2024 08:10:42.390 * RDB age 507 seconds
+db-redis-offer-banner  | 1:M 28 May 2024 08:10:42.390 * RDB memory usage when created 0.77 Mb
+db-redis-offer-banner  | 1:M 28 May 2024 08:10:42.390 * DB loaded from disk: 0.000 seconds
+db-redis-offer-banner  | 1:M 28 May 2024 08:10:42.391 * Ready to accept connections
+db-redis-offer-banner  | 1:signal-handler (1716884029) Received SIGTERM scheduling shutdown...
+db-redis-offer-banner  | 1:M 28 May 2024 08:13:49.534 # User requested shutdown...
+db-redis-offer-banner  | 1:M 28 May 2024 08:13:49.534 * Saving the final RDB snapshot before exiting.
+db-redis-offer-banner  | 1:M 28 May 2024 08:13:49.535 * DB saved on disk
+db-redis-offer-banner  | 1:M 28 May 2024 08:13:49.535 # Redis is now ready to exit, bye bye...
+db-redis-offer-banner  | 1:C 28 May 2024 08:13:52.522 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+db-redis-offer-banner  | 1:C 28 May 2024 08:13:52.522 # Redis version=6.0.20, bits=64, commit=00000000, modified=0, pid=1, just started
+db-redis-offer-banner  | 1:C 28 May 2024 08:13:52.522 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+db-redis-offer-banner  | 1:M 28 May 2024 08:13:52.524 * Running mode=standalone, port=6379.
+db-redis-offer-banner  | 1:M 28 May 2024 08:13:52.524 # Server initialized
+db-redis-offer-banner  | 1:M 28 May 2024 08:13:52.524 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+db-redis-offer-banner  | 1:M 28 May 2024 08:13:52.525 * Loading RDB produced by version 6.0.20
+db-redis-offer-banner  | 1:M 28 May 2024 08:13:52.525 * RDB age 3 seconds
+db-redis-offer-banner  | 1:M 28 May 2024 08:13:52.525 * RDB memory usage when created 0.76 Mb
+db-redis-offer-banner  | 1:M 28 May 2024 08:13:52.525 * DB loaded from disk: 0.000 seconds
+db-redis-offer-banner  | 1:M 28 May 2024 08:13:52.525 * Ready to accept connections
+db-redis-offer-banner  | 1:signal-handler (1716884211) Received SIGTERM scheduling shutdown...
+db-redis-offer-banner  | 1:M 28 May 2024 08:16:51.983 # User requested shutdown...
+db-redis-offer-banner  | 1:M 28 May 2024 08:16:51.983 * Saving the final RDB snapshot before exiting.
+db-redis-offer-banner  | 1:M 28 May 2024 08:16:51.990 * DB saved on disk
+db-redis-offer-banner  | 1:M 28 May 2024 08:16:51.990 # Redis is now ready to exit, bye bye...
+db-redis-offer-banner  | 1:C 28 May 2024 08:17:21.487 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+db-redis-offer-banner  | 1:C 28 May 2024 08:17:21.487 # Redis version=6.0.20, bits=64, commit=00000000, modified=0, pid=1, just started
+db-redis-offer-banner  | 1:C 28 May 2024 08:17:21.487 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+db-redis-offer-banner  | 1:M 28 May 2024 08:17:21.489 * Running mode=standalone, port=6379.
+db-redis-offer-banner  | 1:M 28 May 2024 08:17:21.489 # Server initialized
+db-redis-offer-banner  | 1:M 28 May 2024 08:17:21.489 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+db-redis-offer-banner  | 1:M 28 May 2024 08:17:21.490 * Loading RDB produced by version 6.0.20
+db-redis-offer-banner  | 1:M 28 May 2024 08:17:21.490 * RDB age 30 seconds
+db-redis-offer-banner  | 1:M 28 May 2024 08:17:21.490 * RDB memory usage when created 0.77 Mb
+db-redis-offer-banner  | 1:M 28 May 2024 08:17:21.490 * DB loaded from disk: 0.000 seconds
+db-redis-offer-banner  | 1:M 28 May 2024 08:17:21.490 * Ready to accept connections
