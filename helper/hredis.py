@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 # Env variables
 load_dotenv()
 redis_password = os.getenv('REDIS_PASSWORD')
-
+print(redis_password)
 r_client = redis.Redis(host="localhost", port=6379, password=redis_password)
-
+print(r_client)
 def redis_command(command, *args):
     max_retries = 3
     count = 0
