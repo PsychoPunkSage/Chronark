@@ -10,6 +10,7 @@ services:
       - vittmitra
     volumes:
       - ./src/offer_banner/conf/:/etc/redis/
+    command: ["redis-server", "/etc/redis/redis.conf"]
 
   offer-banner:
     build:
@@ -26,7 +27,7 @@ services:
     networks:
       - vittmitra
     environment:
-      - REDIS_PASSWORD=a-very-complex-password-here
+      - REDIS_PASSWORD=complexpass
       - REDIS_PORT=6379
       - REDIS_HOST=redis
     command: python app.py
