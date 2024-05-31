@@ -1,22 +1,21 @@
 import os
-import sys
 import json
-# import redis
+import random
+import requests
 from flask import Flask, render_template, request, redirect, url_for
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from src.offer_banner.ads import getAds, getAd, updateAd, get_offer_banner, Ad
 
 app = Flask(__name__)
 
-# TEST
-# print("Running Redis Setup test")
-# print(redis.redis_command(redis.r_client.set, 'foo', 'bar'))
-# print(redis.redis_command(redis.r_client.get, 'foo'))
+OFFER_BANNER_SERVICE_HOST = os.environ.get('OFFER_BANNER_SERVICE_HOST')
+OFFER_BANNER_SERVICE_PORT = os.environ.get('OFFER_BANNER_SERVICE_PORT')
+ADS_SERVICE_URL = 'http://' + OFFER_BANNER_SERVICE_HOST + ':' + OFFER_BANNER_SERVICE_PORT
+print("Offer Banner::> ", ADS_SERVICE_URL)
+
 
 @app.route('/', methods=['GET'])
 def get_ads():
-    ads = getAds()
+    response = requests.get(f'{ADS_SERVICE_URL}/getAds')
+    ads = response.json()
     banner_id = get_offer_banner(list(ads.keys()))
     if banner_id is not None:
         banner = ads[banner_id]
@@ -26,31 +25,32 @@ def get_ads():
 
 @app.route('/get/<string:adID>', methods=['GET'])
 def get_ad(adID):
-    ad = getAd(adID)
-    if ad == {}:
+    response = requests.get(f'{ADS_SERVICE_URL}/getAd/{adID}')
+    if response.status_code == 404:
         return {}, 404
     else:
+        ad = response.json()
         return json.dumps(ad), 200
 
 @app.route('/set', methods=['POST'])
 def add_ad():
     jsonData = request.json
-
     required_fields = ["adID", "alt", "url", "category", "date", "time"]
     for field in required_fields:
         if field not in jsonData:
             return f"{field} required", 400
 
-    ad = Ad(
-        adID=jsonData["adID"],
-        alt=jsonData["alt"],
-        url=jsonData["url"],
-        category=jsonData["category"],
-        date=jsonData["date"],
-        time=jsonData["time"]
-    )
-    updateAd(ad)
-    return "success", 200
+    ad = {
+        "adID": jsonData["adID"],
+        "alt": jsonData["alt"],
+        "url": jsonData["url"],
+        "category": jsonData["category"],
+        "date": jsonData["date"],
+        "time": jsonData["time"]
+    }
+
+    response = requests.post(f'{ADS_SERVICE_URL}/updateAd', json=ad)
+    return "success", response.status_code
 
 @app.route('/open-account', methods=['POST'])
 def open_account():
@@ -71,5 +71,12 @@ def generate_credit_card():
     dob = request.form['dob']
     return redirect(url_for('index'))
 
+def get_offer_banner(banner_list):
+    if not banner_list:
+        return None
+    random_banner = random.choice(banner_list)
+    return random_banner
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
+    # app.run(host='0.0.0.0', debug=True)
