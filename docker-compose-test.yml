@@ -1,0 +1,59 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:6.0-alpine
+    container_name: db-redis-offer-banner
+    ports:
+      - 6379:6379
+    networks:
+      - vittmitra
+    volumes:
+      - ./src/offer_banner/conf/:/etc/redis/
+
+  offer-banner:
+    build:
+      context: ./src/offer_banner
+      dockerfile: Dockerfile.offer_banner
+    container_name: ms-offer-banner
+    volumes:
+      - ./src/offer_banner/app.py:/app/app.py
+      - ./src/offer_banner/conf/redis.conf:/app/conf/redis.conf
+      - ./src/offer_banner/templates/index.html:/app/templates/index.html
+      - ./src/offer_banner/requirements.txt:/app/requirements.txt
+    ports:
+      - 5002:5002
+    networks:
+      - vittmitra
+    environment:
+      - REDIS_PASSWORD=a-very-complex-password-here
+      - REDIS_PORT=6379
+      - REDIS_HOST=redis
+    command: python app.py
+    depends_on:
+      - redis
+
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile.frontend
+    container_name: ms-frontend
+    volumes:
+      - ./src/frontend/static/styles.css:/app/static/styles
+      - ./src/frontend/templates/index.html:/app/templates/index.html
+      - ./src/frontend/app.py:/app/app.py
+    ports:
+      - 5001:5001
+    networks:
+      - vittmitra
+    environment:
+      - OFFER_BANNER_SERVICE_HOST=ms-offer-banner
+      - OFFER_BANNER_SERVICE_PORT=5002
+    command: python app.py
+    depends_on:
+      - offer-banner
+      - redis
+
+networks:
+  vittmitra:
+    driver: bridge
