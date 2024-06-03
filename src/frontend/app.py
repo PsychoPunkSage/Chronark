@@ -6,10 +6,17 @@ from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
+SELF_PORT = os.environ.get('SELF_PORT')
+
+# Offer-banner urls
 OFFER_BANNER_SERVICE_HOST = os.environ.get('OFFER_BANNER_SERVICE_HOST')
 OFFER_BANNER_SERVICE_PORT = os.environ.get('OFFER_BANNER_SERVICE_PORT')
 ADS_SERVICE_URL = 'http://' + OFFER_BANNER_SERVICE_HOST + ':' + OFFER_BANNER_SERVICE_PORT
-print("Offer Banner::> ", ADS_SERVICE_URL)
+
+# Contact
+CONTACT_SERVICE_HOST = os.environ.get('CONTACT_SERVICE_HOST')
+CONTACT_SERVICE_PORT = os.environ.get('CONTACT_SERVICE_PORT')
+CONTACT_SERVICE_URL = 'http://' + CONTACT_SERVICE_HOST + ':' + CONTACT_SERVICE_PORT
 
 
 @app.route('/', methods=['GET'])
@@ -21,7 +28,18 @@ def get_ads():
         banner = ads[banner_id]
     else:
         banner = None
-    return render_template('index.html', banner=banner)
+
+    response = requests.get(f'{CONTACT_SERVICE_URL}/clients')
+    contacts = response.json()
+
+    return render_template('index.html', banner=banner, contacts=contacts)
+    # return render_template('index.html', banner=banner)
+
+@app.route('/contact', methods=['GET'])
+def get_contacts():
+    response = requests.get(f'{CONTACT_SERVICE_URL}/clients')
+    contacts = response.json()
+    return render_template('index.html', contacts=contacts)
 
 @app.route('/get/<string:adID>', methods=['GET'])
 def get_ad(adID):
@@ -78,5 +96,5 @@ def get_offer_banner(banner_list):
     return random_banner
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=SELF_PORT, debug=True)
     # app.run(host='0.0.0.0', debug=True)
