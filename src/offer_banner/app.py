@@ -2,13 +2,15 @@ import os
 import json
 import time
 import redis
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
 
 # Load environment variables
-load_dotenv()
+# load_dotenv()
+SELF_PORT = os.environ.get('SELF_PORT')
+
 REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 REDIS_HOST = os.environ.get('REDIS_HOST')
@@ -88,5 +90,5 @@ def updateAds():
     return "Success", 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5002, debug=True)
+    app.run(host='0.0.0.0', port=SELF_PORT, debug=True)
     # app.run(host='0.0.0.0', debug=True)
