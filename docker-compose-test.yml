@@ -12,6 +12,20 @@ services:
       - ./src/offer_banner/conf/:/etc/redis/
     command: ["redis-server", "/etc/redis/redis.conf"]
 
+  mongo:
+    image: mongo:7.0
+    container_name: db-mongo-bank-info
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongocontact
+      - MONGO_INITDB_ROOT_PASSWORD=contact
+    ports:
+      - 27017:27017
+    networks:
+      - vittmitra
+    volumes:
+      # - ./src/contact/conf/:/etc/mongo
+      - mongo_data:/data/db
+
   offer-banner:
     build:
       context: ./src/offer_banner
@@ -30,9 +44,36 @@ services:
       - REDIS_PASSWORD=complexpass
       - REDIS_PORT=6379
       - REDIS_HOST=redis
+      - SELF_PORT=5002
     command: python app.py
     depends_on:
       - redis
+      - mongo
+
+  contacts:
+    build:
+      context: ./src/contact
+      dockerfile: Dockerfile.contact
+    container_name: ms-contacts
+    volumes:
+      - ./src/contact/app.py:/app/app.py
+      - ./src/contact/conf/mongo.conf:/app/conf/mongo.conf
+      - ./src/contact/templates/index.html:/app/templates/index.html
+      - ./src/contact/requirements.txt:/app/requirements.txt
+    ports:
+      - 5003:5003
+    networks:
+      - vittmitra
+    environment:
+      - MONGO_DB_HOST=db-mongo-bank-info
+      - MONGO_DB_PORT=27017
+      - MONGO_DB_USERNAME=mongocontact
+      - MONGO_DB_PASSWORD=contact
+      - SELF_PORT=5003
+    command: python app.py
+    depends_on:
+      - mongo
+      - offer-banner
 
   frontend:
     build:
@@ -49,11 +90,20 @@ services:
       - vittmitra
     environment:
       - OFFER_BANNER_SERVICE_HOST=ms-offer-banner
+      - CONTACT_SERVICE_HOST=ms-contacts
       - OFFER_BANNER_SERVICE_PORT=5002
+      - CONTACT_SERVICE_PORT=5003
+      - SELF_PORT=5001
     command: python app.py
     depends_on:
       - offer-banner
+      - contacts
       - redis
+      - mongo
+
+volumes:
+  mongo_data:
+    driver: local
 
 networks:
   vittmitra:
