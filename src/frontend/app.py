@@ -1,5 +1,4 @@
 import os
-import json
 import random
 import requests
 from flask import Flask, render_template, request, redirect, url_for
@@ -8,12 +7,12 @@ app = Flask(__name__)
 
 SELF_PORT = os.environ.get('SELF_PORT')
 
-# Offer-banner urls
+# Offer-banner url
 OFFER_BANNER_SERVICE_HOST = os.environ.get('OFFER_BANNER_SERVICE_HOST')
 OFFER_BANNER_SERVICE_PORT = os.environ.get('OFFER_BANNER_SERVICE_PORT')
 ADS_SERVICE_URL = 'http://' + OFFER_BANNER_SERVICE_HOST + ':' + OFFER_BANNER_SERVICE_PORT
 
-# Contact
+# Contact url
 CONTACT_SERVICE_HOST = os.environ.get('CONTACT_SERVICE_HOST')
 CONTACT_SERVICE_PORT = os.environ.get('CONTACT_SERVICE_PORT')
 CONTACT_SERVICE_URL = 'http://' + CONTACT_SERVICE_HOST + ':' + CONTACT_SERVICE_PORT
@@ -29,28 +28,25 @@ def get_ads():
     else:
         banner = None
 
-    response = requests.get(f'{CONTACT_SERVICE_URL}/clients')
+    response = requests.get(f'{CONTACT_SERVICE_URL}/getClients')
     contacts = response.json()
 
     return render_template('index.html', banner=banner, contacts=contacts)
-    # return render_template('index.html', banner=banner)
 
-@app.route('/contact', methods=['GET'])
-def get_contacts():
-    response = requests.get(f'{CONTACT_SERVICE_URL}/clients')
-    contacts = response.json()
-    return render_template('index.html', contacts=contacts)
+@app.route('/ap')
+def ap():
+    return render_template('ap.html')
 
-@app.route('/get/<string:adID>', methods=['GET'])
-def get_ad(adID):
-    response = requests.get(f'{ADS_SERVICE_URL}/getAd/{adID}')
-    if response.status_code == 404:
-        return {}, 404
-    else:
-        ad = response.json()
-        return json.dumps(ad), 200
+# @app.route('/get/<string:adID>', methods=['GET'])
+# def get_ad(adID):
+#     response = requests.get(f'{ADS_SERVICE_URL}/getAd/{adID}')
+#     if response.status_code == 404:
+#         return {}, 404
+#     else:
+#         ad = response.json()
+#         return json.dumps(ad), 200
 
-@app.route('/set', methods=['POST'])
+@app.route('/setOfferBanner', methods=['POST'])
 def add_ad():
     jsonData = request.json
     required_fields = ["adID", "alt", "url", "category", "date", "time"]
@@ -69,6 +65,67 @@ def add_ad():
 
     response = requests.post(f'{ADS_SERVICE_URL}/updateAd', json=ad)
     return "success", response.status_code
+
+@app.route('/setContacts', methods=['POST'])
+def add_contact():
+    jsonData = request.json
+    required_fields = ["id", "name", "employee", "customer", "email", "mobile", "address"]
+    for field in required_fields:
+        if field not in jsonData:
+            return f"{field} required", 400
+
+    contact = {
+        "id": jsonData["id"],
+        "name": jsonData["name"],
+        "employee": jsonData["employee"],
+        "customer": jsonData["customer"],
+        "email": jsonData["email"],
+        "mobile": jsonData["mobile"],
+        "address": jsonData["address"]
+    }
+
+    response = requests.post(f'{CONTACT_SERVICE_URL}/updateClient', json=contact)
+    return "success", response.status_code
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @app.route('/open-account', methods=['POST'])
 def open_account():
