@@ -8,6 +8,6 @@ name:
 employee: (yes/no)
 customer: (yes/no)
 email:
-mobile number:
+mobile:
 location:
 ```
