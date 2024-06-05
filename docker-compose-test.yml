@@ -59,6 +59,7 @@ services:
       - ./src/contact/app.py:/app/app.py
       - ./src/contact/conf/mongo.conf:/app/conf/mongo.conf
       - ./src/contact/templates/index.html:/app/templates/index.html
+      - ./src/contact/templates/contact.html:/app/templates/contact.html
       - ./src/contact/requirements.txt:/app/requirements.txt
     ports:
       - 5003:5003
