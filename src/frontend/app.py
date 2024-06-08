@@ -28,14 +28,31 @@ def get_ads():
     else:
         banner = None
 
-    response = requests.get(f'{CONTACT_SERVICE_URL}/getClients')
+    # response = requests.get(f'{CONTACT_SERVICE_URL}/getClients')
+    # contacts = response.json()
+
+    # return render_template('index.html', banner=banner, contacts=contacts)
+    return render_template('index.html', banner=banner)
+
+@app.route('/contact', methods=['GET'])
+def contact():
+    response = requests.get(f'{ADS_SERVICE_URL}/getAds')
+    ads = response.json()
+    banner_id1 = get_offer_banner(list(ads.keys()))
+    banner_id2 = get_offer_banner(list(ads.keys()))
+    if banner_id1 is not None and banner_id2 is not None:
+        banner_r = ads[banner_id1]
+        banner_l = ads[banner_id2]
+    else:
+        banner_r = None
+        banner_l = None
+
+    response = requests.get(f'{CONTACT_SERVICE_URL}/getContacts')
     contacts = response.json()
-
-    return render_template('index.html', banner=banner, contacts=contacts)
-
-@app.route('/ap')
-def ap():
-    return render_template('ap.html')
+    tollfree_contact = next((contact for contact in contacts if contact['region_id'] == 'tollfree'), None)
+    overseas_contact = next((contact for contact in contacts if contact['region_id'] == 'overseas'), None)
+    regional_contact = list(contact for contact in contacts if contact['region_id'] != 'overseas' and contact['region_id'] != 'tollfree')
+    return render_template('contact.html', banner_r=banner_r, banner_l=banner_l, tollfree=tollfree_contact, overseas=overseas_contact, contacts=regional_contact)
 
 # @app.route('/get/<string:adID>', methods=['GET'])
 # def get_ad(adID):
