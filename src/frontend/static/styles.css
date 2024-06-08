@@ -14,3 +14,17 @@ h2 {
     height: 300px;
     object-fit: cover;
 }
+
+.portrait {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    aspect-ratio: 1 / 4;
+}
+
+.custom-container {
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: 0;
+    margin-right: 0;
+}
