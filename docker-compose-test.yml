@@ -110,8 +110,8 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: ms-frontend
     volumes:
-      - ./src/frontend/static/styles.css:/app/static/styles
-      - ./src/frontend/templates/index.html:/app/templates/index.html
+      - ./src/frontend/static/:/app/static/
+      - ./src/frontend/templates/:/app/templates/
       - ./src/frontend/app.py:/app/app.py
     ports:
       - 5001:5001
