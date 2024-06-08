@@ -28,3 +28,7 @@ h2 {
     margin-left: 0;
     margin-right: 0;
 }
+
+.text-left-align {
+    text-align: left !important;
+}

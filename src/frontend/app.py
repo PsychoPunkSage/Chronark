@@ -1,6 +1,7 @@
 import os
 import random
 import requests
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
@@ -27,41 +28,61 @@ def get_ads():
         banner = ads[banner_id]
     else:
         banner = None
-
-    # response = requests.get(f'{CONTACT_SERVICE_URL}/getClients')
-    # contacts = response.json()
-
-    # return render_template('index.html', banner=banner, contacts=contacts)
     return render_template('index.html', banner=banner)
 
 @app.route('/contact', methods=['GET'])
 def contact():
     response = requests.get(f'{ADS_SERVICE_URL}/getAds')
     ads = response.json()
-    banner_id1 = get_offer_banner(list(ads.keys()))
-    banner_id2 = get_offer_banner(list(ads.keys()))
-    if banner_id1 is not None and banner_id2 is not None:
-        banner_r = ads[banner_id1]
-        banner_l = ads[banner_id2]
+    banners = [get_offer_banner(list(ads.keys())) for _ in range(2)]
+    if all(banners):
+        banner_r, banner_l = (ads[banners[0]], ads[banners[1]])
     else:
-        banner_r = None
-        banner_l = None
+        banner_r = banner_l = None
 
     response = requests.get(f'{CONTACT_SERVICE_URL}/getContacts')
     contacts = response.json()
-    tollfree_contact = next((contact for contact in contacts if contact['region_id'] == 'tollfree'), None)
-    overseas_contact = next((contact for contact in contacts if contact['region_id'] == 'overseas'), None)
-    regional_contact = list(contact for contact in contacts if contact['region_id'] != 'overseas' and contact['region_id'] != 'tollfree')
-    return render_template('contact.html', banner_r=banner_r, banner_l=banner_l, tollfree=tollfree_contact, overseas=overseas_contact, contacts=regional_contact)
+    regional_contact = []
+    for contact in contacts:
+        if contact['region_id'] == 'tollfree':
+            tollfree_contact = contact
+        elif contact['region_id'] == 'overseas':
+            overseas_contact = contact
+        else:
+            regional_contact.append(contact)
 
-# @app.route('/get/<string:adID>', methods=['GET'])
-# def get_ad(adID):
-#     response = requests.get(f'{ADS_SERVICE_URL}/getAd/{adID}')
-#     if response.status_code == 404:
-#         return {}, 404
-#     else:
-#         ad = response.json()
-#         return json.dumps(ad), 200
+    response = requests.get(f'{CONTACT_SERVICE_URL}/getFaqs')
+    faqs = response.json()
+    categories = {}
+    for item in faqs:
+        category = item['category']
+        if category not in categories:
+            categories[category] = []
+        categories[category].append(item)
+
+    return render_template('contact.html', banner_r=banner_r, banner_l=banner_l, tollfree=tollfree_contact, overseas=overseas_contact, contacts=regional_contact, categories=categories )
+
+@app.route('/record_conv', methods=['POST'])
+def record_conv():
+    # Capturing form data
+    name = request.form['name']
+    email = request.form['email']
+    message = request.form['message']
+    now = datetime.now()
+    data = {
+        'conversation_id': random.randint(1000000, 9999999),
+        'name': name,
+        'email': email,
+        'message': message,
+        'date': now.date().isoformat(),
+        'time':now.time().isoformat(),
+    }
+    print("++++ DATA ++++", data)
+    response = requests.post(f'{CONTACT_SERVICE_URL}/updateConvs', json=data)
+    if response.status_code == 200:
+        return 'Form submitted successfully!'
+    else:
+        return 'Failed to submit form.', response.status_code
 
 @app.route('/setOfferBanner', methods=['POST'])
 def add_ad():
@@ -171,4 +192,3 @@ def get_offer_banner(banner_list):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=SELF_PORT, debug=True)
-    # app.run(host='0.0.0.0', debug=True)
