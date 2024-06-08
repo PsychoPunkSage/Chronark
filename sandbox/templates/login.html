@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+  </head>
+
+  <a id="img_nav" href="{{ url_for('home')}}"
+    ><img
+      src="{{ url_for('static', filename= 'images/UVM_LOGO.jpg') }}"
+      alt="UVM logo"
+      class="left"
+  /></a>
+  <nav id="nav_grid">
+    <section class="nav_section">
+      <a href="{{ url_for('login')}}" class="right">Log In</a>
+      <a href="{{ url_for('signUp')}}" class="right">Sign Up</a>
+    </section>
+  </nav>
+
+  <body>
+    <main>
+      <h1>login</h1>
+    </main>
+  </body>
+</html>
