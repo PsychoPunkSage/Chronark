@@ -1,0 +1,272 @@
+<!-- templates/index.html -->
+{% extends "base.html" %} {% block title %}Banking System{% endblock %} {% block
+custom_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+{% endblock %} {% block content %}
+<div class="container custom-container mt-5">
+  <div class="row">
+    <!-- Left Sidebar Image -->
+    <div class="col-lg-2 d-lg-block">
+      <img
+        src="{{ banner_l.url }}"
+        class="img-fluid portrait"
+        alt="{{ banner_l.alt }}"
+      />
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-lg-8">
+      <h1>Contact Us</h1>
+      <div>
+        <p>
+          If you have any questions, please fill out the form below and we'll
+          get back to you as soon as possible.
+        </p>
+        <form class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label for="inputName4" class="form-label">Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="inputName4"
+              placeholder="John Doe"
+            />
+          </div>
+          <div class="col-md-6">
+            <label for="inputEmail4" class="form-label">Email</label>
+            <input
+              type="email"
+              class="form-control"
+              id="inputEmail4"
+              placeholder="johndoe@mail.com"
+            />
+          </div>
+          <div class="col-12">
+            <label for="inputMessage" class="form-label">Message</label>
+            <textarea
+              class="form-control"
+              id="inputMessage"
+              rows="4"
+              placeholder="Your message"
+            ></textarea>
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-lg btn-success">Submit</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Contact Card -->
+      <hr />
+      <div class="container mt-3 mb-3">
+        <h2>Helpline</h2>
+        <div class="container card mt-3 mb-3" style="max-width: 540px">
+          <div class="row g-0">
+            <div
+              class="col-md-2 d-flex align-items-center justify-content-center"
+            >
+              <img
+                src="{{ url_for('static', filename='customer_care.png') }}"
+                class="img-fluid rounded-start"
+                alt="customer-care"
+                style="max-width: 90px"
+              />
+            </div>
+            <div class="col-md-10">
+              <div class="card-body">
+                <h5 class="card-title">{{ tollfree.region }}</h5>
+                <p class="card-text">
+                  {{ tollfree.number }}<br />
+                  {{ tollfree.email }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="container card mb-3" style="max-width: 540px">
+          <div class="row g-0">
+            <div
+              class="col-md-2 d-flex align-items-center justify-content-center"
+            >
+              <img
+                src="{{ url_for('static', filename='customer_care.png') }}"
+                class="img-fluid rounded-start"
+                alt="customer-care"
+                style="max-width: 90px"
+              />
+            </div>
+            <div class="col-md-10">
+              <div class="card-body">
+                <h5 class="card-title">{{ overseas.region }}</h5>
+                <p class="card-text">
+                  {{ overseas.number }}<br />
+                  {{ overseas.email }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="container faq-section mt-3">
+          <div class="accordion" id="faqAccordion">
+            <div class="card">
+              <button
+                class="btn btn-info btn-lg"
+                type="button"
+                data-toggle="collapse"
+                data-target="#outerCollapse"
+                aria-expanded="false"
+                aria-controls="outerCollapse"
+              >
+                Regional Helpline
+              </button>
+              <div
+                id="outerCollapse"
+                class="collapse"
+                aria-labelledby="outerHeading"
+                data-parent="#faqAccordion"
+              >
+                <div class="card-body">
+                  {% for contact in contacts %}
+                  <div class="card">
+                    <button
+                      class="btn btn-warning"
+                      type="button"
+                      data-toggle="collapse"
+                      data-target="#{{ contact.region_id }}"
+                      aria-expanded="false"
+                      aria-controls="{{ contact.region_id }}"
+                    >
+                      {{ contact.region }}
+                    </button>
+                  </div>
+                  <div
+                    id="{{ contact.region_id }}"
+                    class="collapse"
+                    aria-labelledby="heading{{ contact.region_id }}"
+                  >
+                    <div class="card-body">
+                      <p>
+                        <b><u>Phone</u></b
+                        >: {{ contact.number }}<br />
+                        <b><u>Email</u></b
+                        >: {{ contact.email }}
+                      </p>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ Section -->
+      <hr />
+      <div class="container faq-section mt-3">
+        <h2>Frequently Asked Questions</h2>
+        <div class="accordion" id="faqAccordion">
+          <div class="card">
+            <div class="card-header" id="headingOne">
+              <h2 class="mb-0">
+                <button
+                  class="btn btn-link faq-question"
+                  type="button"
+                  data-toggle="collapse"
+                  data-target="#collapseOne"
+                  aria-expanded="true"
+                  aria-controls="collapseOne"
+                >
+                  What is your return policy?
+                </button>
+              </h2>
+            </div>
+            <div
+              id="collapseOne"
+              class="collapse show"
+              aria-labelledby="headingOne"
+              data-parent="#faqAccordion"
+            >
+              <div class="card-body">
+                Our return policy allows you to return products within 30 days
+                of purchase. Please ensure the items are in their original
+                condition.
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header" id="headingTwo">
+              <h2 class="mb-0">
+                <button
+                  class="btn btn-link faq-question"
+                  type="button"
+                  data-toggle="collapse"
+                  data-target="#collapseTwo"
+                  aria-expanded="false"
+                  aria-controls="collapseTwo"
+                >
+                  Do you offer technical support?
+                </button>
+              </h2>
+            </div>
+            <div
+              id="collapseTwo"
+              class="collapse"
+              aria-labelledby="headingTwo"
+              data-parent="#faqAccordion"
+            >
+              <div class="card-body">
+                Yes, we offer 24/7 technical support. You can reach our support
+                team through email or our hotline.
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header" id="headingThree">
+              <h2 class="mb-0">
+                <button
+                  class="btn btn-link faq-question"
+                  type="button"
+                  data-toggle="collapse"
+                  data-target="#collapseThree"
+                  aria-expanded="false"
+                  aria-controls="collapseThree"
+                >
+                  Where are you located?
+                </button>
+              </h2>
+            </div>
+            <div
+              id="collapseThree"
+              class="collapse"
+              aria-labelledby="headingThree"
+              data-parent="#faqAccordion"
+            >
+              <div class="card-body">
+                We are located at 123 Main Street, Anytown, USA.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar Image -->
+    <div class="col-lg-2 d-none d-lg-block">
+      <img
+        src="{{ banner_r.url }}"
+        class="img-fluid portrait"
+        alt="{{ banner_r.alt }}"
+      />
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+{% endblock %}
