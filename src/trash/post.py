@@ -1,0 +1,204 @@
+import requests
+
+url = 'http://localhost:5003/updateContacts'
+url1 = 'http://localhost:5003/clearContacts'
+
+data = [
+    {
+        "region_id": "tollfree",
+        "number": "1800 1800 23",
+        "region": "Customer Care Number",
+        "email": "contact.customer_care@example.com"
+    },
+    {
+        "region_id": "overseas",
+        "number": "+91-22-33667777",
+        "region": "Domestic Customers Travelling Overseas",
+        "email": "contact.overseas@example.com"
+    },
+    {
+        "region_id": "AP_01",
+        "number": "+91 1234567890",
+        "region": "Andhra Pradesh",
+        "email": "contact.andhrapradesh@example.com"
+    },
+    {
+        "region_id": "ArP_02",
+        "number": "+91 1234567891",
+        "region": "Arunachal Pradesh",
+        "email": "contact.arunachalpradesh@example.com"
+    },
+    {
+        "region_id": "AS_03",
+        "number": "+91 1234567892",
+        "region": "Assam",
+        "email": "contact.assam@example.com"
+    },
+    {
+        "region_id": "BH_04",
+        "number": "+91 1234567893",
+        "region": "Bihar",
+        "email": "contact.bihar@example.com"
+    },
+    {
+        "region_id": "CH_05",
+        "number": "+91 1234567894",
+        "region": "Chhattisgarh",
+        "email": "contact.chhattisgarh@example.com"
+    },
+    {
+        "region_id": "GO_06",
+        "number": "+91 1234567895",
+        "region": "Goa",
+        "email": "contact.goa@example.com"
+    },
+    {
+        "region_id": "GJ_07",
+        "number": "+91 1234567896",
+        "region": "Gujarat",
+        "email": "contact.gujarat@example.com"
+    },
+    {
+        "region_id": "HR_08",
+        "number": "+91 1234567897",
+        "region": "Haryana",
+        "email": "contact.haryana@example.com"
+    },
+    {
+        "region_id": "9",
+        "number": "+91 1234567898",
+        "region": "Himachal Pradesh",
+        "email": "contact.himachalpradesh@example.com"
+    },
+    {
+        "region_id": "JH_10",
+        "number": "+91 1234567899",
+        "region": "Jharkhand",
+        "email": "contact.jharkhand@example.com"
+    },
+    {
+        "region_id": "KR_11",
+        "number": "+91 1234567800",
+        "region": "Karnataka",
+        "email": "contact.karnataka@example.com"
+    },
+    {
+        "region_id": "HL_12",
+        "number": "+91 1234567801",
+        "region": "Kerala",
+        "email": "contact.kerala@example.com"
+    },
+    {
+        "region_id": "MP_13",
+        "number": "+91 1234567802",
+        "region": "Madhya Pradesh",
+        "email": "contact.madhyapradesh@example.com"
+    },
+    {
+        "region_id": "MH_14",
+        "number": "+91 1234567803",
+        "region": "Maharashtra",
+        "email": "contact.maharashtra@example.com"
+    },
+    {
+        "region_id": "MN_15",
+        "number": "+91 1234567804",
+        "region": "Manipur",
+        "email": "contact.manipur@example.com"
+    },
+    {
+        "region_id": "MG_16",
+        "number": "+91 1234567805",
+        "region": "Meghalaya",
+        "email": "contact.meghalaya@example.com"
+    },
+    {
+        "region_id": "MZ_17",
+        "number": "+91 1234567806",
+        "region": "Mizoram",
+        "email": "contact.mizoram@example.com"
+    },
+    {
+        "region_id": "NG_18",
+        "number": "+91 1234567807",
+        "region": "Nagaland",
+        "email": "contact.nagaland@example.com"
+    },
+    {
+        "region_id": "OD_19",
+        "number": "+91 1234567808",
+        "region": "Odisha",
+        "email": "contact.odisha@example.com"
+    },
+    {
+        "region_id": "PB_20",
+        "number": "+91 1234567809",
+        "region": "Punjab",
+        "email": "contact.punjab@example.com"
+    },
+    {
+        "region_id": "RJ_21",
+        "number": "+91 1234567810",
+        "region": "Rajasthan",
+        "email": "contact.rajasthan@example.com"
+    },
+    {
+        "region_id": "SK_22",
+        "number": "+91 1234567811",
+        "region": "Sikkim",
+        "email": "contact.sikkim@example.com"
+    },
+    {
+        "region_id": "TN_23",
+        "number": "+91 1234567812",
+        "region": "Tamil Nadu",
+        "email": "contact.tamilnadu@example.com"
+    },
+    {
+        "region_id": "TL_24",
+        "number": "+91 1234567813",
+        "region": "Telangana",
+        "email": "contact.telangana@example.com"
+    },
+    {
+        "region_id": "TR_25",
+        "number": "+91 1234567814",
+        "region": "Tripura",
+        "email": "contact.tripura@example.com"
+    },
+    {
+        "region_id": "UP_26",
+        "number": "+91 1234567815",
+        "region": "Uttar Pradesh",
+        "email": "contact.uttarpradesh@example.com"
+    },
+    {
+        "region_id": "UT_27",
+        "number": "+91 1234567816",
+        "region": "Uttarakhand",
+        "email": "contact.uttarakhand@example.com"
+    },
+    {
+        "region_id": "WB_28",
+        "number": "+91 1234567817",
+        "region": "West Bengal",
+        "email": "contact.westbengal@example.com"
+    }
+]
+
+for contact in data:
+    response = requests.post(url, json=contact)
+    if response.status_code == 200:
+        print(f"Successfully updated contact for {contact['region']}")
+    else:
+        print(f"Failed to update contact for {contact['region']}. Status code: {response.status_code}, Response: {response.text}")
+
+# CLEAR ALL THE DATA
+# try:
+#     response = requests.post(url1)
+#     if response.status_code == 200:
+#         print("Contacts collection cleared successfully.")
+#     else:
+#         print("Failed to clear contacts collection. Status code:", response.status_code)
+# except requests.exceptions.RequestException as e:
+#     print("Error:", e)
