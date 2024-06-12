@@ -3,156 +3,168 @@
 custom_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
 {% endblock %} {% block content %}
-<div class="container custom-container mt-5">
-  <div class="row">
-    <!-- Left Sidebar Image -->
-    <div class="col-lg-2 d-lg-block">
-      <img src="{{ banner_l.url }}" class="img-fluid portrait" alt="{{ banner_l.alt }}" />
-    </div>
+<div class="main-container">
+  <h1>Contact Us</h1>
 
-    <!-- Main Content -->
-    <div class="col-lg-8">
-      <h1>Contact Us</h1>
-      <div>
-        <p>
-          If you have any questions, please fill out the form below and we'll
-          get back to you as soon as possible.
-        </p>
-        <form class="row g-3 mb-4" id="contactForm" method="POST" action="/record_conv">
-          <div class="col-md-6">
-            <label for="inputName4" class="form-label">Name</label>
-            <input type="text" class="form-control" name="name" id="inputName4" placeholder="John Doe" />
-          </div>
-          <div class="col-md-6">
-            <label for="inputEmail4" class="form-label">Email</label>
-            <input type="email" class="form-control" name="email" id="inputEmail4" placeholder="johndoe@mail.com" />
-          </div>
-          <div class="col-12">
-            <label for="inputMessage" class="form-label">Message</label>
-            <textarea class="form-control" id="inputMessage" name="message" rows="4" placeholder="Your message"></textarea>
-          </div>
-          <div class="col-12">
-            <button type="submit" class="btn btn-lg btn-success">Submit</button>
-          </div>
-        </form>
-        <!-- <div id="successMessage" style="display: none; color: green;">Form submitted successfully!</div> -->
+  <!-- SEARCH Bar -->
+  <div class="container-search">
+    <form action="" id="searchForms" class="search-bar" method="POST" action="/search_results">
+      <input type="text" placeholder="Type your question here" name="prompt" id="searchInput">
+      <button type="submit"><img src="{{ url_for('static', filename='search.png') }}"></button>
+    </form>
+  </div>
+
+  <div class="container custom-container mt-5">
+    <div class="row">
+
+      <!-- Left Sidebar Image -->
+      <div class="col-lg-2 d-block">
+        <img src="{{ banner_l.url }}" class="img-fluid portrait side-banner-image" alt="{{ banner_l.alt }}" />
       </div>
 
-      <!-- Contact Card -->
-      <hr />
-      <div class="container mt-3 mb-3">
-        <h2>Helpline</h2>
-        <div class="container card mt-3 mb-3" style="max-width: 540px">
-          <div class="row g-0">
-            <div class="col-md-2 d-flex align-items-center justify-content-center">
-              <img src="{{ url_for('static', filename='customer_care.png') }}" class="img-fluid rounded-start"
-                alt="customer-care" style="max-width: 90px" />
+      <!-- Main Content -->
+      <div class="col-lg-8">
+        <div>
+          <p>
+            If you have any questions, please fill out the form below and we'll
+            get back to you as soon as possible.
+          </p>
+          <form class="row g-3 mb-4" id="contactForm" method="POST" action="/record_conv">
+            <div class="col-md-6">
+              <label for="inputName4" class="form-label">Name</label>
+              <input type="text" class="form-control" name="name" id="inputName4" placeholder="John Doe" />
             </div>
-            <div class="col-md-10">
-              <div class="card-body">
-                <h5 class="card-title">{{ tollfree.region }}</h5>
-                <p class="card-text">
-                  {{ tollfree.number }}<br />
-                  {{ tollfree.email }}
-                </p>
+            <div class="col-md-6">
+              <label for="inputEmail4" class="form-label">Email</label>
+              <input type="email" class="form-control" name="email" id="inputEmail4" placeholder="johndoe@mail.com" />
+            </div>
+            <div class="col-12">
+              <label for="inputMessage" class="form-label">Message</label>
+              <textarea class="form-control" id="inputMessage" name="message" rows="4"
+                placeholder="Your message"></textarea>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-lg btn-success">Submit</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Contact Card -->
+        <hr />
+        <div class="container mt-3 mb-3">
+          <h2>Helpline</h2>
+          <div class="container card mt-3 mb-3" style="max-width: 540px">
+            <div class="row g-0">
+              <div class="col-md-2 d-flex align-items-center justify-content-center">
+                <img src="{{ url_for('static', filename='customer_care.png') }}" class="img-fluid rounded-start"
+                  alt="customer-care" style="max-width: 90px" />
+              </div>
+              <div class="col-md-10">
+                <div class="card-body">
+                  <h5 class="card-title">{{ tollfree.region }}</h5>
+                  <p class="card-text">
+                    {{ tollfree.number }}<br />
+                    {{ tollfree.email }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="container card mb-3" style="max-width: 540px">
+            <div class="row g-0">
+              <div class="col-md-2 d-flex align-items-center justify-content-center">
+                <img src="{{ url_for('static', filename='customer_care.png') }}" class="img-fluid rounded-start"
+                  alt="customer-care" style="max-width: 90px" />
+              </div>
+              <div class="col-md-10">
+                <div class="card-body">
+                  <h5 class="card-title">{{ overseas.region }}</h5>
+                  <p class="card-text">
+                    {{ overseas.number }}<br />
+                    {{ overseas.email }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="container faq-section mt-3">
+            <div class="accordion" id="faqAccordion">
+              <div class="card">
+                <button class="btn btn-info btn-lg" type="button" data-toggle="collapse" data-target="#outerCollapse"
+                  aria-expanded="false" aria-controls="outerCollapse">
+                  Regional Helpline
+                </button>
+                <div id="outerCollapse" class="collapse" aria-labelledby="outerHeading" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    {% for contact in contacts %}
+                    <div class="card">
+                      <button class="btn btn-warning" type="button" data-toggle="collapse"
+                        data-target="#{{ contact.region_id }}" aria-expanded="false"
+                        aria-controls="{{ contact.region_id }}">
+                        {{ contact.region }}
+                      </button>
+                    </div>
+                    <div id="{{ contact.region_id }}" class="collapse" aria-labelledby="heading{{ contact.region_id }}">
+                      <div class="card-body">
+                        <p>
+                          <b><u>Phone</u></b>: {{ contact.number }}<br />
+                          <b><u>Email</u></b>: {{ contact.email }}
+                        </p>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="container card mb-3" style="max-width: 540px">
-          <div class="row g-0">
-            <div class="col-md-2 d-flex align-items-center justify-content-center">
-              <img src="{{ url_for('static', filename='customer_care.png') }}" class="img-fluid rounded-start"
-                alt="customer-care" style="max-width: 90px" />
-            </div>
-            <div class="col-md-10">
-              <div class="card-body">
-                <h5 class="card-title">{{ overseas.region }}</h5>
-                <p class="card-text">
-                  {{ overseas.number }}<br />
-                  {{ overseas.email }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- FAQ Section -->
+        <hr />
 
         <div class="container faq-section mt-3">
+          <h2>Frequently Asked questions</h2>
           <div class="accordion" id="faqAccordion">
+            {% for category, questions in categories.items() %}
             <div class="card">
-              <button class="btn btn-info btn-lg" type="button" data-toggle="collapse" data-target="#outerCollapse"
-                aria-expanded="false" aria-controls="outerCollapse">
-                Regional Helpline
+              <button class="btn btn-danger btn-lg" type="button" data-toggle="collapse" data-bs-toggle="button"
+                data-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+                {{ category }}
               </button>
-              <div id="outerCollapse" class="collapse" aria-labelledby="outerHeading" data-parent="#faqAccordion">
+              <div id="collapse{{ loop.index }}" class="collapse" aria-labelledby="heading{{ loop.index }}"
+                data-parent="#faqAccordion">
                 <div class="card-body">
-                  {% for contact in contacts %}
+                  {% for question in questions %}
                   <div class="card">
-                    <button class="btn btn-warning" type="button" data-toggle="collapse"
-                      data-target="#{{ contact.region_id }}" aria-expanded="false"
-                      aria-controls="{{ contact.region_id }}">
-                      {{ contact.region }}
+                    <button class="btn btn-success text-left text-left-align" type="button" data-toggle="collapse"
+                      data-target="#question{{ question.question_id }}" aria-expanded="false" data-bs-toggle="button"
+                      aria-controls="question{{ question.question_id }}">
+                      <b>Q. </b>{{ question.question }}
                     </button>
-                  </div>
-                  <div id="{{ contact.region_id }}" class="collapse" aria-labelledby="heading{{ contact.region_id }}">
-                    <div class="card-body">
-                      <p>
-                        <b><u>Phone</u></b>: {{ contact.number }}<br />
-                        <b><u>Email</u></b>: {{ contact.email }}
-                      </p>
+                    <div id="question{{ question.question_id }}" class="collapse"
+                      aria-labelledby="heading{{ question.question_id }}">
+                      <div class="card-body">
+                        <p><b><u>Answer</u></b>: {{ question.answer }}</p>
+                      </div>
                     </div>
                   </div>
                   {% endfor %}
                 </div>
               </div>
             </div>
+            {% endfor %}
           </div>
         </div>
       </div>
 
-      <!-- FAQ Section -->
-      <hr />
 
-      <div class="container faq-section mt-3">
-        <h2>Frequently Asked questions</h2>
-        <div class="accordion" id="faqAccordion">
-          {% for category, questions in categories.items() %}
-          <div class="card">
-            <button class="btn btn-danger btn-lg" type="button" data-toggle="collapse" data-bs-toggle="button"
-              data-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
-              {{ category }}
-            </button>
-            <div id="collapse{{ loop.index }}" class="collapse" aria-labelledby="heading{{ loop.index }}"
-              data-parent="#faqAccordion">
-              <div class="card-body">
-                {% for question in questions %}
-                <div class="card">
-                  <button class="btn btn-success text-left text-left-align" type="button" data-toggle="collapse"
-                    data-target="#question{{ question.question_id }}" aria-expanded="false" data-bs-toggle="button"
-                    aria-controls="question{{ question.question_id }}">
-                    <b>Q. </b>{{ question.question }}
-                  </button>
-                  <div id="question{{ question.question_id }}" class="collapse"
-                    aria-labelledby="heading{{ question.question_id }}">
-                    <div class="card-body">
-                      <p><b><u>Answer</u></b>: {{ question.answer }}</p>
-                    </div>
-                  </div>
-                </div>
-                {% endfor %}
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
+      <!-- Right Sidebar Image -->
+      <div class="col-lg-2 d-block">
+        <img src="{{ banner_r.url }}" class="img-fluid portrait" alt="{{ banner_r.alt }}" />
       </div>
-    </div>
-
-
-    <!-- Right Sidebar Image -->
-    <div class="col-lg-2 d-none d-lg-block">
-      <img src="{{ banner_r.url }}" class="img-fluid portrait" alt="{{ banner_r.alt }}" />
     </div>
   </div>
 </div>
@@ -163,9 +175,12 @@ custom_styles %}
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script>
   document.getElementById("contactForm").addEventListener("submit", function () {
-      document.getElementById("inputName4").value = "";
-      document.getElementById("inputEmail4").value = "";
-      document.getElementById("inputMessage").value = "";
+    document.getElementById("inputName4").value = "";
+    document.getElementById("inputEmail4").value = "";
+    document.getElementById("inputMessage").value = "";
+  });
+  document.getElementById("searchForms").addEventListener("submit", function () {
+    document.getElementById("searchInput").value = "";
   });
 </script>
 {% endblock %}
