@@ -4,6 +4,7 @@ import requests
 url = 'http://localhost:5003/updateContacts'
 url1 = 'http://localhost:5003/clearContacts'
 url2 = 'http://localhost:5003/updateFaqs'
+url3 = 'http://localhost:5004/updateIndex'
 
 def read_json_file(file_path):
     try:
@@ -19,17 +20,17 @@ def read_json_file(file_path):
     except Exception as e:
         print(f"An unexpected error occurred while reading the file {file_path}. Error: {e}")
 
-data = read_json_file("faq.json")
+data = read_json_file("index_search.json")
 
 # if data:
-    # print(data)
+#     print(data)
 
 for i in data:
-    response = requests.post(url2, json=i)
+    response = requests.post(url3, json=i)
     if response.status_code == 200:
         print(f"Successfully updated data")
     else:
-        print(f"Failed to update data")
+        print(f"Failed to update data {response.status_code}")
 
 # CLEAR ALL THE DATA
 # try:
