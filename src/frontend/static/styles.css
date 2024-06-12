@@ -9,6 +9,30 @@ h2 {
     margin-bottom: 10px;
 }
 
+body {
+    background-color: #000833; /* Dark solid color */
+    color: white; /* Optional: Sets the text color to white for better readability */
+}
+
+.main-container {
+    width: 100%;
+    padding: 5%;
+    position: relative;
+}
+
+.col-lg-2 {
+    padding: 10px; /* Adjust padding as needed */
+}
+
+.banner-image {
+    width: 100%;
+    height: auto; /* Ensures the image maintains its aspect ratio */
+    display: block;
+    padding: 5px; /* Padding inside the image itself */
+    box-sizing: border-box; /* Includes padding in the element's total width and height */
+}
+
+
 #banner-img {
     width: 100%; 
     height: 300px;
@@ -31,4 +55,48 @@ h2 {
 
 .text-left-align {
     text-align: left !important;
+}
+
+.container-search {
+    display: flex;
+    justify-content: center;
+    /* padding: 10px; */
+}
+
+.search-bar {
+    width: 100%;
+    max-width: 700px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    border-radius: 60px;
+    padding: 10px 20px;
+    backdrop-filter: blur(4px) saturate(180%);
+}
+
+.search-bar input {
+    background: transparent;
+    flex: 1;
+    border: 0;
+    outline: none;
+    padding: 24px 20px;
+    font-size: 20px;
+    color: #cac7ff;
+}
+
+::placeholder {
+    color: #cac7ff;
+}
+
+.search-bar button img {
+    width: 25px;
+}
+
+.search-bar button {
+    border: 0;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    background: #58629b;
+    cursor: pointer;
 }
