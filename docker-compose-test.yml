@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  redis:
+  redis-ob-ms:
     image: redis:6.0-alpine
     container_name: db-redis-offer-banner
     ports:
@@ -10,6 +10,17 @@ services:
       - vittmitra
     volumes:
       - ./src/offer_banner/conf/:/etc/redis/
+    command: ["redis-server", "/etc/redis/redis.conf"]
+
+  redis-search-ms:
+    image: redis:6.0-alpine
+    container_name: db-redis-search
+    ports:
+      - 6380:6379
+    networks:
+      - vittmitra
+    volumes:
+      - ./src/search/conf/:/etc/redis/
     command: ["redis-server", "/etc/redis/redis.conf"]
 
   mongo:
@@ -26,33 +37,19 @@ services:
       # - ./src/contact/conf/:/etc/mongo
       - mongo_data:/data/db
 
-  # solr:
-  #   image: solr:9.0
-  #   container_name: solr-searcher
-  #   ports:
-  #     - 8983:8983
-  #   environment:
-  #     - ZK_HOST=zoo:2181
-  #   networks:
-  #     - vittmitra
-  #   depends_on:
-  #     - zoo
-  #   volumes:
-  #     - solr_data:/var/solr
-
-  # zoo:
-  #   image: zookeeper:3.8
-  #   container_name: zoo
-  #   restart: always
-  #   hostname: zoo
-  #   ports:
-  #     - 2181:2181
-  #     - 7000:7000
-  #   environment:
-  #     - ZOO_MY_ID: 1
-  #     - ZOO_SERVERS: server.1=zoo:2888:3888;2181
-  #   networks:
-  #     - vittmitra
+  mongo-express:
+    image: mongo-express
+    container_name: db-mongo-express
+    ports:
+      - 8081:8081
+    networks:
+      - vittmitra
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=mongocontact
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=contact
+      - ME_CONFIG_MONGODB_SERVER=mongo
+    depends_on:
+      - mongo
 
   offer-banner:
     build:
@@ -69,13 +66,13 @@ services:
     networks:
       - vittmitra
     environment:
-      - REDIS_PASSWORD=complexpass
-      - REDIS_PORT=6379
-      - REDIS_HOST=redis
       - SELF_PORT=5002
+      - REDIS_HOST=db-redis-offer-banner
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=offer_banner_complexpass
     command: python app.py
     depends_on:
-      - redis
+      - redis-ob-ms
       - mongo
 
   contacts:
@@ -94,15 +91,45 @@ services:
     networks:
       - vittmitra
     environment:
+      - SELF_PORT=5003
       - MONGO_DB_HOST=db-mongo-bank-info
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocontact
       - MONGO_DB_PASSWORD=contact
-      - SELF_PORT=5003
     command: python app.py
     depends_on:
       - mongo
       - offer-banner
+
+  search:
+    build:
+      context: ./src/search
+      dockerfile: Dockerfile.search
+    container_name: ms-search
+    volumes:
+      - ./src/search/app.py:/app/app.py
+      - ./src/search/conf/redis.conf:/app/conf/redis.conf
+      - ./src/search/requirements.txt:/app/requirements.txt
+      - ./src/search/templates/:/app/templates/
+      - ./src/search/static/:/app/static/
+    ports:
+      - 5004:5004
+    networks:
+      - vittmitra
+    environment:
+      - SELF_PORT=5004
+      - MONGO_DB_HOST=db-mongo-bank-info
+      - MONGO_DB_PORT=27017
+      - MONGO_DB_USERNAME=mongocontact
+      - MONGO_DB_PASSWORD=contact
+      - SEARCH_REDIS_HOST=db-redis-search
+      - SEARCH_REDIS_PORT=6380
+      - SEARCH_REDIS_PASSWORD=search_complexpass
+    command: python app.py
+    depends_on:
+      - redis-search-ms
+      - mongo
+      - contacts
 
   frontend:
     build:
@@ -118,23 +145,25 @@ services:
     networks:
       - vittmitra
     environment:
-      - OFFER_BANNER_SERVICE_HOST=ms-offer-banner
-      - CONTACT_SERVICE_HOST=ms-contacts
-      - OFFER_BANNER_SERVICE_PORT=5002
-      - CONTACT_SERVICE_PORT=5003
       - SELF_PORT=5001
+      - OFFER_BANNER_SERVICE_HOST=ms-offer-banner
+      - OFFER_BANNER_SERVICE_PORT=5002
+      - CONTACT_SERVICE_HOST=ms-contacts
+      - CONTACT_SERVICE_PORT=5003
+      - SEARCH_SERVICE_HOST=ms-search
+      - SEARCH_SERVICE_PORT=5004
     command: python app.py
     depends_on:
       - offer-banner
       - contacts
-      - redis
+      - search
+      - redis-ob-ms
+      - redis-search-ms
       - mongo
 
 volumes:
   mongo_data:
     driver: local
-  # solr_data:
-  #   driver: local
 
 networks:
   vittmitra:
