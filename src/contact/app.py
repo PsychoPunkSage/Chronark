@@ -24,7 +24,6 @@ app = Flask(__name__)
 # Database connection
 db_client = MongoClient(username=MONGO_DB_USERNAME, password=MONGO_DB_PASSWORD, host=MONGO_DB_HOST, port=int(MONGO_DB_PORT))
 # User data
-# print("db_client::> ", db_client)
 data = db_client.contact
 storage = data.storage
 
@@ -76,8 +75,6 @@ class Conversation:
 @app.route('/', methods=['GET'])
 def index():
     conv_data = getConvs().response
-    # conv_data_json = [json.loads(item.decode('utf-8')) for item in conv_data]
-    print(conv_data)
     return render_template('index.html', conv_data=conv_data, m_client=db_client, MONGO_HOST=MONGO_DB_HOST, MONGO_PORT=MONGO_DB_PORT, MONGO_PASSWORD=MONGO_DB_PASSWORD, MONGO_USERNAME=MONGO_DB_USERNAME)
 
 # ===================================================================================================================================================================================== #
