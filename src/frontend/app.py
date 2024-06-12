@@ -18,6 +18,11 @@ CONTACT_SERVICE_HOST = os.environ.get('CONTACT_SERVICE_HOST')
 CONTACT_SERVICE_PORT = os.environ.get('CONTACT_SERVICE_PORT')
 CONTACT_SERVICE_URL = 'http://' + CONTACT_SERVICE_HOST + ':' + CONTACT_SERVICE_PORT
 
+# Search url
+SEARCH_SERVICE_HOST = os.environ.get('SEARCH_SERVICE_HOST')
+SEARCH_SERVICE_PORT = os.environ.get('SEARCH_SERVICE_PORT')
+SEARCH_SERVICE_URL = 'http://' + SEARCH_SERVICE_HOST + ':' + SEARCH_SERVICE_PORT
+print("SEARCH_SERVICE_URL: ", SEARCH_SERVICE_URL)
 
 @app.route('/', methods=['GET'])
 def get_ads():
@@ -62,6 +67,8 @@ def contact():
 
     return render_template('contact.html', banner_r=banner_r, banner_l=banner_l, tollfree=tollfree_contact, overseas=overseas_contact, contacts=regional_contact, categories=categories )
 
+# ======================================================================================================================================================================================== #
+
 @app.route('/record_conv', methods=['POST'])
 def record_conv():
     # Capturing form data
@@ -83,6 +90,20 @@ def record_conv():
         return 'Form submitted successfully!'
     else:
         return 'Failed to submit form.', response.status_code
+
+@app.route('/search_results', methods=['POST'])
+def search_results():
+    # Capturing Form data
+    print("++++Entered search_results++++")
+    prompt = request.form['prompt']
+    print("++++Noted Prompt++++")
+    # return redirect(f'{SEARCH_SERVICE_URL}/getIndex/{prompt}')
+    print("++++Sending Get request++++")
+    get_data = requests.get(f'{SEARCH_SERVICE_URL}/getIndexKeys')
+    print("++++Got Get request++++")
+    return render_template('index_page.html', data=get_data, prompt=prompt)
+
+# ======================================================================================================================================================================================== #
 
 @app.route('/setOfferBanner', methods=['POST'])
 def add_ad():
