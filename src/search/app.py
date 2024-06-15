@@ -136,7 +136,7 @@ def get_all_keys(r_client):
     return redis_command(r_client.keys, '*')
 
 def get_similar_key(keyword, all_keys):
-    similar_keys = difflib.get_close_matches(keyword, [key.decode('utf-8') for key in all_keys], n=1, cutoff=0.8)
+    similar_keys = difflib.get_close_matches(keyword, all_keys, n=1, cutoff=0.8)
     return similar_keys[0] if similar_keys else None
 
 def get_similar_index_from_mongo(keyword):
