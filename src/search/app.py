@@ -122,11 +122,11 @@ def getIndex():
 def updateIndex():
     # Update only in `Mongodb`
     jsonData = request.json
-    index_tag = jsonData.get('index_tag')
-    existing_data = index_collection.find_one({"index_tag": index_tag})
+    index_id = jsonData.get('index_id')
+    existing_data = index_collection.find_one({"index_id": index_id})
 
     if existing_data:
-        index_collection.update_one({"index_tag": index_tag}, {"$set": jsonData})
+        index_collection.update_one({"index_id": index_id}, {"$set": jsonData})
     else:
         index_collection.insert_one(jsonData)
     return "Success", 200
