@@ -37,13 +37,14 @@ def get_ads():
 
 @app.route('/contact', methods=['GET'])
 def contact():
-    response = requests.get(f'{ADS_SERVICE_URL}/getAds')
-    ads = response.json()
-    banners = [get_offer_banner(list(ads.keys())) for _ in range(2)]
-    if all(banners):
-        banner_r, banner_l = (ads[banners[0]], ads[banners[1]])
-    else:
-        banner_r = banner_l = None
+    # response = requests.get(f'{ADS_SERVICE_URL}/getAds')
+    # ads = response.json()
+    # banners = [get_offer_banner(list(ads.keys())) for _ in range(2)]
+    # if all(banners):
+    #     banner_r, banner_l = (ads[banners[0]], ads[banners[1]])
+    # else:
+    #     banner_r = banner_l = None
+    banner = fetch_banners(2)
 
     response = requests.get(f'{CONTACT_SERVICE_URL}/getContacts')
     contacts = response.json()
@@ -65,7 +66,7 @@ def contact():
             categories[category] = []
         categories[category].append(item)
 
-    return render_template('contact.html', banner_r=banner_r, banner_l=banner_l, tollfree=tollfree_contact, overseas=overseas_contact, contacts=regional_contact, categories=categories )
+    return render_template('contact.html', banner_r=banner[0], banner_l=banner[1], tollfree=tollfree_contact, overseas=overseas_contact, contacts=regional_contact, categories=categories )
 
 # ======================================================================================================================================================================================== #
 
@@ -115,9 +116,10 @@ def search_results():
         'prompt': prompt,
     }
     response = requests.post(f'{SEARCH_SERVICE_URL}/getIndex', json=data)
+    offer_banner = fetch_banners(2)
     source = response.json().get('source')
     index_data = response.json().get('data')
-    return render_template('index_page.html', data=index_data, prompt=prompt, source=source)
+    return render_template('index_page.html', data=index_data, prompt=prompt, source=source, banner_l=offer_banner[0], banner_r=offer_banner[1])
 
 # ======================================================================================================================================================================================== #
 
@@ -162,7 +164,18 @@ def add_contact():
     response = requests.post(f'{CONTACT_SERVICE_URL}/updateClient', json=contact)
     return "success", response.status_code
 
+# ======================================================================================================================================================================================== #
 
+def fetch_banners(num_outputs):
+    response = requests.get(f'{ADS_SERVICE_URL}/getAds')
+    
+    if response.status_code != 200:
+        return [None] * num_outputs  # Return a list of None if the request fails
+    
+    ads = response.json()
+    banners = [get_offer_banner(list(ads.keys())) for _ in range(num_outputs)]
+    
+    return [ads[banner] if banner else None for banner in banners]
 
 
 
