@@ -1,21 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ data.index_tag }}</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='styles.css') }}"
-    />
-  </head>
-  <body>
-    <div class="container">
-      <h1>{{ data.heading }}</h1>
+{% extends "base.html" %} {% block title %}Banking System{% endblock %} {% block
+custom_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+{% endblock %} {% block content %}
+<div class="container-fluid main-container">
+  <h1>{{ data.heading }}</h1>
+  <div class="row">
+    <!-- Left strip for image -->
+    <div class="col-md-2 d-none d-md-block p-0">
+      <img
+        src="{{ banner_l.url }}"
+        class="img-fluid portrait side-banner-image"
+        alt="{{ banner_l.alt }}"
+      />
+    </div>
+
+    <!-- Main content -->
+    <div class="col-md-8 text-justify py-5" style="font-size: 1.2rem">
       <p><strong>Prompt:</strong> {{ prompt }}</p>
-      <!-- <p><strong>Tag:</strong> {{ data.index_tag }}</p> -->
-      <p><strong>Content:</strong> {{ data.content }}</p>
+      <strong>Content:</strong>
+      <hr />
+      <p>{{ data.content }}</p>
+      <br />
+      <p>{{ data.content }}</p>
+      <br />
+      <p>{{ data.content }}</p>
       <p><strong>Source:</strong> {{ source }}</p>
     </div>
-  </body>
-</html>
+
+    <!-- Right strip for image -->
+    <div class="col-md-2 d-none d-md-block p-0">
+      <img
+        src="{{ banner_r.url }}"
+        class="img-fluid portrait side-banner-image"
+        alt="{{ banner_r.alt }}"
+      />
+    </div>
+  </div>
+</div>
+{% endblock %}
