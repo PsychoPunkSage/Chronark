@@ -22,8 +22,8 @@ def read_json_file(file_path):
 
 data = read_json_file("index_search.json")
 
-# if data:
-#     print(data)
+if data:
+    print(data)
 
 for i in data:
     response = requests.post(url3, json=i)
