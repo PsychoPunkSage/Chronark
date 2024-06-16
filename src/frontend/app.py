@@ -69,39 +69,55 @@ def contact():
 
 # ======================================================================================================================================================================================== #
 
-@app.route('/record_conv', methods=['POST'])
+@app.route('/record_conv', methods=['POST', "GET"])
 def record_conv():
-    # Capturing form data
-    name = request.form['name']
-    email = request.form['email']
-    message = request.form['message']
-    now = datetime.now()
-    data = {
-        'conversation_id': random.randint(1000000, 9999999),
-        'name': name,
-        'email': email,
-        'message': message,
-        'date': now.date().isoformat(),
-        'time':now.time().isoformat(),
-    }
-    print("++++ DATA ++++", data)
-    response = requests.post(f'{CONTACT_SERVICE_URL}/updateConvs', json=data)
-    if response.status_code == 200:
-        return 'Form submitted successfully!'
+    if request.method == 'POST':
+        # Capturing form data
+        name = request.form['name']
+        email = request.form['email']
+        message = request.form['message']
+
+        print("Received form data:")
+        print(f"Name: {name}, Email: {email}, Message: {message}")
+
+        if not name or not email or not message:
+            return 'Form data missing!', 400
+
+        now = datetime.now()
+        data = {
+            'conversation_id': random.randint(1000000, 9999999),
+            'name': name,
+            'email': email,
+            'message': message,
+            'date': now.date().isoformat(),
+            'time':now.time().isoformat(),
+        }
+        print("++++ DATA ++++", data)
+        response = requests.post(f'{CONTACT_SERVICE_URL}/updateConvs', json=data)
+        if response.status_code == 200:
+            return 'Form submitted successfully!'
+        else:
+            return 'Failed to submit form.', response.status_code
     else:
-        return 'Failed to submit form.', response.status_code
+        pass
 
 @app.route('/search_results', methods=['POST'])
 def search_results():
+    # if request.method == 'POST':
     # Capturing Form data
     print("++++Entered search_results++++")
+    print("Form Request", request.form)
     prompt = request.form['prompt']
     print("++++Noted Prompt++++")
-    # return redirect(f'{SEARCH_SERVICE_URL}/getIndex/{prompt}')
-    print("++++Sending Get request++++")
-    get_data = requests.get(f'{SEARCH_SERVICE_URL}/getIndexKeys')
-    print("++++Got Get request++++")
-    return render_template('index_page.html', data=get_data, prompt=prompt)
+    if not prompt:
+        return 'Form data missing! - Prompt'#, 400
+    data = {
+        'prompt': prompt,
+    }
+    response = requests.post(f'{SEARCH_SERVICE_URL}/getIndex', json=data)
+    source = response.json().get('source')
+    index_data = response.json().get('data')
+    return render_template('index_page.html', data=index_data, prompt=prompt, source=source)
 
 # ======================================================================================================================================================================================== #
 
