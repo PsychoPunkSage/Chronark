@@ -8,8 +8,8 @@ custom_styles %}
 
   <!-- SEARCH Bar -->
   <div class="container-search">
-    <form action="" id="searchForms" class="search-bar" method="POST" action="/search_results">
-      <input type="text" placeholder="Type your question here" name="prompt" id="searchInput">
+    <form id="searchForms" class="search-bar" method="post" action="/search_results">
+      <input type="text" placeholder="Type your question here; e.g. bills" name="prompt" id="searchInput">
       <button type="submit"><img src="{{ url_for('static', filename='search.png') }}"></button>
     </form>
   </div>
@@ -29,7 +29,7 @@ custom_styles %}
             If you have any questions, please fill out the form below and we'll
             get back to you as soon as possible.
           </p>
-          <form class="row g-3 mb-4" id="contactForm" method="POST" action="/record_conv">
+          <form class="row g-3 mb-4" id="contactForm" method="post" action="/record_conv">
             <div class="col-md-6">
               <label for="inputName4" class="form-label">Name</label>
               <input type="text" class="form-control" name="name" id="inputName4" placeholder="John Doe" />
@@ -173,7 +173,7 @@ custom_styles %}
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<script>
+<!-- <script>
   document.getElementById("contactForm").addEventListener("submit", function () {
     document.getElementById("inputName4").value = "";
     document.getElementById("inputEmail4").value = "";
@@ -182,7 +182,7 @@ custom_styles %}
   document.getElementById("searchForms").addEventListener("submit", function () {
     document.getElementById("searchInput").value = "";
   });
-</script>
+</script> -->
 {% endblock %}
 </div>
 </div>
