@@ -1,45 +1,54 @@
 [
   {
+    "index_id": "00001",
     "index_tag": "digital banking demo video",
     "heading": "Digital Banking Demo Video",
     "content": "Watch our comprehensive digital banking demo video to learn how to navigate and utilize our online banking platform. This video covers key features such as checking account balances, transferring funds, paying bills, and more. Our user-friendly interface is designed to make managing your finances easy and convenient."
   },
   {
+    "index_id": "00002",
     "index_tag": "Forget User ID",
     "heading": "Forgot User ID",
     "content": "If you have forgotten your User ID, don't worry. You can recover it by visiting the login page and clicking on the 'Forgot User ID' link. Follow the instructions and provide the necessary information such as your registered email address or mobile number to receive your User ID. Ensure you have access to the contact details linked to your account."
   },
   {
+    "index_id": "00003",
     "index_tag": "forget net banking password",
     "heading": "Forgot Net Banking Password",
     "content": "Resetting your net banking password is simple. Go to the login page and click on 'Forgot Password'. Enter your User ID and follow the steps to verify your identity through a one-time password (OTP) sent to your registered mobile number or email. Once verified, you can set a new password and regain access to your account."
   },
   {
+    "index_id": "00004",
     "index_tag": "how to download mobile app",
     "heading": "How to Download Mobile App",
     "content": "Downloading our mobile app is easy and convenient. Visit the App Store or Google Play Store on your smartphone. Search for our bank's official app, then click 'Install' or 'Get' to download and install it on your device. Once installed, open the app, and log in using your existing online banking credentials or register for a new account."
   },
   {
+    "index_id": "00005",
     "index_tag": "send money via UPI",
     "heading": "Send Money via UPI",
     "content": "Sending money via UPI (Unified Payments Interface) is fast and secure. Open your banking app and select the UPI option. Enter the recipient's UPI ID or scan their QR code, then enter the amount you wish to send. Confirm the transaction with your UPI PIN. The money will be transferred instantly to the recipient's account."
   },
   {
+    "index_id": "00006",
     "index_tag": "online recharge",
     "heading": "Online Recharge",
     "content": "Recharging your mobile, DTH, or other services online is quick and easy. Log in to your net banking or mobile banking app. Navigate to the 'Recharge' section, select the service you wish to recharge, enter the necessary details, and confirm the payment. Your account will be recharged instantly, and you will receive a confirmation message."
   },
   {
+    "index_id": "00007",
     "index_tag": "whatsapp banking",
     "heading": "WhatsApp Banking",
     "content": "Experience the convenience of WhatsApp Banking. Add our bank's official WhatsApp number to your contacts. Send a 'Hi' message to start a conversation. You can perform various banking tasks such as checking account balances, viewing mini statements, requesting cheque books, and more, all through simple text commands on WhatsApp."
   },
   {
+    "index_id": "00008",
     "index_tag": "online tax payment",
     "heading": "Online Tax Payment",
     "content": "Paying your taxes online is simple and secure. Log in to your net banking account and navigate to the 'Tax Payments' section. Select the type of tax you need to pay, fill in the required details, and confirm the payment. You will receive an acknowledgment receipt, and your tax payment will be processed immediately."
   },
   {
+    "index_id": "00009",
     "index_tag": "manage bills using net banking",
     "heading": "Manage Bills Using Net Banking",
     "content": "Managing your bills through net banking is convenient and efficient. Log in to your net banking account and go to the 'Bill Payments' section. Add the billers you wish to pay, and schedule one-time or recurring payments. You can track the status of your payments, view payment history, and receive notifications for due bills, ensuring you never miss a payment."
