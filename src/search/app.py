@@ -41,13 +41,15 @@ def redis_command(command, *args):
         time.sleep(backoff_seconds)
 
 class IndexTemplate:
-    def __init__(self, index_tag="", heading="", content=""):
+    def __init__(self, index_id="", index_tag="", heading="", content=""):
+        self.index_id = index_id
         self.index_tag = index_tag
         self.heading = heading
         self.content = content
     
     def to_dict(self):
         return {
+            "index_id": self.index_id,
             "index_tag": self.index_tag,
             "heading": self.heading,
             "content": self.content
@@ -88,42 +90,32 @@ def getIndexKeys():
 def getIndex():
     keyword = request.json['prompt']
     print("**Keyword** ", keyword)
-    all_keys = redis_command(r_client.keys, '*')
-    all_keys = [key.decode('utf-8') for key in all_keys]  # Get list of strings
-    similar_key = get_similar_index_from_mongo(keyword)
-    return similar_key
 
-    # if all_keys:
-    #     similar_key = get_similar_key(keyword, all_keys)
-    #     if similar_key:
-    #         index_data = redis_command(r_client.get, similar_key)
-    #         if index_data:
-    #             return jsonify(index_data), "Redis", 200
+    if not keyword:
+        return jsonify({"error": "Keyword is required"}), 400
 
-    # existing_index = index_collection.find_one({"index_tag": keyword})
-    # if existing_index is None:
-    #     similar_index_tag = get_similar_index_from_mongo(keyword)
-    #     if similar_index_tag:
-    #         existing_index = index_collection.find_one({"index_tag": similar_index_tag})
-    #         if existing_index:
-    #             index_data = IndexTemplate(
-    #                 index_tag=existing_index["index_tag"],
-    #                 heading=existing_index["heading"],
-    #                 content=existing_index["content"]
-    #             ).to_dict()
+    similar_key = get_similar_index_id_from_redis(keyword)
+    if similar_key:
+        index_data = redis_command(r_client.get, similar_key)
+        if index_data:
+            index_data = json.loads(index_data)
+            return jsonify({"source": "Redis", "data": index_data}), 200
 
-    #             redis_command(r_client.set, existing_index["index_tag"], json.dumps(index_data))
-    #             return jsonify(index_data),  "MongoDB", 200
-    #     return jsonify({}), None, 404
+    # If no similar key found in Redis, fall back to MongoDB
+    similar_index_id = get_similar_index_id_from_mongo(keyword)
+    if similar_index_id:
+        existing_index = index_collection.find_one({"index_id": similar_index_id})
+        if existing_index:
+            index_data = {
+                "index_id": existing_index["index_id"],
+                "index_tag": existing_index["index_tag"],
+                "heading": existing_index["heading"],
+                "content": existing_index["content"]
+            }
+            redis_command(r_client.set, existing_index["index_id"], json.dumps(index_data))
+            return jsonify({"source": "MongoDB", "data": index_data}), 200
 
-    # index_data = IndexTemplate(
-    #     index_tag=existing_index["index_tag"],
-    #     heading=existing_index["heading"],
-    #     content=existing_index["content"]
-    # ).to_dict()
-
-    # redis_command(r_client.set, existing_index["index_tag"], json.dumps(index_data))
-    # return jsonify(index_data), "MongoDB", 200
+    return jsonify({"error": "No matching index found"}), 404
 
 
 @app.route("/updateIndex", methods=["POST"])
@@ -144,11 +136,40 @@ def updateIndex():
 def get_all_keys(r_client):
     return redis_command(r_client.keys, '*')
 
-def get_similar_key(keyword, all_keys):
-    similar_keys = difflib.get_close_matches(keyword, all_keys, n=1, cutoff=0.8)
-    return similar_keys[0] if similar_keys else None
+def get_similar_index_id_from_redis(keyword):
+    # Retrieve all keys from Redis
+    all_keys = redis_command(r_client.keys, '*')
+    all_keys = [key.decode('utf-8') for key in all_keys]
 
-def get_similar_index_from_mongo(keyword):
+    # Initialize variables to keep track of the best match
+    best_match = None
+    best_match_id = None
+    highest_similarity = 0
+
+    # Iterate through all keys to find the best match
+    for key in all_keys:
+        value = redis_command(r_client.get, key)
+        if value:
+            try:
+                value = value.decode('utf-8')
+                value_data = json.loads(value)
+                index_tag = value_data.get('index_tag', '')
+                index_tags = index_tag.split(', ')
+
+                # Check each tag for similarity
+                for tag in index_tags:
+                    similarity = difflib.SequenceMatcher(None, keyword, tag).ratio()
+                    if similarity > highest_similarity:
+                        highest_similarity = similarity
+                        best_match = tag
+                        best_match_id = key
+            except json.JSONDecodeError as e:
+                print(f"JSON decode error for key {key}: {e}")
+                continue
+
+    return best_match_id if best_match else None
+
+def get_similar_index_id_from_mongo(keyword):
     all_entries = index_collection.find({}, {"index_tag": 1, "index_id": 1})
 
     best_match = None
