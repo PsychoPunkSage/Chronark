@@ -136,59 +136,6 @@ def updateIndex():
 def get_all_keys(r_client):
     return redis_command(r_client.keys, '*')
 
-# def get_similar_index_id_from_redis(keyword):
-#     # Retrieve all keys from Redis
-#     all_keys = redis_command(r_client.keys, '*')
-#     all_keys = [key.decode('utf-8') for key in all_keys]
-
-#     # Initialize variables to keep track of the best match
-#     best_match = None
-#     best_match_id = None
-#     highest_similarity = 0
-
-#     # Iterate through all keys to find the best match
-#     for key in all_keys:
-#         value = redis_command(r_client.get, key)
-#         if value:
-#             try:
-#                 value = value.decode('utf-8')
-#                 value_data = json.loads(value)
-#                 index_tag = value_data.get('index_tag', '')
-#                 index_tags = index_tag.split(', ')
-
-#                 # Check each tag for similarity
-#                 for tag in index_tags:
-#                     similarity = difflib.SequenceMatcher(None, keyword, tag).ratio()
-#                     if similarity > highest_similarity:
-#                         highest_similarity = similarity
-#                         best_match = tag
-#                         best_match_id = key
-#             except json.JSONDecodeError as e:
-#                 print(f"JSON decode error for key {key}: {e}")
-#                 continue
-
-#     return best_match_id if best_match else None
-
-# def get_similar_index_id_from_mongo(keyword):
-#     all_entries = index_collection.find({}, {"index_tag": 1, "index_id": 1})
-
-#     best_match = None
-#     best_match_id = None
-#     highest_similarity = 0
-
-#     for entry in all_entries:
-#         index_id = entry['index_id']
-#         index_tags = entry['index_tag'].split(', ')
-        
-#         for tag in index_tags:
-#             similarity = difflib.SequenceMatcher(None, keyword, tag).ratio()
-#             if similarity > highest_similarity:
-#                 highest_similarity = similarity
-#                 best_match = tag
-#                 best_match_id = index_id
-
-#     return best_match_id if best_match else None
-
 def get_similar_index_id_from_redis(keyword):
     # Retrieve all keys from Redis
     all_keys = redis_command(r_client.keys, '*')
