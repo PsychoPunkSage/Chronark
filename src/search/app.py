@@ -73,48 +73,57 @@ print(value)
 def index():
     return render_template('index.html', r_client=r_client, SEARCH_REDIS_HOST=SEARCH_REDIS_HOST, SEARCH_REDIS_PORT=SEARCH_REDIS_PORT, SEARCH_REDIS_PASSWORD=SEARCH_REDIS_PASSWORD, m_client=db_client , MONGO_DB_HOST=MONGO_DB_HOST, MONGO_DB_PORT=MONGO_DB_PORT, MONGO_DB_USERNAME=MONGO_DB_USERNAME, MONGO_DB_PASSWORD=MONGO_DB_PASSWORD)
 
+@app.route('/clearContacts', methods=['POST'])
+def clearContacts():
+    index_collection.delete_many({})
+    return "All data cleared from contacts collection", 200
+
 @app.route("/getIndexKeys", methods=["GET"])
 def getIndexKeys():
     all_keys = redis_command(r_client.keys, '*')
     all_keys = [key.decode('utf-8') for key in all_keys]  # Get list of strings
     return all_keys, 200
 
-@app.route("/getIndex/<string:keyword>", methods=["GET"])
-def getIndex(keyword):
+@app.route("/getIndex", methods=["POST"])
+def getIndex():
+    keyword = request.json['prompt']
+    print("**Keyword** ", keyword)
     all_keys = redis_command(r_client.keys, '*')
     all_keys = [key.decode('utf-8') for key in all_keys]  # Get list of strings
+    similar_key = get_similar_index_from_mongo(keyword)
+    return similar_key
 
-    if all_keys:
-        similar_key = get_similar_key(keyword, all_keys)
-        if similar_key:
-            index_data = redis_command(r_client.get, similar_key)
-            if index_data:
-                return jsonify(index_data), "Redis", 200
+    # if all_keys:
+    #     similar_key = get_similar_key(keyword, all_keys)
+    #     if similar_key:
+    #         index_data = redis_command(r_client.get, similar_key)
+    #         if index_data:
+    #             return jsonify(index_data), "Redis", 200
 
-    existing_index = index_collection.find_one({"index_tag": keyword})
-    if existing_index is None:
-        similar_index_tag = get_similar_index_from_mongo(keyword)
-        if similar_index_tag:
-            existing_index = index_collection.find_one({"index_tag": similar_index_tag})
-            if existing_index:
-                index_data = IndexTemplate(
-                    index_tag=existing_index["index_tag"],
-                    heading=existing_index["heading"],
-                    content=existing_index["content"]
-                ).to_dict()
+    # existing_index = index_collection.find_one({"index_tag": keyword})
+    # if existing_index is None:
+    #     similar_index_tag = get_similar_index_from_mongo(keyword)
+    #     if similar_index_tag:
+    #         existing_index = index_collection.find_one({"index_tag": similar_index_tag})
+    #         if existing_index:
+    #             index_data = IndexTemplate(
+    #                 index_tag=existing_index["index_tag"],
+    #                 heading=existing_index["heading"],
+    #                 content=existing_index["content"]
+    #             ).to_dict()
 
-                redis_command(r_client.set, existing_index["index_tag"], json.dumps(index_data))
-                return jsonify(index_data),  "MongoDB", 200
-        return jsonify({}), None, 404
+    #             redis_command(r_client.set, existing_index["index_tag"], json.dumps(index_data))
+    #             return jsonify(index_data),  "MongoDB", 200
+    #     return jsonify({}), None, 404
 
-    index_data = IndexTemplate(
-        index_tag=existing_index["index_tag"],
-        heading=existing_index["heading"],
-        content=existing_index["content"]
-    ).to_dict()
+    # index_data = IndexTemplate(
+    #     index_tag=existing_index["index_tag"],
+    #     heading=existing_index["heading"],
+    #     content=existing_index["content"]
+    # ).to_dict()
 
-    redis_command(r_client.set, existing_index["index_tag"], json.dumps(index_data))
-    return jsonify(index_data), "MongoDB", 200
+    # redis_command(r_client.set, existing_index["index_tag"], json.dumps(index_data))
+    # return jsonify(index_data), "MongoDB", 200
 
 
 @app.route("/updateIndex", methods=["POST"])
@@ -140,9 +149,24 @@ def get_similar_key(keyword, all_keys):
     return similar_keys[0] if similar_keys else None
 
 def get_similar_index_from_mongo(keyword):
-    all_index_tags = [index["index_tag"] for index in index_collection.find({}, {"index_tag": 1})]
-    similar_keys = difflib.get_close_matches(keyword, all_index_tags, n=1, cutoff=0.8)
-    return similar_keys[0] if similar_keys else None
+    all_entries = index_collection.find({}, {"index_tag": 1, "index_id": 1})
+
+    best_match = None
+    best_match_id = None
+    highest_similarity = 0
+
+    for entry in all_entries:
+        index_id = entry['index_id']
+        index_tags = entry['index_tag'].split(', ')
+        
+        for tag in index_tags:
+            similarity = difflib.SequenceMatcher(None, keyword, tag).ratio()
+            if similarity > highest_similarity:
+                highest_similarity = similarity
+                best_match = tag
+                best_match_id = index_id
+
+    return best_match_id if best_match else None
 
 # ============================================================================================================ #
 
