@@ -11,9 +11,11 @@
   </head>
   <body>
     <div class="container">
-      <h1>{{ data }}</h1>
-      <p>{{ prompt }}</p>
-      <!-- <p><small>Source: {{ source }}</small></p> -->
+      <h1>{{ data.heading }}</h1>
+      <p><strong>Prompt:</strong> {{ prompt }}</p>
+      <!-- <p><strong>Tag:</strong> {{ data.index_tag }}</p> -->
+      <p><strong>Content:</strong> {{ data.content }}</p>
+      <p><strong>Source:</strong> {{ source }}</p>
     </div>
   </body>
 </html>
