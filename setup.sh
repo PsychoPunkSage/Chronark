@@ -21,6 +21,12 @@ python3 post.py
 # Check if the Python script ran successfully
 if [ $? -eq 0 ]; then
     echo "Python script executed successfully."
+    echo ""
+    echo "==================================="
+    echo "|| Visit: http://localhost:5001/ ||"
+    echo "==================================="
+
+    echo "Note: Visit ./src/api to get an idea of structure of API calls."
 else
     echo "Python script execution failed."
 fi
