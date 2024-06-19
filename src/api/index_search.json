@@ -1,0 +1,56 @@
+[
+  {
+    "index_id": "00001",
+    "index_tag": "digital banking, demo video, demo, digital, video",
+    "heading": "Digital Banking Demo Video",
+    "content": "Watch our comprehensive digital banking demo video to learn how to navigate and utilize our online banking platform. This video covers key features such as checking account balances, transferring funds, paying bills, and more. Our user-friendly interface is designed to make managing your finances easy and convenient. Additionally, the video includes tips and tricks for maximizing the benefits of our digital services, ensuring you can take full advantage of all features available. Whether you are a new user or an experienced one, this demo video will provide valuable insights and a complete overview of our digital banking solutions."
+  },
+  {
+    "index_id": "00002",
+    "index_tag": "user id, id, user identity, identity",
+    "heading": "Forgot User ID",
+    "content": "If you have forgotten your User ID, don't worry. You can recover it by visiting the login page and clicking on the 'Forgot User ID' link. Follow the instructions and provide the necessary information such as your registered email address or mobile number to receive your User ID. Ensure you have access to the contact details linked to your account. Once you have entered the required information, you will receive an email or SMS with your User ID. This process is designed to be secure and user-friendly, helping you regain access to your account without any hassle. Remember to keep your User ID safe to prevent future inconveniences."
+  },
+  {
+    "index_id": "00003",
+    "index_tag": "net banking password, forgot net banking password, password, banking password",
+    "heading": "Forgot Net Banking Password",
+    "content": "Resetting your net banking password is simple. Go to the login page and click on 'Forgot Password'. Enter your User ID and follow the steps to verify your identity through a one-time password (OTP) sent to your registered mobile number or email. Once verified, you can set a new password and regain access to your account. Make sure to create a strong password that includes a mix of letters, numbers, and special characters to enhance security. It is also advisable to change your password regularly to protect your account from unauthorized access. If you encounter any issues, our customer support is available to assist you."
+  },
+  {
+    "index_id": "00004",
+    "index_tag": "mobile app, download app, download mobile app, app",
+    "heading": "How to Download Mobile App",
+    "content": "Downloading our mobile app is easy and convenient. Visit the App Store or Google Play Store on your smartphone. Search for our bank's official app, then click 'Install' or 'Get' to download and install it on your device. Once installed, open the app, and log in using your existing online banking credentials or register for a new account. The app offers a seamless banking experience with features such as quick balance checks, fund transfers, bill payments, and more. Our app is designed to provide you with banking services at your fingertips, making it easier to manage your finances anytime, anywhere. Keep your app updated to enjoy the latest features and enhancements."
+  },
+  {
+    "index_id": "00005",
+    "index_tag": "upi, transfer upi, upi transfer, transfer via upi, send money",
+    "heading": "Send Money via UPI",
+    "content": "Sending money via UPI (Unified Payments Interface) is fast and secure. Open your banking app and select the UPI option. Enter the recipient's UPI ID or scan their QR code, then enter the amount you wish to send. Confirm the transaction with your UPI PIN. The money will be transferred instantly to the recipient's account. UPI makes transactions simple and is available 24/7, even on holidays. It eliminates the need to share bank account details, providing a higher level of security. With UPI, you can also check transaction history, set up recurring payments, and receive instant notifications of your transactions."
+  },
+  {
+    "index_id": "00006",
+    "index_tag": "online recharge, recharge",
+    "heading": "Online Recharge",
+    "content": "Recharging your mobile, DTH, or other services online is quick and easy. Log in to your net banking or mobile banking app. Navigate to the 'Recharge' section, select the service you wish to recharge, enter the necessary details, and confirm the payment. Your account will be recharged instantly, and you will receive a confirmation message. Online recharge is available around the clock, allowing you to top up your services whenever needed. Additionally, you can save your frequently used details for even faster recharges in the future. Enjoy the convenience of managing all your recharges from one place, without any hassles."
+  },
+  {
+    "index_id": "00007",
+    "index_tag": "whatsapp banking, whatsapp",
+    "heading": "WhatsApp Banking",
+    "content": "Experience the convenience of WhatsApp Banking. Add our bank's official WhatsApp number to your contacts. Send a 'Hi' message to start a conversation. You can perform various banking tasks such as checking account balances, viewing mini statements, requesting cheque books, and more, all through simple text commands on WhatsApp. This service is designed to be user-friendly and secure, ensuring you have easy access to banking services without needing to visit a branch or log in to your account. Stay updated with instant alerts and manage your banking needs on the go with WhatsApp Banking. This innovative service enhances your banking experience by integrating with one of the most popular messaging platforms."
+  },
+  {
+    "index_id": "00008",
+    "index_tag": "online tax payment, tax",
+    "heading": "Online Tax Payment",
+    "content": "Paying your taxes online is simple and secure. Log in to your net banking account and navigate to the 'Tax Payments' section. Select the type of tax you need to pay, fill in the required details, and confirm the payment. You will receive an acknowledgment receipt, and your tax payment will be processed immediately. Online tax payment saves you the time and effort of visiting tax offices and ensures that your payments are made on time. Keep records of your payment confirmations for future reference. This method of tax payment is efficient, safe, and can be done from the comfort of your home or office, providing you with a hassle-free experience."
+  },
+  {
+    "index_id": "00009",
+    "index_tag": "manage bills using net banking, bill management, net banking, manage bills",
+    "heading": "Manage Bills Using Net Banking",
+    "content": "Managing your bills through net banking is convenient and efficient. Log in to your net banking account and go to the 'Bill Payments' section. Add the billers you wish to pay, and schedule one-time or recurring payments. You can track the status of your payments, view payment history, and receive notifications for due bills, ensuring you never miss a payment. Net banking allows you to manage multiple billers in one place, making it easy to stay on top of your finances. This feature not only saves time but also ensures that your payments are made accurately and on schedule. Enjoy the peace of mind that comes with automated bill management."
+  }
+]

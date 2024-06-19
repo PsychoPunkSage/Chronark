@@ -1,0 +1,92 @@
+{
+  "1111": {
+    "id": "1111",
+    "name": "Alice Parker",
+    "employee": "yes",
+    "customer": "yes",
+    "email": "alice.parker@gmail.com",
+    "mobile": "9876543210",
+    "address": "123 Main St, Springfield"
+  },
+  "1112": {
+    "id": "1112",
+    "name": "Bob Smith",
+    "employee": "no",
+    "customer": "yes",
+    "email": "bob.smith@gmail.com",
+    "mobile": "9876543211",
+    "address": "456 Elm St, Springfield"
+  },
+  "1113": {
+    "id": "1113",
+    "name": "Carol Johnson",
+    "employee": "yes",
+    "customer": "no",
+    "email": "carol.johnson@gmail.com",
+    "mobile": "9876543212",
+    "address": "789 Oak St, Springfield"
+  },
+  "1114": {
+    "id": "1114",
+    "name": "David Brown",
+    "employee": "yes",
+    "customer": "yes",
+    "email": "david.brown@gmail.com",
+    "mobile": "9876543213",
+    "address": "101 Maple St, Springfield"
+  },
+  "1115": {
+    "id": "1115",
+    "name": "Eva Davis",
+    "employee": "no",
+    "customer": "yes",
+    "email": "eva.davis@gmail.com",
+    "mobile": "9876543214",
+    "address": "202 Birch St, Springfield"
+  },
+  "1116": {
+    "id": "1116",
+    "name": "Frank Miller",
+    "employee": "yes",
+    "customer": "no",
+    "email": "frank.miller@gmail.com",
+    "mobile": "9876543215",
+    "address": "303 Cedar St, Springfield"
+  },
+  "1117": {
+    "id": "1117",
+    "name": "Grace Wilson",
+    "employee": "yes",
+    "customer": "yes",
+    "email": "grace.wilson@gmail.com",
+    "mobile": "9876543216",
+    "address": "404 Pine St, Springfield"
+  },
+  "1118": {
+    "id": "1118",
+    "name": "Henry Moore",
+    "employee": "no",
+    "customer": "yes",
+    "email": "henry.moore@gmail.com",
+    "mobile": "9876543217",
+    "address": "505 Redwood St, Springfield"
+  },
+  "1119": {
+    "id": "1119",
+    "name": "Ivy Taylor",
+    "employee": "yes",
+    "customer": "no",
+    "email": "ivy.taylor@gmail.com",
+    "mobile": "9876543218",
+    "address": "606 Ash St, Springfield"
+  },
+  "1120": {
+    "id": "1120",
+    "name": "Jack Anderson",
+    "employee": "yes",
+    "customer": "yes",
+    "email": "jack.anderson@gmail.com",
+    "mobile": "9876543219",
+    "address": "707 Poplar St, Springfield"
+  }
+}
