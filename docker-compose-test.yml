@@ -1,28 +1,29 @@
 version: "3.8"
 
 services:
-  # redis-ob-ms:
-  #   build:
-  #     context: scripts/Redis/CVE-2023-45145
-  #     dockerfile: Dockerfile.redis_cve_2023_45145
-  #   container_name: db-redis-offer-banner
-  #   ports:
-  #     - 6379:6379
-  #   networks:
-  #     - vittmitra
-  #   volumes:
-  #     - scripts/Redis/CVE-2023-45145/redis.conf:/etc/redis/
-
   redis-ob-ms:
-    image: redis:6.0-alpine
+    build:
+      context: scripts/Redis/CVE-2023-45145
+      dockerfile: Dockerfile.redis_cve_2023_45145
     container_name: db-redis-offer-banner
     ports:
       - 6379:6379
     networks:
       - vittmitra
     volumes:
-      - ./src/offer_banner/conf/:/etc/redis/
-    command: ["redis-server", "/etc/redis/redis.conf"]
+      - ./scripts/Redis/CVE-2023-45145/redis.conf:/etc/redis/redis.conf
+    # command: ["redis-server", "/etc/redis/redis.conf"]
+
+  # redis-ob-ms:
+  #   image: redis:6.0-alpine
+  #   container_name: db-redis-offer-banner
+  #   ports:
+  #     - 6379:6379
+  #   networks:
+  #     - vittmitra
+  #   volumes:
+  #     - ./src/offer_banner/conf/:/etc/redis/
+  #   command: ["redis-server", "/etc/redis/redis.conf"]
 
   redis-search-ms:
     image: redis:6.0-alpine
