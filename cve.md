@@ -1,6 +1,8 @@
 ## CVE
 
 ### Redis:
+- [**CVE-2023-45145**](https://www.cvedetails.com/cve/CVE-2023-45145/): On startup, Redis begins listening on a Unix socket before adjusting its permissions to the user-provided configuration. If a permissive umask(2) is used, this creates a race condition that enables, during a short period of time, another process to establish an otherwise unauthorized connection.
+
 - **CVE-2023-41056**: incorrectly handles resizing of memory buffers which can result in integer overflow that leads to heap overflow
 - **CVE-2023-36824**: related to extracting key names from a command and a list of arguments may, in some cases, trigger a heap overflow
 - **CVE-2022-24834**: related to Lua Script -> Heap Overflow in `cjson` library.
@@ -12,10 +14,6 @@
 - **CVE-2022-0543**: prone to remote code execution.`<Known Exploit>` + `<Public Exploit>`
 - **CVE-2022-31144**: `XAUTOCLAIM`; integer overflow
 - **CVE-2022-35951**: `XAUTOCLAIM`; integer overflow
-
-### Elasticsearch:
-* Last Vulnerability spotted in 2020.
-- **CVE-2020-7016**: DoS flaw in Timelion; An attacker can construct a URL that when viewed by a user can lead to the process consuming large amounts of CPU => unresponsive
 
 ### MongoDB:
 - **CVE-2024-3372**: Improper validation, incorrect serialization BSON.
@@ -39,3 +37,5 @@
 
 ## DOCKER LOGS
 ## Telnet++
+
+## selenium... Automation tool
