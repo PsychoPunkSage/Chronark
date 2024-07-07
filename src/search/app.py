@@ -6,6 +6,9 @@ import redis
 from pymongo import MongoClient
 from flask import Flask, render_template, request, jsonify
 
+from jaeger_client import Config
+from flask_opentracing import FlaskTracing
+
 SELF_PORT = os.environ.get('SELF_PORT')
 MONGO_DB_HOST = os.environ.get('MONGO_DB_HOST')
 MONGO_DB_PORT = os.environ.get('MONGO_DB_PORT')
@@ -16,6 +19,9 @@ SEARCH_REDIS_PASSWORD = os.environ.get('SEARCH_REDIS_PASSWORD')
 SEARCH_REDIS_PORT = os.environ.get('SEARCH_REDIS_PORT')
 SEARCH_REDIS_HOST = os.environ.get('SEARCH_REDIS_HOST')
 
+JAEGER_AGENT_HOST = os.environ.get('JAEGER_AGENT_HOST')
+JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
+
 app = Flask(__name__)
 
 r_client = redis.Redis(host=SEARCH_REDIS_HOST, port=SEARCH_REDIS_PORT, password=SEARCH_REDIS_PASSWORD)
@@ -25,6 +31,25 @@ data = db_client.search
 
 # Collection init
 index_collection = data.indexes
+
+def initialize_tracer():
+    config = Config(
+        config={
+            'sampler': {'type': 'const', 'param': 1},
+            'local_agent': {
+                'reporting_host': JAEGER_AGENT_HOST,
+                'reporting_port': JAEGER_AGENT_PORT,
+            },
+            'logging': True,
+        },
+        # ToCheck: offer-banner...
+        service_name="frontend",
+    )
+    return config.initialize_tracer()
+
+tracer = initialize_tracer()
+tracing = FlaskTracing(tracer, True, app)
+
 
 def redis_command(command, *args):
     max_retries = 3
@@ -72,21 +97,25 @@ value = redis_command(r_client.get, 'test_key')
 print(value)
 
 @app.route('/', methods=['GET'])
+@tracing.trace()
 def index():
     return render_template('index.html', r_client=r_client, SEARCH_REDIS_HOST=SEARCH_REDIS_HOST, SEARCH_REDIS_PORT=SEARCH_REDIS_PORT, SEARCH_REDIS_PASSWORD=SEARCH_REDIS_PASSWORD, m_client=db_client , MONGO_DB_HOST=MONGO_DB_HOST, MONGO_DB_PORT=MONGO_DB_PORT, MONGO_DB_USERNAME=MONGO_DB_USERNAME, MONGO_DB_PASSWORD=MONGO_DB_PASSWORD)
 
 @app.route('/clearContacts', methods=['POST'])
+@tracing.trace()
 def clearContacts():
     index_collection.delete_many({})
     return "All data cleared from contacts collection", 200
 
 @app.route("/getIndexKeys", methods=["GET"])
+@tracing.trace()
 def getIndexKeys():
     all_keys = redis_command(r_client.keys, '*')
     all_keys = [key.decode('utf-8') for key in all_keys]  # Get list of strings
     return all_keys, 200
 
 @app.route("/getIndex", methods=["POST"])
+@tracing.trace()
 def getIndex():
     keyword = request.json.get('prompt')
     print("**Keyword** ", keyword)
@@ -119,6 +148,7 @@ def getIndex():
 
 
 @app.route("/updateIndex", methods=["POST"])
+@tracing.trace()
 def updateIndex():
     # Update only in `Mongodb`
     jsonData = request.json

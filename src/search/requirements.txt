@@ -1,3 +1,6 @@
 Flask==3.0.3
 redis==5.0.4
 pymongo==4.7.2
+opentracing==2.4.0
+jaeger-client==4.8.0
+flask-opentracing==2.0.0
