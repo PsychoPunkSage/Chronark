@@ -4,14 +4,43 @@ import time
 import redis
 from flask import Flask, jsonify, render_template, request
 
+# Jaeger tracing imports
+# from opentracing.ext import tags
+from jaeger_client import Config
+from flask_opentracing import FlaskTracing
+
 app = Flask(__name__)
 
 SELF_PORT = os.environ.get('SELF_PORT')
 
-REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD')
 REDIS_PORT = os.environ.get('REDIS_PORT')
 REDIS_HOST = os.environ.get('REDIS_HOST')
+REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD')
+
+JAEGER_AGENT_HOST = os.environ.get('JAEGER_AGENT_HOST')
+JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
+
 r_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, password=REDIS_PASSWORD)
+
+# Jaeger configuration - start
+def initialize_tracer():
+    config = Config(
+        config={
+            'sampler': {'type': 'const', 'param': 1},
+            'local_agent': {
+                'reporting_host': JAEGER_AGENT_HOST,
+                'reporting_port': JAEGER_AGENT_PORT,
+            },
+            'logging': True,
+        },
+        # ToCheck: offer-banner...
+        service_name="offer-banner",
+    )
+    return config.initialize_tracer()
+
+tracer = initialize_tracer()
+tracing = FlaskTracing(tracer, True, app)
+# Jaeger configuration - end
 
 def redis_command(command, *args):
     max_retries = 3
@@ -41,11 +70,13 @@ class Ad:
         return self.date + " || " + self.time
 
 @app.route('/', methods=['GET'])
+@tracing.trace()
 def index():
     return render_template('index.html', r_client=r_client, REDIS_HOST=REDIS_HOST, REDIS_PORT=REDIS_PORT, REDIS_PASSWORD=REDIS_PASSWORD)
 
 
 @app.route('/getAds', methods=['GET'])
+@tracing.trace()
 def getAds():
     ads = {}
     adIDs = redis_command(r_client.scan_iter, "*")
@@ -59,6 +90,7 @@ def getAds():
 
 
 @app.route('/getAd/<string:adID>', methods=['GET'])
+@tracing.trace()
 def getAd(adID):
     ad = redis_command(r_client.get, adID)
     if ad is None:
@@ -72,6 +104,7 @@ def getAd(adID):
             return {}
 
 @app.route('/updateAd', methods=['POST'])
+@tracing.trace()
 def updateAd():
     jsonData = request.json
     ad = Ad(**jsonData)
@@ -79,6 +112,7 @@ def updateAd():
     return "Success", 200
 
 @app.route('/updateAds', methods=['POST'])
+@tracing.trace()
 def updateAds():
     jsonData = request.json
     for ad_data in jsonData:
