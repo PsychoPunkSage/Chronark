@@ -3,21 +3,16 @@ import os
 from pymongo import MongoClient
 from flask import Flask, render_template, request, jsonify
 
-'''
-id:
-name:
-employee: (yes/no)
-customer: (yes/no)
-email:
-mobile:
-address:
-'''
+from jaeger_client import Config
+from flask_opentracing import FlaskTracing
+
 SELF_PORT = os.environ.get('SELF_PORT')
 MONGO_DB_HOST = os.environ.get('MONGO_DB_HOST')
 MONGO_DB_PORT = os.environ.get('MONGO_DB_PORT')
 MONGO_DB_USERNAME = os.environ.get('MONGO_DB_USERNAME')
 MONGO_DB_PASSWORD = os.environ.get('MONGO_DB_PASSWORD')
-
+JAEGER_AGENT_HOST = os.environ.get('JAEGER_AGENT_HOST')
+JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
 
 app = Flask(__name__)
 
@@ -72,7 +67,28 @@ class Conversation:
 
 # ===================================================================================================================================================================================== #
 
+def initialize_tracer():
+    config = Config(
+        config={
+            'sampler': {'type': 'const', 'param': 1},
+            'local_agent': {
+                'reporting_host': JAEGER_AGENT_HOST,
+                'reporting_port': JAEGER_AGENT_PORT,
+            },
+            'logging': True,
+        },
+        # ToCheck: offer-banner...
+        service_name="frontend",
+    )
+    return config.initialize_tracer()
+
+tracer = initialize_tracer()
+tracing = FlaskTracing(tracer, True, app)
+
+# ===================================================================================================================================================================================== #
+
 @app.route('/', methods=['GET'])
+@tracing.trace()
 def index():
     conv_data = getConvs().response
     return render_template('index.html', conv_data=conv_data, m_client=db_client, MONGO_HOST=MONGO_DB_HOST, MONGO_PORT=MONGO_DB_PORT, MONGO_PASSWORD=MONGO_DB_PASSWORD, MONGO_USERNAME=MONGO_DB_USERNAME)
@@ -80,6 +96,7 @@ def index():
 # ===================================================================================================================================================================================== #
 
 @app.route('/getContacts', methods=['GET'])
+@tracing.trace()
 def getContacts():
     contact_data = contacts_collection.find()
     contacts = []
@@ -89,6 +106,7 @@ def getContacts():
     return jsonify(contacts)
 
 @app.route('/updateContacts', methods=['POST'])
+@tracing.trace()
 def updateContacts():
     jsonData = request.json
     region_id = jsonData.get('region_id')
@@ -126,6 +144,7 @@ def updateFaqs():
 # ===================================================================================================================================================================================== #
 
 @app.route('/getConvs', methods=['GET'])
+@tracing.trace()
 def getConvs():
     conv_data = conv_collection.find()
     convs = []
@@ -135,6 +154,7 @@ def getConvs():
     return jsonify(convs)
 
 @app.route('/updateConvs', methods=['POST'])
+@tracing.trace()
 def updateConvs():
     jsonData = request.json
     conv_collection.insert_one(jsonData)
@@ -143,6 +163,7 @@ def updateConvs():
 # ===================================================================================================================================================================================== #
 
 @app.route('/clearContacts', methods=['POST'])
+@tracing.trace()
 def clearContacts():
     contacts_collection.delete_many({})
     return "All data cleared from contacts collection", 200
@@ -150,6 +171,7 @@ def clearContacts():
 # ===================================================================================================================================================================================== #
 
 @app.route('/getClients', methods=['GET'])
+@tracing.trace()
 def getClients():
     client_data = storage.find()
     clients = []
@@ -160,6 +182,7 @@ def getClients():
 
 
 @app.route('/getClient/<string:id>', methods=['GET'])
+@tracing.trace()
 def getClient(id):
     client = storage.find_one({"id": id})
     if client is None:
@@ -168,6 +191,7 @@ def getClient(id):
         return client
 
 @app.route('/updateClient', methods=['POST'])
+@tracing.trace()
 def updateClient():
     jsonData = request.json
     client_id = jsonData.get('region_id')
