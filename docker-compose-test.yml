@@ -137,8 +137,8 @@ services:
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocontact
       - MONGO_DB_PASSWORD=contact
-      # - JAEGER_AGENT_HOST=jaeger
-      # - JAEGER_AGENT_PORT=6831
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
@@ -169,8 +169,8 @@ services:
       - SEARCH_REDIS_HOST=db-redis-search
       - SEARCH_REDIS_PORT=6380
       - SEARCH_REDIS_PASSWORD=search_complexpass
-      # - JAEGER_AGENT_HOST=jaeger
-      # - JAEGER_AGENT_PORT=6831
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
@@ -199,8 +199,8 @@ services:
       - CONTACT_SERVICE_PORT=5003
       - SEARCH_SERVICE_HOST=ms-search
       - SEARCH_SERVICE_PORT=5004
-      # - JAEGER_AGENT_HOST=jaeger               # Added Jaeger Agent Host
-      # - JAEGER_AGENT_PORT=6831
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
