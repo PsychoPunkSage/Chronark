@@ -1,29 +1,31 @@
 version: "3.8"
 
 services:
-  redis-ob-ms:
-    build:
-      context: scripts/Redis/CVE-2023-45145
-      dockerfile: Dockerfile.redis_cve_2023_45145
-    container_name: db-redis-offer-banner
-    ports:
-      - 6379:6379
-    networks:
-      - vittmitra
-    volumes:
-      - ./scripts/Redis/CVE-2023-45145/redis.conf:/etc/redis/redis.conf
-    # command: ["redis-server", "/etc/redis/redis.conf"]
-
   # redis-ob-ms:
-  #   image: redis:6.0-alpine
+  #   build:
+  #     context: scripts/Redis/CVE-2023-45145
+  #     dockerfile: Dockerfile.redis_cve_2023_45145
   #   container_name: db-redis-offer-banner
   #   ports:
   #     - 6379:6379
   #   networks:
   #     - vittmitra
   #   volumes:
-  #     - ./src/offer_banner/conf/:/etc/redis/
+  #     - ./scripts/Redis/CVE-2023-45145/redis.conf:/etc/redis/redis.conf
   #   command: ["redis-server", "/etc/redis/redis.conf"]
+
+  redis-ob-ms:
+    # image: redis:6.0-alpine
+    image: redis:6.2.12
+    container_name: db-redis-offer-banner
+    ports:
+      - 6379:6379
+    networks:
+      - vittmitra
+    volumes:
+      # - ./src/offer_banner/conf/:/etc/redis/
+      - ./scripts/Redis/CVE-2022-24834/conf:/etc/redis/
+    command: ["redis-server", "/etc/redis/redis.conf"]
 
   redis-search-ms:
     image: redis:6.0-alpine
@@ -82,7 +84,7 @@ services:
       - SELF_PORT=5002
       - REDIS_HOST=db-redis-offer-banner
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=offer_banner_complexpass
+      - REDIS_PASSWORD=offer_banner_cve-2022-24834
     command: python app.py
     depends_on:
       - redis-ob-ms
