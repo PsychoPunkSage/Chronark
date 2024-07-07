@@ -1,6 +1,28 @@
 version: "3.8"
 
 services:
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: ms-jaeger
+    ports:
+      - "16686:16686"
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+      - COLLECTOR_PORT=6831
+      - AGENT_HOST=jaeger
+      - AGENT_PORT=6831
+
+    networks:
+      - vittmitra
+
   # redis-ob-ms:
   #   build:
   #     context: scripts/Redis/CVE-2023-45145
@@ -64,6 +86,7 @@ services:
       - ME_CONFIG_MONGODB_ADMINPASSWORD=contact
       - ME_CONFIG_MONGODB_SERVER=mongo
     depends_on:
+      - jaeger
       - mongo
 
   offer-banner:
@@ -85,8 +108,11 @@ services:
       - REDIS_HOST=db-redis-offer-banner
       - REDIS_PORT=6379
       - REDIS_PASSWORD=offer_banner_cve-2022-24834
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
+      - jaeger
       - redis-ob-ms
       - mongo
 
@@ -111,8 +137,11 @@ services:
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocontact
       - MONGO_DB_PASSWORD=contact
+      # - JAEGER_AGENT_HOST=jaeger
+      # - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
+      - jaeger
       - mongo
       - offer-banner
 
@@ -140,8 +169,11 @@ services:
       - SEARCH_REDIS_HOST=db-redis-search
       - SEARCH_REDIS_PORT=6380
       - SEARCH_REDIS_PASSWORD=search_complexpass
+      # - JAEGER_AGENT_HOST=jaeger
+      # - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
+      - jaeger
       - redis-search-ms
       - mongo
       - contacts
@@ -167,8 +199,11 @@ services:
       - CONTACT_SERVICE_PORT=5003
       - SEARCH_SERVICE_HOST=ms-search
       - SEARCH_SERVICE_PORT=5004
+      # - JAEGER_AGENT_HOST=jaeger               # Added Jaeger Agent Host
+      # - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
+      - jaeger
       - offer-banner
       - contacts
       - search
@@ -183,3 +218,4 @@ volumes:
 networks:
   vittmitra:
     driver: bridge
+    # external: true
