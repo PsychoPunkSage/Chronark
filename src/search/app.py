@@ -42,8 +42,7 @@ def initialize_tracer():
             },
             'logging': True,
         },
-        # ToCheck: offer-banner...
-        service_name="frontend",
+        service_name="search",
     )
     return config.initialize_tracer()
 
