@@ -2,7 +2,7 @@
 
 ![Reference Image](./image/ref_img.png)
 
-### Functionality:
+## Functionality:
 Users interface with a **`flask` front-end**, to login to their
 account, search information about the bank, or contact a
 representative. Once logged in, a user can process a payment
@@ -15,8 +15,9 @@ services, and representatives.
 
 -> 1st Compose
 
-### Resources:
+## Resources:
 
+### Main
 - [ ] **Load-balancer**: `HAProxy`
 - [X] **Front-end**: `Flask`, `HTML`, `CSS` 
 - [ ] **Wealth-management**: `MongoDB`/`NOSql`
@@ -35,3 +36,6 @@ services, and representatives.
 - [X] **Contact**: `Flask`
 - [X] **Bank-info-db**: `MongoDB`
 - [ ] **Data-exchange**: `Apache-kafka`
+
+### Support
+- [X] **Tracing**: `Jaegar` using `Flask-Opentracing`
