@@ -187,6 +187,7 @@ services:
       - ./src/frontend/static/:/app/static/
       - ./src/frontend/templates/:/app/templates/
       - ./src/frontend/app.py:/app/app.py
+      - ./src/frontend/tracing.py:/app/tracing.py
     ports:
       - 5001:5001
     networks:
