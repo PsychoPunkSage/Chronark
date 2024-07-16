@@ -2,6 +2,7 @@ import os
 import random
 import requests
 from datetime import datetime
+from tracing import setup_tracer, instrument_app
 from flask import Flask, render_template, request, redirect, url_for
 
 from jaeger_client import Config
@@ -33,27 +34,34 @@ JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
 print("SEARCH_SERVICE_URL: ", SEARCH_SERVICE_URL)
 
 # Jaeger configuration - start
-def initialize_tracer():
-    config = Config(
-        config={
-            'sampler': {'type': 'const', 'param': 1},
-            'local_agent': {
-                'reporting_host': JAEGER_AGENT_HOST,
-                'reporting_port': JAEGER_AGENT_PORT,
-            },
-            'logging': True,
-        },
-        # ToCheck: offer-banner...
-        service_name="frontend",
-    )
-    return config.initialize_tracer()
+# def initialize_tracer():
+#     config = Config(
+#         config={
+#             'sampler': {'type': 'const', 'param': 1},
+#             'local_agent': {
+#                 'reporting_host': JAEGER_AGENT_HOST,
+#                 'reporting_port': JAEGER_AGENT_PORT,
+#             },
+#             'logging': True,
+#         },
+#         # ToCheck: offer-banner...
+#         service_name="frontend",
+#     )
+#     return config.initialize_tracer()
 
-tracer = initialize_tracer()
-tracing = FlaskTracing(tracer, True, app)
+# tracer = initialize_tracer()
+# tracing = FlaskTracing(tracer, True, app)
 # Jaeger configuration - end
 
+# Setup tracer
+tracer = setup_tracer(service_name="frontend", jaeger_host=JAEGER_AGENT_HOST, jaeger_port=JAEGER_AGENT_PORT)
+
+# Instrument the app
+instrument_app(app, tracer)
+
+
 @app.route('/', methods=['GET'])
-@tracing.trace()
+# @tracing.trace()
 def get_ads():
     response = requests.get(f'{ADS_SERVICE_URL}/getAds')
     ads = response.json()
@@ -65,7 +73,7 @@ def get_ads():
     return render_template('index.html', banner=banner)
 
 @app.route('/contact', methods=['GET'])
-@tracing.trace()
+# @tracing.trace()
 def contact():
     # response = requests.get(f'{ADS_SERVICE_URL}/getAds')
     # ads = response.json()
@@ -101,7 +109,7 @@ def contact():
 # ======================================================================================================================================================================================== #
 
 @app.route('/record_conv', methods=['POST', "GET"])
-@tracing.trace()
+# @tracing.trace()
 def record_conv():
     if request.method == 'POST':
         # Capturing form data
@@ -134,7 +142,7 @@ def record_conv():
         pass
 
 @app.route('/search_results', methods=['POST'])
-@tracing.trace()
+# @tracing.trace()
 def search_results():
     # if request.method == 'POST':
     # Capturing Form data
@@ -156,7 +164,7 @@ def search_results():
 # ======================================================================================================================================================================================== #
 
 @app.route('/setOfferBanner', methods=['POST'])
-@tracing.trace()
+# @tracing.trace()
 def add_ad():
     jsonData = request.json
     required_fields = ["adID", "alt", "url", "category", "date", "time"]
@@ -177,7 +185,7 @@ def add_ad():
     return "success", response.status_code
 
 @app.route('/setContacts', methods=['POST'])
-@tracing.trace()
+# @tracing.trace()
 def add_contact():
     jsonData = request.json
     required_fields = ["id", "name", "employee", "customer", "email", "mobile", "address"]
