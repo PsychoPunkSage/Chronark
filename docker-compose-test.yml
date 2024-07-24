@@ -60,6 +60,17 @@ services:
       - ./src/search/conf/:/etc/redis/
     command: ["redis-server", "/etc/redis/redis.conf"]
 
+  redis-auth-ms:
+    image: redis:6.0-alpine
+    container_name: db-redis-auth
+    ports:
+      - 6381:6379
+    networks:
+      - vittmitra
+    volumes:
+      - ./src/authentication/conf/:/etc/redis/
+    command: ["redis-server", "/etc/redis/redis.conf"]
+
   mongo:
     image: mongo:7.0
     container_name: db-mongo-bank-info
@@ -68,6 +79,20 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=contact
     ports:
       - 27017:27017
+    networks:
+      - vittmitra
+    volumes:
+      # - ./src/contact/conf/:/etc/mongo
+      - mongo_data:/data/db
+
+  mongo-auth:
+    image: mongo:7.0
+    container_name: db-mongo-bank-auth
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongauth
+      - MONGO_INITDB_ROOT_PASSWORD=authentication
+    ports:
+      - 27018:27017
     networks:
       - vittmitra
     volumes:
