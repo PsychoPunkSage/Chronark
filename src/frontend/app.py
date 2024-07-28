@@ -3,7 +3,7 @@ import random
 import requests
 from datetime import datetime
 from tracing import setup_tracer, instrument_app
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 
 from jaeger_client import Config
 from flask_opentracing import FlaskTracing
@@ -11,6 +11,7 @@ from flask_opentracing import FlaskTracing
 app = Flask(__name__)
 
 SELF_PORT = os.environ.get('SELF_PORT')
+app.secret_key = os.environ.get('SECRET_KEY', 'your_super_complex_secret_key_here')
 
 # Offer-banner url
 OFFER_BANNER_SERVICE_HOST = os.environ.get('OFFER_BANNER_SERVICE_HOST')
@@ -25,13 +26,18 @@ CONTACT_SERVICE_URL = 'http://' + CONTACT_SERVICE_HOST + ':' + CONTACT_SERVICE_P
 # Search url
 SEARCH_SERVICE_HOST = os.environ.get('SEARCH_SERVICE_HOST')
 SEARCH_SERVICE_PORT = os.environ.get('SEARCH_SERVICE_PORT')
-SEARCH_SERVICE_URL = 'http://' + SEARCH_SERVICE_HOST + ':' + SEARCH_SERVICE_PORT
+
+# Auth service
+AUTH_SERVICE_HOST = os.environ.get('AUTH_SERVICE_HOST')
+AUTH_SERVICE_PORT = os.environ.get('AUTH_SERVICE_PORT')
+AUTH_SERVICE_URL = f'http://{AUTH_SERVICE_HOST}:{AUTH_SERVICE_PORT}'
 
 # Jaegar integration
 JAEGER_AGENT_HOST = os.environ.get('JAEGER_AGENT_HOST')
 JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
 
-print("SEARCH_SERVICE_URL: ", SEARCH_SERVICE_URL)
+JAEGER_SERVICE_URL = 'http://' + JAEGER_AGENT_HOST + ':' + JAEGER_AGENT_PORT
+print("SEARCH_SERVICE_URL: ", JAEGER_SERVICE_URL)
 
 # Jaeger configuration - start
 # def initialize_tracer():
@@ -54,15 +60,17 @@ print("SEARCH_SERVICE_URL: ", SEARCH_SERVICE_URL)
 # Jaeger configuration - end
 
 # Setup tracer
-tracer = setup_tracer(service_name="frontend", jaeger_host=JAEGER_AGENT_HOST, jaeger_port=JAEGER_AGENT_PORT)
+tracer = setup_tracer(service_name="frontend", jaeger_host=JAEGER_AGENT_HOST, jaeger_port=int(JAEGER_AGENT_PORT))
 
 # Instrument the app
-instrument_app(app, tracer)
+instrument_app(app)
 
 
 @app.route('/', methods=['GET'])
 # @tracing.trace()
 def get_ads():
+    if 'token' not in session:
+        return redirect(url_for('login'))
     response = requests.get(f'{ADS_SERVICE_URL}/getAds')
     ads = response.json()
     banner_id = get_offer_banner(list(ads.keys()))
@@ -71,6 +79,39 @@ def get_ads():
     else:
         banner = None
     return render_template('index.html', banner=banner)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        response = requests.post(f'{AUTH_SERVICE_URL}/login', json={'username': username, 'password': password})
+        if response.status_code == 200:
+            session['token'] = response.json()['token']
+            return redirect(url_for('get_ads'))
+        else:
+            flash('Login failed. Check your username and password.')
+    return render_template('login.html')
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        response = requests.post(f'{AUTH_SERVICE_URL}/register', json={'username': username, 'password': password})
+        if response.status_code == 201:
+            flash('Registered successfully. Please log in.')
+            return redirect(url_for('login'))
+        else:
+            flash('Username already exists.')
+    return render_template('signup.html')
+
+@app.route('/logout')
+def logout():
+    token = session.pop('token', None)
+    if token:
+        requests.post(f'{AUTH_SERVICE_URL}/logout', headers={'Authorization': token})
+    return redirect(url_for('login'))
 
 @app.route('/contact', methods=['GET'])
 # @tracing.trace()
