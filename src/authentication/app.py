@@ -12,8 +12,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_super_complex_secret_key_here')
 
 SELF_PORT = os.environ.get('SELF_PORT')
-REDIS_PORT = os.environ.get('REDIS_PORT')
 REDIS_HOST = os.environ.get('REDIS_HOST')
+REDIS_PORT = os.environ.get('REDIS_PORT')
 REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD')
 MONGO_DB_HOST = os.environ.get('MONGO_DB_HOST')
 MONGO_DB_PORT = os.environ.get('MONGO_DB_PORT')
@@ -82,3 +82,4 @@ def protected():
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=SELF_PORT, debug=True)
 
+# Locust...
