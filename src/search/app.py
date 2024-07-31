@@ -25,7 +25,12 @@ JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
 app = Flask(__name__)
 
 r_client = redis.Redis(host=SEARCH_REDIS_HOST, port=SEARCH_REDIS_PORT, password=SEARCH_REDIS_PASSWORD)
-db_client = MongoClient(username=MONGO_DB_USERNAME, password=MONGO_DB_PASSWORD, host=MONGO_DB_HOST, port=int(MONGO_DB_PORT))
+db_client = MongoClient(
+    username=MONGO_DB_USERNAME, 
+    password=MONGO_DB_PASSWORD, 
+    host=MONGO_DB_HOST, 
+    port=int(MONGO_DB_PORT)
+)
 # Database init
 data = db_client.search
 
@@ -98,7 +103,18 @@ print(value)
 @app.route('/', methods=['GET'])
 @tracing.trace()
 def index():
-    return render_template('index.html', r_client=r_client, SEARCH_REDIS_HOST=SEARCH_REDIS_HOST, SEARCH_REDIS_PORT=SEARCH_REDIS_PORT, SEARCH_REDIS_PASSWORD=SEARCH_REDIS_PASSWORD, m_client=db_client , MONGO_DB_HOST=MONGO_DB_HOST, MONGO_DB_PORT=MONGO_DB_PORT, MONGO_DB_USERNAME=MONGO_DB_USERNAME, MONGO_DB_PASSWORD=MONGO_DB_PASSWORD)
+    return render_template(
+        'index.html',
+        r_client=r_client, 
+        SEARCH_REDIS_HOST=SEARCH_REDIS_HOST, 
+        SEARCH_REDIS_PORT=SEARCH_REDIS_PORT, 
+        SEARCH_REDIS_PASSWORD=SEARCH_REDIS_PASSWORD, 
+        m_client=db_client , 
+        MONGO_DB_HOST=MONGO_DB_HOST, 
+        MONGO_DB_PORT=MONGO_DB_PORT, 
+        MONGO_DB_USERNAME=MONGO_DB_USERNAME, 
+        MONGO_DB_PASSWORD=MONGO_DB_PASSWORD
+    )
 
 @app.route('/clearContacts', methods=['POST'])
 @tracing.trace()
