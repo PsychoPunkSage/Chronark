@@ -12,7 +12,7 @@ python-dotenv==1.0.1
 redis==5.0.4
 requests==2.32.2
 # urllib3==2.2.1
-Werkzeug==3.0.3
+# Werkzeug==3.0.3
 pymongo==4.7.2
 opentracing==2.4.0
 jaeger-client==4.8.0
