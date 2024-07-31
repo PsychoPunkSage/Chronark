@@ -140,6 +140,7 @@ services:
       - jaeger
       - redis-ob-ms
       - mongo
+      - authentication
 
   contacts:
     build:
@@ -169,6 +170,7 @@ services:
       - jaeger
       - mongo
       - offer-banner
+      - authentication
 
   search:
     build:
@@ -202,6 +204,7 @@ services:
       - redis-search-ms
       - mongo
       - contacts
+      - authentication
 
   authentication:
     build:
@@ -210,6 +213,7 @@ services:
     container_name: ms-authentication
     volumes:
       - ./src/authentication/app.py:/app/app.py
+      - ./src/authentication/templates/:/app/templates/
       - ./src/authentication/helper.py:/app/helper.py
       - ./src/authentication/conf/redis.conf:/app/conf/redis.conf
       - ./src/authentication/requirements.txt:/app/requirements.txt
@@ -231,6 +235,7 @@ services:
     depends_on:
       - jaeger
       - redis-auth-ms
+      - mongo-express
       - mongo-auth
 
   frontend:
@@ -268,6 +273,7 @@ services:
       - redis-ob-ms
       - redis-search-ms
       - mongo
+      - authentication
 
 volumes:
   mongo_data:
