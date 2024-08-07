@@ -26,6 +26,7 @@ CONTACT_SERVICE_URL = 'http://' + CONTACT_SERVICE_HOST + ':' + CONTACT_SERVICE_P
 # Search url
 SEARCH_SERVICE_HOST = os.environ.get('SEARCH_SERVICE_HOST')
 SEARCH_SERVICE_PORT = os.environ.get('SEARCH_SERVICE_PORT')
+SEARCH_SERVICE_URL = 'http://' + SEARCH_SERVICE_HOST + ':' + SEARCH_SERVICE_PORT
 
 # Auth service
 AUTH_SERVICE_HOST = os.environ.get('AUTH_SERVICE_HOST')
@@ -68,9 +69,9 @@ instrument_app(app)
 
 @app.route('/', methods=['GET'])
 # @tracing.trace()
-def get_ads():
-    if 'token' not in session:
-        return redirect(url_for('login'))
+def home():
+    # if 'token' not in session:
+    #     return redirect(url_for('login'))
     response = requests.get(f'{ADS_SERVICE_URL}/getAds')
     ads = response.json()
     banner_id = get_offer_banner(list(ads.keys()))
@@ -87,8 +88,8 @@ def login():
         password = request.form['password']
         response = requests.post(f'{AUTH_SERVICE_URL}/login', json={'username': username, 'password': password})
         if response.status_code == 200:
-            session['token'] = response.json()['token']
-            return redirect(url_for('get_ads'))
+            # session['token'] = response.json()['token']
+            return redirect(url_for('home'))
         else:
             flash('Login failed. Check your username and password.')
     return render_template('login.html')
