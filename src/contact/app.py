@@ -17,7 +17,12 @@ JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
 app = Flask(__name__)
 
 # Database connection
-db_client = MongoClient(username=MONGO_DB_USERNAME, password=MONGO_DB_PASSWORD, host=MONGO_DB_HOST, port=int(MONGO_DB_PORT))
+db_client = MongoClient(
+    username=MONGO_DB_USERNAME, 
+    password=MONGO_DB_PASSWORD, 
+    host=MONGO_DB_HOST, 
+    port=int(MONGO_DB_PORT)
+)
 # User data
 data = db_client.contact
 storage = data.storage
