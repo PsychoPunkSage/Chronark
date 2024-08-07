@@ -89,7 +89,7 @@ services:
     image: mongo:7.0
     container_name: db-mongo-bank-auth
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=mongauth
+      - MONGO_INITDB_ROOT_USERNAME=mongoauth
       - MONGO_INITDB_ROOT_PASSWORD=authentication
     ports:
       - 27018:27017
@@ -97,7 +97,7 @@ services:
       - vittmitra
     volumes:
       # - ./src/contact/conf/:/etc/mongo
-      - mongo_data:/data/db
+      - mongodb-auth:/data/db
 
   mongo-express:
     image: mongo-express
@@ -226,17 +226,18 @@ services:
       - REDIS_HOST=db-redis-auth
       - REDIS_PORT=6381
       - REDIS_PASSWORD=authentication_complexpass
-      - MONGO_DB_HOST=db-mongo-bank-auth
-      - MONGO_DB_PORT=27018
-      - MONGO_DB_USERNAME=mongauth
-      - MONGO_DB_PASSWORD=authentication
+      - MONGO_DB_HOST=db-mongo-bank-info
+      - MONGO_DB_PORT=27017
+      - MONGO_DB_USERNAME=mongocontact
+      - MONGO_DB_PASSWORD=contact
       # - SECRET_KEY=super_secret_key
     command: python app.py
     depends_on:
       - jaeger
       - redis-auth-ms
+      - mongo
       - mongo-express
-      - mongo-auth
+      # - mongo-auth
 
   frontend:
     build:
@@ -277,6 +278,8 @@ services:
 
 volumes:
   mongo_data:
+    driver: local
+  mongodb-auth:
     driver: local
 
 networks:
