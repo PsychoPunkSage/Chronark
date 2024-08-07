@@ -28,8 +28,46 @@ mongo_client = MongoClient(
     host=AUTH_MONGO_DB_HOST, 
     port=int(AUTH_MONGO_DB_PORT)
 )
-data = mongo_client.auth_db
-users_collection = data.users
+db = mongo_client.auth_db
+users_collection = db.users
+
+class Users:
+    def __init__(self, username="", password="") -> None:
+        self.username = username
+        self.password = password
+
+test_user = {"username": "test_user", "password": "test_password"}
+insert_result = users_collection.insert_one(test_user)
+print(f"Inserted document ID: {insert_result.inserted_id}")
+fetched_user = users_collection.find_one({"username": "test_user"})
+print(f"Fetched document: {fetched_user}")
+delete_result = users_collection.delete_one({"username": "test_user"})
+print(f"Deleted document count: {delete_result.deleted_count}")
+
+# @app.route('/test_db', methods=['GET'])
+# def test_db_connection():
+#     try:
+#         # Insert a test document
+#         test_user = {"username": "test_user", "password": "test_password"}
+#         insert_result = users_collection.insert_one(test_user)
+#         print(f"Inserted document ID: {insert_result.inserted_id}")
+
+#         # Fetch the test document
+#         fetched_user = users_collection.find_one({"username": "test_user"})
+#         print(f"Fetched document: {fetched_user}")
+
+#         # Delete the test document
+#         delete_result = users_collection.delete_one({"username": "test_user"})
+#         print(f"Deleted document count: {delete_result.deleted_count}")
+
+#         return jsonify({
+#             "inserted_id": str(insert_result.inserted_id),
+#             "fetched_user": fetched_user,
+#             "deleted_count": delete_result.deleted_count
+#         })
+#     except Exception as e:
+#         print(f"An error occurred: {e}")
+#         return jsonify({"error": str(e)}), 500
 
 def token_required(f):
     def decorated_function(*args, **kwargs):
@@ -66,32 +104,35 @@ def index():
 
 @app.route('/register', methods=['POST'])
 def register():
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    print("DATA(logout):", data)
-    if users_collection.find_one({'username': username}):
-        return jsonify({'message': 'Username already exists'}), 409
-
-    hashed_password = generate_password_hash(password, method='sha256')
-    users_collection.insert_one({'username': username, 'password': hashed_password})
-    return jsonify({'message': 'Registered successfully'}), 201
+    jsonData = request.json
+    username = jsonData.get('username')
+    existing_user = users_collection.find_one({'username': username})
+    
+    if existing_user:
+        users_collection.update_one({'username': username}, {"$set": jsonData})
+    else:
+        users_collection.insert_one(jsonData)
+    return "Successful Regiatration", 200
 
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
-    print("DATA(login):", data)
     user = users_collection.find_one({'username': username})
     if not user:
         return jsonify({'message': 'Username does not exist'}), 404
-
-    if check_password_hash(user['password'], password):
-        token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
-        return jsonify({'token': token})
-
-    return jsonify({'message': 'Could not verify password'}), 401
+    else:
+        print("user password", user["password"])
+        if user["password"]!=password:
+            return "UnAuthenticated Access", 303
+        else:
+            # token = jwt.encode({
+            #     'user': username,
+            #     'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=30)
+            # }, app.config['SECRET_KEY'], algorithm='HS256')
+            # return jsonify({'token': token})
+            return "Success", 200
 
 @app.route('/logout', methods=['POST'])
 @token_required
@@ -108,4 +149,4 @@ def logout():
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=SELF_PORT, debug=True)
 
-# Locust...
+# Locust...APT
