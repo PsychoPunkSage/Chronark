@@ -66,12 +66,14 @@ tracer = setup_tracer(service_name="frontend", jaeger_host=JAEGER_AGENT_HOST, ja
 # Instrument the app
 instrument_app(app)
 
-
+################################### LANDING PAGE ###################################
 @app.route('/', methods=['GET'])
 # @tracing.trace()
 def home():
-    if 'token' not in session:
+    is_logged_in = 'token' in session
+    if not is_logged_in:
         return redirect(url_for('login'))
+
     response = requests.get(f'{ADS_SERVICE_URL}/getAds')
     ads = response.json()
     banner_id = get_offer_banner(list(ads.keys()))
@@ -79,7 +81,9 @@ def home():
         banner = ads[banner_id]
     else:
         banner = None
-    return render_template('index.html', banner=banner)
+    return render_template('index.html', banner=banner, is_logged_in=is_logged_in)
+
+################################ ACCESS MANAGEMENT ################################
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -114,6 +118,10 @@ def logout():
     if token:
         requests.post(f'{AUTH_SERVICE_URL}/logout', headers={'Authorization': token})
     return redirect(url_for('login'))
+
+# ======================================================================================================================================================================================== #
+
+##################################### CONTACT  ####################################
 
 @app.route('/contact', methods=['GET'])
 # @tracing.trace()
@@ -151,6 +159,7 @@ def contact():
 
 # ======================================================================================================================================================================================== #
 
+##################################### INPUT/OUTPUT ####################################
 @app.route('/record_conv', methods=['POST', "GET"])
 # @tracing.trace()
 def record_conv():
@@ -206,6 +215,7 @@ def search_results():
 
 # ======================================================================================================================================================================================== #
 
+##################################### ADS ####################################
 @app.route('/setOfferBanner', methods=['POST'])
 # @tracing.trace()
 def add_ad():
@@ -251,6 +261,7 @@ def add_contact():
 
 # ======================================================================================================================================================================================== #
 
+##################################### HELPER FN ####################################
 def fetch_banners(num_outputs):
     response = requests.get(f'{ADS_SERVICE_URL}/getAds')
     
