@@ -85,19 +85,19 @@ services:
       # - ./src/contact/conf/:/etc/mongo
       - mongo_data:/data/db
 
-  mongo-auth:
-    image: mongo:7.0
-    container_name: db-mongo-bank-auth
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=mongoauth
-      - MONGO_INITDB_ROOT_PASSWORD=authentication
-    ports:
-      - 27018:27017
-    networks:
-      - vittmitra
-    volumes:
-      # - ./src/contact/conf/:/etc/mongo
-      - mongodb-auth:/data/db
+  # mongo-auth:
+  #   image: mongo:7.0
+  #   container_name: db-mongo-bank-auth
+  #   environment:
+  #     - MONGO_INITDB_ROOT_USERNAME=mongoauth
+  #     - MONGO_INITDB_ROOT_PASSWORD=authentication
+  #   ports:
+  #     - 27018:27017
+  #   networks:
+  #     - vittmitra
+  #   volumes:
+  #     # - ./src/contact/conf/:/etc/mongo
+  #     - mongodb-auth:/data/db
 
   mongo-express:
     image: mongo-express
