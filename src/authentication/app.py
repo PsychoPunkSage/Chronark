@@ -127,12 +127,13 @@ def login():
         if user["password"]!=password:
             return "UnAuthenticated Access", 303
         else:
-            # token = jwt.encode({
-            #     'user': username,
-            #     'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=30)
-            # }, app.config['SECRET_KEY'], algorithm='HS256')
+            payload = {
+                'user': username,
+                'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=30)
+            }
+            token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
             # return jsonify({'token': token})
-            return "Success", 200
+            return jsonify({'Status': "Success", "Status Code": 200, "token": token})
 
 @app.route('/logout', methods=['POST'])
 @token_required
