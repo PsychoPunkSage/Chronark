@@ -76,14 +76,6 @@ class IndexTemplate:
         self.heading = heading
         self.content = content
     
-    def to_dict(self):
-        return {
-            "index_id": self.index_id,
-            "index_tag": self.index_tag,
-            "heading": self.heading,
-            "content": self.content
-        }
-    
 '''
 For Redis:
 
