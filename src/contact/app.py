@@ -37,15 +37,24 @@ faqs_collection = data.faq
 conv_collection = data.conversation
 
 
-class Client:
-    def __init__(self, id="", name="", employee="", customer="", email="", mobile="", address="") -> None:
-        self.id = id
-        self.name = name
-        self.employee = employee
-        self.customer = customer
-        self.email = email
-        self.mobile = mobile
-        self.address = address
+# class Client:
+#     def __init__(
+#         self, 
+#         id="", 
+#         name="", 
+#         employee="", 
+#         customer="", 
+#         email="", 
+#         mobile="", 
+#         address=""
+#     ) -> None:
+#         self.id = id
+#         self.name = name
+#         self.employee = employee
+#         self.customer = customer
+#         self.email = email
+#         self.mobile = mobile
+#         self.address = address
 
 class ContactNumber:
     def __init__(self, region_id="", number="", region="", email=""):
