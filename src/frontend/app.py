@@ -105,7 +105,7 @@ def signup():
         username = request.form['username']
         password = request.form['password']
         response = requests.post(f'{AUTH_SERVICE_URL}/register', json={'username': username, 'password': password})
-        if response.status_code == 201:
+        if response.status_code == 200:
             flash('Registered successfully. Please log in.')
             return redirect(url_for('login'))
         else:
