@@ -70,8 +70,8 @@ instrument_app(app)
 @app.route('/', methods=['GET'])
 # @tracing.trace()
 def home():
-    # if 'token' not in session:
-    #     return redirect(url_for('login'))
+    if 'token' not in session:
+        return redirect(url_for('login'))
     response = requests.get(f'{ADS_SERVICE_URL}/getAds')
     ads = response.json()
     banner_id = get_offer_banner(list(ads.keys()))
@@ -88,7 +88,8 @@ def login():
         password = request.form['password']
         response = requests.post(f'{AUTH_SERVICE_URL}/login', json={'username': username, 'password': password})
         if response.status_code == 200:
-            # session['token'] = response.json()['token']
+            session['token'] = response.json()['token']
+            print("RESPONSE::>", response.json())
             return redirect(url_for('home'))
         else:
             flash('Login failed. Check your username and password.')
