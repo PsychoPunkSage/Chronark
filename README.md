@@ -23,8 +23,9 @@ services, and representatives.
 - [ ] **Wealth-management**: `MongoDB`/`NOSql`
 - [ ] **Open-credit-card**: `nginx`
 - [ ] **Open-account**: `nginx`
-- [ ] **Authentication**: 
-  - [ ] `Apache-spark` - Big Data
+- [X] **Authentication**: 
+  - [X] `MongoDB` - Auth data storage
+  - [X] `Redis` - Access Token Management
 - [ ] **Payments**: `Apache Server`
   - [ ] **ACL**: `LDAP`
   - [ ] **Customer-info**: `Apache-spark`
