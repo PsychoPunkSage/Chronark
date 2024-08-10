@@ -1,4 +1,4 @@
-version: "3.8"
+# version: "3.8"
 
 services:
   jaeger:
@@ -230,6 +230,8 @@ services:
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocontact
       - MONGO_DB_PASSWORD=contact
+      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_PORT=5006
       # - SECRET_KEY=super_secret_key
     command: python app.py
     depends_on:
@@ -237,7 +239,34 @@ services:
       - redis-auth-ms
       - mongo
       - mongo-express
+      - customer-info
       # - mongo-auth
+
+  customer-info:
+    build:
+      context: ./src/customerInfo
+      dockerfile: Dockerfile.customerInfo
+    container_name: ms-customer-info
+    volumes:
+      - ./src/customerInfo/app.py:/app/app.py
+      - ./src/customerInfo/requirements.txt:/app/requirements.txt
+      - ./src/customerInfo/static/:/app/static/
+      - ./src/customerInfo/templates/:/app/templates/
+    ports:
+      - 5006:5006
+    networks:
+      - vittmitra
+    environment:
+      - SELF_PORT=5006
+      - MONGO_DB_HOST=db-mongo-bank-info
+      - MONGO_DB_PORT=27017
+      - MONGO_DB_USERNAME=mongocontact
+      - MONGO_DB_PASSWORD=contact
+    command: python app.py
+    depends_on:
+      - jaeger
+      - mongo
+      - mongo-express
 
   frontend:
     build:
@@ -263,6 +292,8 @@ services:
       - SEARCH_SERVICE_PORT=5004
       - AUTH_SERVICE_HOST=authentication
       - AUTH_SERVICE_PORT=5005
+      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_PORT=5006
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
@@ -275,6 +306,7 @@ services:
       - redis-search-ms
       - mongo
       - authentication
+      - customer-info
 
 volumes:
   mongo_data:
