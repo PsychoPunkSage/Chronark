@@ -33,6 +33,11 @@ AUTH_SERVICE_HOST = os.environ.get('AUTH_SERVICE_HOST')
 AUTH_SERVICE_PORT = os.environ.get('AUTH_SERVICE_PORT')
 AUTH_SERVICE_URL = f'http://{AUTH_SERVICE_HOST}:{AUTH_SERVICE_PORT}'
 
+# Customer Info Service
+CUSTOMER_INFO_SERVICE_HOST = os.environ.get('CUSTOMER_INFO_SERVICE_HOST')
+CUSTOMER_INFO_SERVICE_PORT = os.environ.get('CUSTOMER_INFO_SERVICE_PORT')
+CUSTOMER_INFO_SERVICE_URL = f'http://{CUSTOMER_INFO_SERVICE_HOST}:{CUSTOMER_INFO_SERVICE_PORT}'
+
 # Jaegar integration
 JAEGER_AGENT_HOST = os.environ.get('JAEGER_AGENT_HOST')
 JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
@@ -71,6 +76,7 @@ instrument_app(app)
 # @tracing.trace()
 def home():
     is_logged_in = 'token' in session
+    username = session.get('username') if 'token' in session else None
     if not is_logged_in:
         return redirect(url_for('login'))
 
@@ -81,7 +87,10 @@ def home():
         banner = ads[banner_id]
     else:
         banner = None
-    return render_template('index.html', banner=banner, is_logged_in=is_logged_in)
+
+    user_info = fetch_customer_info(username) or {}
+
+    return render_template('index.html', banner=banner, is_logged_in=is_logged_in, **user_info)
 
 ################################ ACCESS MANAGEMENT ################################
 
@@ -93,6 +102,7 @@ def login():
         response = requests.post(f'{AUTH_SERVICE_URL}/login', json={'username': username, 'password': password})
         if response.status_code == 200:
             session['token'] = response.json()['token']
+            session['username'] = response.json()['username']
             print("RESPONSE::>", response.json())
             return redirect(url_for('home'))
         else:
@@ -104,7 +114,22 @@ def signup():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        response = requests.post(f'{AUTH_SERVICE_URL}/register', json={'username': username, 'password': password})
+        name = request.form['name']
+        email = request.form['email']
+        contact = request.form['contact']
+        address = request.form['address']
+
+        response = requests.post(
+            f'{AUTH_SERVICE_URL}/register', 
+            json={ 
+                'username': username, 
+                'password': password,
+                'name': name, 
+                'email': email, 
+                'contact': contact, 
+                'address': address 
+            })
+        
         if response.status_code == 200:
             flash('Registered successfully. Please log in.')
             return redirect(url_for('login'))
@@ -273,8 +298,28 @@ def fetch_banners(num_outputs):
     
     return [ads[banner] if banner else None for banner in banners]
 
+def fetch_customer_info(username):
+    response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
 
+    if response.status_code != 200:
+        return None
 
+    customer_data = response.json()
+
+    user_info = {
+        "username": customer_data.get("username", ""),
+        "name": customer_data.get("name", ""),
+        "acc_balance": customer_data.get("acc_balance", "0"),
+        "dmat_balance": customer_data.get("dmat_balance", "0"),
+        "account_number": customer_data.get("account_number", ""),
+        "email": customer_data.get("email", ""),
+        "contact_no": customer_data.get("contact_no", ""),
+        "address": customer_data.get("address", ""),
+        "customer_pic_url": customer_data.get("customer_pic_url", "https://imgs.search.brave.com/QZ3mtUm8nZzRX-Ru5cyHaCL5eBj9vXxTOz81T5eq1Ao/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5naXRlbS5jb20v/cGltZ3MvbS81MDQt/NTA0MDUyOF9lbXB0/eS1wcm9maWxlLXBp/Y3R1cmUtcG5nLXRy/YW5zcGFyZW50LXBu/Zy5wbmc"),
+    }
+
+    return user_info
+    
 
 
 
