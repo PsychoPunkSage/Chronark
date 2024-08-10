@@ -1,7 +1,7 @@
 h1 {
     font-size: 40px;
     font-family: Roboto;
-    color: blue;
+    color: #2c3e50;
     text-align: center;
 }
 
@@ -9,9 +9,38 @@ h2 {
     margin-bottom: 10px;
 }
 
+h3 {
+    color: #03708b;
+}
+
 body {
-    background-color: #000833; /* Dark solid color */
-    color: white; /* Optional: Sets the text color to white for better readability */
+    background-color: #f5f5f5; /* Light background color */
+    color: #333; /* Optional: Sets the text color to white for better readability */
+}
+
+.card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.card-title {
+    color: #2980b9; /* Primary blue color */
+}
+
+.btn-primary {
+    background-color: #2980b9; /* Primary blue color */
+    border-color: #2980b9;
+}
+
+img.profile-img {
+    width: 150px;  /* Fixed width */
+    height: 150px; /* Fixed height to ensure a perfect circle */
+    object-fit: cover; /* Ensures the image covers the area while maintaining aspect ratio */
+    border-radius: 50%; /* Makes the image circular */
+    border: 3px solid #2980b9; /* Border color and width */
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .main-container {

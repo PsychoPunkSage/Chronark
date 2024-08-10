@@ -30,7 +30,67 @@ custom_styles %}
       est laborum.
     </p>
   </div>
-  <div
+
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card text-center">
+          <div class="card-body">
+            <img
+              src="{{ customer_pic_url }}"
+              class="profile-img img-fluid rounded-circle mb-3"
+              alt="Customer Photo"
+            />
+            <h3 class="mt-3">{{ name }}</h3>
+            <div class="input-group flex-nowrap justify-content-center">
+              <span class="input-group-text" id="addon-wrapping">@</span>
+              <input
+                type="text"
+                class="form-control text-center"
+                placeholder="{{ username }}"
+                aria-label="Username"
+                aria-describedby="addon-wrapping"
+                disabled
+              />
+            </div>
+            <hr />
+            <p class="text-muted">{{ email }}</p>
+            <p>{{ contact_no }}</p>
+            <p>{{ address }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h4 class="card-title">Account Details</h4>
+            <p><strong>Account Number:</strong> {{ account_number }}</p>
+            <p><strong>Account Balance:</strong> ₹{{ acc_balance }}</p>
+            <p><strong>DMAT Balance:</strong> ₹{{ dmat_balance }}</p>
+          </div>
+        </div>
+        {% if banner %}
+        <div class="card mb-3">
+          <img
+            src="{{ banner.url }}"
+            class="card-img-top"
+            alt="{{ banner.alt }}"
+          />
+        </div>
+        {% endif %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <h4 class="card-title">Welcome to VittMitra</h4>
+            <p class="lead">
+              We are delighted to have you with us. Explore our services and
+              offers to make the most out of your banking experience.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- <div
     class="border-bottom form"
     style="padding-bottom: 12px"
     id="open-account"
@@ -93,8 +153,8 @@ custom_styles %}
         </button>
       </div>
     </form>
-  </div>
-  <div
+  </div> -->
+  <!-- <div
     class="border-bottom form"
     style="padding-bottom: 12px"
     id="open-credit-card"
@@ -146,6 +206,6 @@ custom_styles %}
         <button type="submit" class="btn btn-primary btn-lg">Submit</button>
       </div>
     </form>
-  </div>
+  </div> -->
 </div>
 {% endblock %}
