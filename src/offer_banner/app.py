@@ -65,10 +65,7 @@ class Ad:
         self.category = category
         self.date = date
         self.time = time
-
-    def created_at(self):
-        return self.date + " || " + self.time
-
+        
 @app.route('/', methods=['GET'])
 @tracing.trace()
 def index():
