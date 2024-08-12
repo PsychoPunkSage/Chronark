@@ -78,21 +78,6 @@ def apply_loan():
 
         return jsonify({"status": "pending", "approved": "Loan application accepted"}), 200
 
-# @app.route('/approve/<loan_id>', methods=['POST'])
-# def approve_loan(loan_id):
-#     loan = personal_lending.find_one({"_id": loan_id})
-#     if not loan:
-#         return jsonify({"status": "error", "message": "Loan not found"}), 404
-    
-#     approval_status = request.json.get('status')
-#     if approval_status == "approved":
-#         personal_lending.update_one({"_id": loan_id}, {"$set": {"status": "approved"}})
-#         # Additional logic for loan disbursement
-#         return jsonify({"status": "approved", "message": "Loan approved"}), 200
-#     else:
-#         personal_lending.update_one({"_id": loan_id}, {"$set": {"status": "denied"}})
-#         return jsonify({"status": "denied", "message": "Loan denied"}), 200
-
 @app.route('/loan/<loan_id>', methods=['GET'])
 def get_loan(loan_id):
     # Check cache first
@@ -107,6 +92,15 @@ def get_loan(loan_id):
     # Cache the loan details for future requests
     cache.set(loan_id, loan) 
     return jsonify(loan), 200
+
+@app.route('/loans/<username>', methods=['GET'])
+def get_all_loans(username):
+    loans = list(personal_lending.find({"username": username}, {"_id": 0}))
+    
+    if not loans:
+        return jsonify({"status": "error", "message": "No loans found for this user"}), 400
+    
+    return jsonify(loans), 200
 
 @app.route('/pay_loan', methods=['POST'])
 def pay_loan():
