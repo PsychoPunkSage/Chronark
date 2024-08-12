@@ -77,22 +77,30 @@ def getCustomerInfos():
         datas.append(contact_dict)
     return jsonify(datas)
 
-@app.route("/updateCustomerInfo", methods=["POST"])
+@app.route("/updateCustomerInfo", methods=["POST", "PUT"])
 def updateCustomerInfo():
     jsondata = request.json
     username = jsondata.get('username')
     existing_user = customer_collection.find_one({"username": username})
 
-    if existing_user:
-        # Preserve the existing values for account_balance, dmat_balance, and account_number
-        jsondata['acc_balance'] = existing_user.get('acc_balance')
-        jsondata['dmat_balance'] = existing_user.get('dmat_balance')
-        jsondata['account_number'] = existing_user.get('account_number')
+    if request.method == "POST":
+        if existing_user:
+            # Preserve the existing values for account_balance, dmat_balance, and account_number
+            # jsondata['acc_balance'] = existing_user.get('acc_balance')
+            # jsondata['dmat_balance'] = existing_user.get('dmat_balance')
+            jsondata['account_number'] = existing_user.get('account_number')
 
-        customer_collection.update_one({"username": username}, {"$set": jsondata})
-    else:
-        customer_collection.insert_one(jsondata)
-    return "Success", 200
+            customer_collection.update_one({"username": username}, {"$set": jsondata})
+        else:
+            customer_collection.insert_one(jsondata)
+        return "Success", 200
+    
+    if request.method == "PUT":
+        if existing_user:
+            customer_collection.update_one({"username": username}, {"$set": jsondata})
+        else:
+            return jsonify({"message": "No customer found"}), 404
+        return "Success", 200
 
 # ===================================================================================================================================================================================== #
 
