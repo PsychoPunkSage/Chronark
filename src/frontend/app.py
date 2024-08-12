@@ -39,8 +39,8 @@ CUSTOMER_INFO_SERVICE_PORT = os.environ.get('CUSTOMER_INFO_SERVICE_PORT')
 CUSTOMER_INFO_SERVICE_URL = f'http://{CUSTOMER_INFO_SERVICE_HOST}:{CUSTOMER_INFO_SERVICE_PORT}'
 
 # Personal Lending Service
-PERSONAL_LENDING_SERVICE_HOST = os.environ.get('CUSTOMER_INFO_SERVICE_HOST')
-PERSONAL_LENDING_SERVICE_PORT = os.environ.get('CUSTOMER_INFO_SERVICE_PORT')
+PERSONAL_LENDING_SERVICE_HOST = os.environ.get('PERSONAL_LENDING_SERVICE_HOST')
+PERSONAL_LENDING_SERVICE_PORT = os.environ.get('PERSONAL_LENDING_SERVICE_PORT')
 PERSONAL_LENDING_SERVICE_URL = f'http://{PERSONAL_LENDING_SERVICE_HOST}:{PERSONAL_LENDING_SERVICE_PORT}'
 
 # Jaegar integration
@@ -109,11 +109,63 @@ def loan():
         return redirect(url_for('login'))
     
     loans = requests.get(f"{PERSONAL_LENDING_SERVICE_URL}/loans/{username}")
-
-    # if loans.status_code != 200:
-    #     return render_template('loan.html', loans=loans)
+    print(f"loans::> {loans}")
     
-    return render_template('loan.html', loans=loans)
+    return render_template('loan.html', loans=loans.json(), is_logged_in=is_logged_in)
+
+@app.route('/record_loan', methods=['POST', "GET"])
+def apply_for_loans():
+    if request.method == 'POST':
+        term = request.form['term']
+        amount = request.form['amount']
+        purpose = request.form['purpose']
+        username = session.get('username') if 'token' in session else None
+
+        if not term or not amount or not purpose or not username:
+            return 'Form data missing!', 400
+
+        data = {
+            'username': username,
+            'amount': amount,
+            'term': term,
+            'purpose': purpose,
+        }
+
+        response = requests.post(f'{PERSONAL_LENDING_SERVICE_URL}/apply', json=data)
+
+        if response.status_code == 200:
+            return 'Form submitted successfully!'
+        else:
+            return f'Failed to submit form. {response.status_code} || {response.json()}'
+        
+    else:
+        pass
+
+@app.route('/payout_loan', methods=['POST', "GET"])
+def payout_loan():
+    if request.method == 'POST':
+        amount = request.form['amount']
+        loanId = request.form['loanId']
+        username = session.get('username') if 'token' in session else None
+
+        if not loanId or not amount or not username:
+            return 'Form data missing!', 400
+
+        data = {
+            'username': username,
+            'amount': amount,
+            'loanId': loanId,
+        }
+
+        response = requests.post(f'{PERSONAL_LENDING_SERVICE_URL}/pay_loan', json=data)
+
+        if response.status_code == 200:
+            return 'Loan repayment application accepted'
+        else:
+            return f'Failed to initiate loan repayment. {response.status_code} || {response.json()}'
+        
+    else:
+        pass
 
 ################################ ACCESS MANAGEMENT ################################
 
@@ -174,6 +226,7 @@ def logout():
 @app.route('/contact', methods=['GET'])
 # @tracing.trace()
 def contact():
+    is_logged_in = 'token' in session
     # response = requests.get(f'{ADS_SERVICE_URL}/getAds')
     # ads = response.json()
     # banners = [get_offer_banner(list(ads.keys())) for _ in range(2)]
@@ -203,7 +256,7 @@ def contact():
             categories[category] = []
         categories[category].append(item)
 
-    return render_template('contact.html', banner_r=banner[0], banner_l=banner[1], tollfree=tollfree_contact, overseas=overseas_contact, contacts=regional_contact, categories=categories )
+    return render_template('contact.html', banner_r=banner[0], banner_l=banner[1], tollfree=tollfree_contact, overseas=overseas_contact, contacts=regional_contact, categories=categories, is_logged_in=is_logged_in )
 
 # ======================================================================================================================================================================================== #
 
