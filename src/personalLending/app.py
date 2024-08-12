@@ -63,7 +63,7 @@ def apply_loan():
     if not eligibility:
         return jsonify({"status": "denied", "message": "Not eligible for loan"}), 400
     else:
-        if loan_amount > max_loan_amount:
+        if int(loan_amount) > max_loan_amount:
             return jsonify({"status": "pending", "message": "Loan Amount exceeds Max allowable capacity"}), 200
         # Create loan application
         loan_data = {
@@ -104,9 +104,9 @@ def get_all_loans(username):
 
 @app.route('/pay_loan', methods=['POST'])
 def pay_loan():
-    jsonData = request.json()
-    loan_id = jsonData.get('loan_id')
-    pay_amount = jsonData.get('pay_amount')
+    jsonData = request.json
+    loan_id = jsonData.get('loanId')
+    pay_amount = jsonData.get('amount')
     username = jsonData.get('username')
 
     # Check cache first
@@ -120,19 +120,22 @@ def pay_loan():
     customer_data = response.json()
     acc_balance = customer_data.get('acc_balance')
     
-    if pay_amount > acc_balance:
+    if int(pay_amount) > acc_balance:
         return jsonify({"status": "error", "message": "Insufficient funds"}), 400
     
     # Update customer's account balance
-    new_balance = acc_balance - pay_amount
+    ###########
+    # VERY BIGGGG LOOPHOLE... Amount should be updated after loan has been repayed....
+    ###########
+    new_balance = acc_balance - int(pay_amount)
     response = requests.put(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo', json={"username": username, "acc_balance": new_balance})
     if response.status_code!= 200:
         return jsonify({"status": "error", "message": "Can't update the balance"}), 404
 
     # Update loan status
     loan_amt = loan.get("amount")
-    if loan_amt > pay_amount:
-        personal_lending.update_one({"loan_id": loan_id}, {"$set": {"amount": loan_amt-pay_amount}})
+    if int(loan_amt) > int(pay_amount):
+        personal_lending.update_one({"loan_id": loan_id}, {"$set": {"amount": int(loan_amt)-int(pay_amount)}})
         return jsonify({"status": "success", "message": "Partial Payment successful"}), 200
     
     else:
