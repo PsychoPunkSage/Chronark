@@ -1,0 +1,207 @@
+{% extends "base.html" %} {% block title %}Banking System{% endblock %} {% block
+custom_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+{% endblock %} {% block content %}
+
+<div class="main-container">
+  <div class="container mt-5">
+    <h1 class="text-center">Loan Management</h1>
+
+    <!-- View Loans Section -->
+    <div class="card mt-4">
+      <div class="card-header">View Your Loans</div>
+      <div class="card-body">
+        <form id="viewLoansForm">
+          <div class="mb-3">
+            <label for="usernameView" class="form-label">Username</label>
+            <input
+              type="text"
+              class="form-control"
+              id="usernameView"
+              placeholder="Enter your username"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-primary">View Loans</button>
+        </form>
+        <div id="loansList" class="mt-4"></div>
+      </div>
+    </div>
+
+    <!-- Apply for Loan Section -->
+    <div class="card mt-4">
+      <div class="card-header">Apply for a Loan</div>
+      <div class="card-body">
+        <form id="applyLoanForm">
+          <div class="mb-3">
+            <label for="usernameApply" class="form-label">Username</label>
+            <input
+              type="text"
+              class="form-control"
+              id="usernameApply"
+              placeholder="Enter your username"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="loanAmount" class="form-label">Loan Amount</label>
+            <input
+              type="number"
+              class="form-control"
+              id="loanAmount"
+              placeholder="Enter loan amount"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="loanTerm" class="form-label">Loan Term</label>
+            <input
+              type="text"
+              class="form-control"
+              id="loanTerm"
+              placeholder="Enter loan term"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="loanPurpose" class="form-label">Purpose</label>
+            <input
+              type="text"
+              class="form-control"
+              id="loanPurpose"
+              placeholder="Enter loan purpose"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-success">Apply for Loan</button>
+        </form>
+        <div id="applyLoanResult" class="mt-4"></div>
+      </div>
+    </div>
+
+    <!-- Pay Loan Section -->
+    <div class="card mt-4">
+      <div class="card-header">Pay Off a Loan</div>
+      <div class="card-body">
+        <form id="payLoanForm">
+          <div class="mb-3">
+            <label for="usernamePay" class="form-label">Username</label>
+            <input
+              type="text"
+              class="form-control"
+              id="usernamePay"
+              placeholder="Enter your username"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="loanId" class="form-label">Loan ID</label>
+            <input
+              type="text"
+              class="form-control"
+              id="loanId"
+              placeholder="Enter loan ID"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="payAmount" class="form-label">Payment Amount</label>
+            <input
+              type="number"
+              class="form-control"
+              id="payAmount"
+              placeholder="Enter payment amount"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-warning">Pay Loan</button>
+        </form>
+        <div id="payLoanResult" class="mt-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        // View Loans
+        $("#viewLoansForm").on("submit", function (event) {
+          event.preventDefault();
+          let username = $("#usernameView").val();
+          $.ajax({
+            url: `/loans/${username}`,
+            method: "GET",
+            success: function (response) {
+              let loansHtml = '<ul class="list-group">';
+              response.forEach((loan) => {
+                loansHtml += `<li class="list-group-item">
+                                Loan ID: ${loan.loan_id}, Amount: ${loan.amount}, Term: ${loan.term}, Purpose: ${loan.purpose}, Status: ${loan.status}
+                            </li>`;
+              });
+              loansHtml += "</ul>";
+              $("#loansList").html(loansHtml);
+            },
+            error: function (response) {
+              $("#loansList").html(
+                `<p class="text-danger">${response.responseJSON.message}</p>`
+              );
+            },
+          });
+        });
+
+        // Apply for Loan
+        $("#applyLoanForm").on("submit", function (event) {
+          event.preventDefault();
+          let loanData = {
+            username: $("#usernameApply").val(),
+            amount: $("#loanAmount").val(),
+            term: $("#loanTerm").val(),
+            purpose: $("#loanPurpose").val(),
+          };
+          $.ajax({
+            url: "/apply",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(loanData),
+            success: function (response) {
+              $("#applyLoanResult").html(
+                `<p class="text-success">${response.approved}</p>`
+              );
+            },
+            error: function (response) {
+              $("#applyLoanResult").html(
+                `<p class="text-danger">${response.responseJSON.message}</p>`
+              );
+            },
+          });
+        });
+
+        // Pay Loan
+        $("#payLoanForm").on("submit", function (event) {
+          event.preventDefault();
+          let payData = {
+            username: $("#usernamePay").val(),
+            loan_id: $("#loanId").val(),
+            pay_amount: $("#payAmount").val(),
+          };
+          $.ajax({
+            url: "/pay_loan",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(payData),
+            success: function (response) {
+              $("#payLoanResult").html(
+                `<p class="text-success">${response.message}</p>`
+              );
+            },
+            error: function (response) {
+              $("#payLoanResult").html(
+                `<p class="text-danger">${response.responseJSON.message}</p>`
+              );
+            },
+          });
+        });
+      });
+    </script> -->
+</div>
+{% endblock %}
