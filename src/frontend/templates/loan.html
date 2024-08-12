@@ -11,20 +11,32 @@ custom_styles %}
     <div class="card mt-4">
       <div class="card-header">View Your Loans</div>
       <div class="card-body">
-        <form id="viewLoansForm">
-          <div class="mb-3">
-            <label for="usernameView" class="form-label">Username</label>
-            <input
-              type="text"
-              class="form-control"
-              id="usernameView"
-              placeholder="Enter your username"
-              required
-            />
-          </div>
-          <button type="submit" class="btn btn-primary">View Loans</button>
-        </form>
-        <div id="loansList" class="mt-4"></div>
+        {% if loans|length == 0 %}
+        <p>No loans available.</p>
+        {% else %}
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th scope="col">Loan ID</th>
+              <th scope="col">Amount (in Rs.)</th>
+              <th scope="col">Term (in months)</th>
+              <th scope="col">Purpose</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for loan in loans %}
+            <tr>
+              <td>{{ loan.loan_id }}</td>
+              <td>{{ loan.amount }}</td>
+              <td>{{ loan.term }}</td>
+              <td>{{ loan.purpose }}</td>
+              <td>{{ loan.status }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
       </div>
     </div>
 
@@ -32,23 +44,14 @@ custom_styles %}
     <div class="card mt-4">
       <div class="card-header">Apply for a Loan</div>
       <div class="card-body">
-        <form id="applyLoanForm">
-          <div class="mb-3">
-            <label for="usernameApply" class="form-label">Username</label>
-            <input
-              type="text"
-              class="form-control"
-              id="usernameApply"
-              placeholder="Enter your username"
-              required
-            />
-          </div>
+        <form id="applyLoanForm" method="post" action="/record_loan">
           <div class="mb-3">
             <label for="loanAmount" class="form-label">Loan Amount</label>
             <input
               type="number"
               class="form-control"
               id="loanAmount"
+              name="amount"
               placeholder="Enter loan amount"
               required
             />
@@ -59,6 +62,7 @@ custom_styles %}
               type="text"
               class="form-control"
               id="loanTerm"
+              name="term"
               placeholder="Enter loan term"
               required
             />
@@ -69,6 +73,7 @@ custom_styles %}
               type="text"
               class="form-control"
               id="loanPurpose"
+              name="purpose"
               placeholder="Enter loan purpose"
               required
             />
@@ -83,8 +88,8 @@ custom_styles %}
     <div class="card mt-4">
       <div class="card-header">Pay Off a Loan</div>
       <div class="card-body">
-        <form id="payLoanForm">
-          <div class="mb-3">
+        <form id="payLoanForm" method="post" action="/payout_loan">
+          <!-- <div class="mb-3">
             <label for="usernamePay" class="form-label">Username</label>
             <input
               type="text"
@@ -93,13 +98,14 @@ custom_styles %}
               placeholder="Enter your username"
               required
             />
-          </div>
+          </div> -->
           <div class="mb-3">
             <label for="loanId" class="form-label">Loan ID</label>
             <input
               type="text"
               class="form-control"
               id="loanId"
+              name="loanId"
               placeholder="Enter loan ID"
               required
             />
@@ -110,6 +116,7 @@ custom_styles %}
               type="number"
               class="form-control"
               id="payAmount"
+              name="amount"
               placeholder="Enter payment amount"
               required
             />
