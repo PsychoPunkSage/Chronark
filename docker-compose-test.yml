@@ -114,6 +114,14 @@ services:
       - jaeger
       - mongo
 
+  memcached-pl:
+    image: memcached:latest
+    container_name: db-memcached-personal-lending
+    ports:
+      - "11211:11211"
+    networks:
+      - vittmitra
+
   offer-banner:
     build:
       context: ./src/offer_banner
@@ -268,6 +276,38 @@ services:
       - mongo
       - mongo-express
 
+  personal-lending:
+    build:
+      context: ./src/personalLending
+      dockerfile: Dockerfile.personalLending
+    container_name: ms-personal-lending
+    volumes:
+      - ./src/personalLending/app.py:/app/app.py
+      - ./src/personalLending/requirements.txt:/app/requirements.txt
+      - ./src/personalLending/static/:/app/static/
+      - ./src/personalLending/templates/:/app/templates/
+    ports:
+      - 5007:5007
+    networks:
+      - vittmitra
+    environment:
+      - SELF_PORT=5007
+      - MONGO_DB_HOST=db-mongo-bank-info
+      - MONGO_DB_PORT=27017
+      - MONGO_DB_USERNAME=mongocontact
+      - MONGO_DB_PASSWORD=contact
+      - MEMCACHED_HOST=db-memcached-personal-lending
+      - MEMCACHED_PORT=11211
+      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_PORT=5006
+    command: python app.py
+    depends_on:
+      - jaeger
+      - mongo
+      - mongo-express
+      - memcached-pl
+      - customer-info
+
   frontend:
     build:
       context: ./src/frontend
@@ -294,6 +334,8 @@ services:
       - AUTH_SERVICE_PORT=5005
       - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
+      - PERSONAL_LENDING_SERVICE_HOST=ms-personal-lending
+      - PERSONAL_LENDING_SERVICE_PORT=5007
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
