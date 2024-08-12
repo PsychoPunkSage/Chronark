@@ -38,6 +38,11 @@ CUSTOMER_INFO_SERVICE_HOST = os.environ.get('CUSTOMER_INFO_SERVICE_HOST')
 CUSTOMER_INFO_SERVICE_PORT = os.environ.get('CUSTOMER_INFO_SERVICE_PORT')
 CUSTOMER_INFO_SERVICE_URL = f'http://{CUSTOMER_INFO_SERVICE_HOST}:{CUSTOMER_INFO_SERVICE_PORT}'
 
+# Personal Lending Service
+PERSONAL_LENDING_SERVICE_HOST = os.environ.get('CUSTOMER_INFO_SERVICE_HOST')
+PERSONAL_LENDING_SERVICE_PORT = os.environ.get('CUSTOMER_INFO_SERVICE_PORT')
+PERSONAL_LENDING_SERVICE_URL = f'http://{PERSONAL_LENDING_SERVICE_HOST}:{PERSONAL_LENDING_SERVICE_PORT}'
+
 # Jaegar integration
 JAEGER_AGENT_HOST = os.environ.get('JAEGER_AGENT_HOST')
 JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
@@ -72,6 +77,7 @@ tracer = setup_tracer(service_name="frontend", jaeger_host=JAEGER_AGENT_HOST, ja
 instrument_app(app)
 
 ################################### LANDING PAGE ###################################
+
 @app.route('/', methods=['GET'])
 # @tracing.trace()
 def home():
@@ -91,6 +97,23 @@ def home():
     user_info = fetch_customer_info(username) or {}
 
     return render_template('index.html', banner=banner, is_logged_in=is_logged_in, **user_info)
+
+################################### LANDING PAGE ###################################
+
+@app.route('/loan', methods=['GET'])
+# @tracing.trace()
+def loan():
+    is_logged_in = 'token' in session
+    username = session.get('username') if 'token' in session else None
+    if not is_logged_in:
+        return redirect(url_for('login'))
+    
+    loans = requests.get(f"{PERSONAL_LENDING_SERVICE_URL}/loans/{username}")
+
+    # if loans.status_code != 200:
+    #     return render_template('loan.html', loans=loans)
+    
+    return render_template('loan.html', loans=loans)
 
 ################################ ACCESS MANAGEMENT ################################
 
