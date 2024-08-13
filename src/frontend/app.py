@@ -43,12 +43,16 @@ PERSONAL_LENDING_SERVICE_HOST = os.environ.get('PERSONAL_LENDING_SERVICE_HOST')
 PERSONAL_LENDING_SERVICE_PORT = os.environ.get('PERSONAL_LENDING_SERVICE_PORT')
 PERSONAL_LENDING_SERVICE_URL = f'http://{PERSONAL_LENDING_SERVICE_HOST}:{PERSONAL_LENDING_SERVICE_PORT}'
 
+# MORTGAGES Service
+MORTGAGE_SERVICE_HOST = os.environ.get('MORTGAGE_SERVICE_HOST')
+MORTGAGE_SERVICE_PORT = os.environ.get('MORTGAGE_SERVICE_PORT')
+MORTGAGE_SERVICE_URL = f'http://{MORTGAGE_SERVICE_HOST}:{MORTGAGE_SERVICE_PORT}'
+
 # Jaegar integration
 JAEGER_AGENT_HOST = os.environ.get('JAEGER_AGENT_HOST')
 JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
-
 JAEGER_SERVICE_URL = 'http://' + JAEGER_AGENT_HOST + ':' + JAEGER_AGENT_PORT
-print("SEARCH_SERVICE_URL: ", JAEGER_SERVICE_URL)
+# print("SEARCH_SERVICE_URL: ", JAEGER_SERVICE_URL)
 
 # Jaeger configuration - start
 # def initialize_tracer():
@@ -98,7 +102,7 @@ def home():
 
     return render_template('index.html', banner=banner, is_logged_in=is_logged_in, **user_info)
 
-################################### LANDING PAGE ###################################
+################################### PERSONAL LENDING PAGE ###################################
 
 @app.route('/loan', methods=['GET'])
 # @tracing.trace()
@@ -163,6 +167,79 @@ def payout_loan():
             return 'Loan repayment application accepted'
         else:
             return f'Failed to initiate loan repayment. {response.status_code} || {response.json()}'
+        
+    else:
+        pass
+
+################################### MORTGAGES PAGE ###################################
+
+@app.route('/mortgage', methods=['GET'])
+# @tracing.trace()
+def mortgage():
+    is_logged_in = 'token' in session
+    username = session.get('username') if 'token' in session else None
+    if not is_logged_in:
+        return redirect(url_for('login'))
+    
+    mortgages = requests.get(f"{MORTGAGE_SERVICE_URL}/mortgages/{username}")
+    print(f"mortgage::> {mortgages}")
+    
+    return render_template('mortgage.html', mortgages=mortgages.json(), is_logged_in=is_logged_in)
+
+@app.route('/record_mortgage', methods=['POST', "GET"])
+def apply_for_mortgage():
+    if request.method == 'POST':
+        term = request.form['term']
+        amount = request.form['amount']
+        purpose = request.form['purpose']
+        down_payment = request.form['down_payment']
+        property_value = request.form['property_value']
+        username = session.get('username') if 'token' in session else None
+
+        if not term or not amount or not purpose or not username:
+            return 'Form data missing!', 400
+
+        data = {
+            'term': term,
+            'amount': amount,
+            'purpose': purpose,
+            'username': username,
+            'down_payment': down_payment,
+            'property_value': property_value,
+        }
+
+        response = requests.post(f'{MORTGAGE_SERVICE_URL}/apply_mortgage', json=data)
+
+        if response.status_code == 200:
+            return 'MORTGAGE Form submitted successfully!'
+        else:
+            return f'Failed to submit form. {response.status_code} || {response.json()}'
+        
+    else:
+        pass
+
+@app.route('/payout_mortgage', methods=['POST', "GET"])
+def payout_mortgage():
+    if request.method == 'POST':
+        pay_amount = request.form['pay_amount']
+        mortgage_id = request.form['mortgage_id']
+        username = session.get('username') if 'token' in session else None
+
+        if not pay_amount or not mortgage_id or not username:
+            return 'Form data missing!', 400
+
+        data = {
+            'username': username,
+            'amount': pay_amount,
+            'mortgage_id': mortgage_id,
+        }
+
+        response = requests.post(f'{MORTGAGE_SERVICE_URL}/pay_mortgage', json=data)
+
+        if response.status_code == 200:
+            return 'Morgage repayment application accepted'
+        else:
+            return f'Failed to initiate loan repayment. \nStatus Code: {response.status_code} \nError: {response.json()}'
         
     else:
         pass
