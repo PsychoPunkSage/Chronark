@@ -181,7 +181,7 @@ def mortgage():
     if not is_logged_in:
         return redirect(url_for('login'))
     
-    mortgages = requests.get(f"{MORTGAGE_SERVICE_URL}/mortgage/{username}")
+    mortgages = requests.get(f"{MORTGAGE_SERVICE_URL}/mortgages/{username}")
     print(f"mortgage::> {mortgages}")
     
     return render_template('mortgage.html', mortgages=mortgages.json(), is_logged_in=is_logged_in)
@@ -213,7 +213,7 @@ def apply_for_mortgage():
         if response.status_code == 200:
             return 'MORTGAGE Form submitted successfully!'
         else:
-            return f'Failed to submit form. {response.status_code} || {response.json}'
+            return f'Failed to submit form. {response.status_code} || {response.json()}'
         
     else:
         pass
@@ -230,7 +230,7 @@ def payout_mortgage():
 
         data = {
             'username': username,
-            'pay_amount': pay_amount,
+            'amount': pay_amount,
             'mortgage_id': mortgage_id,
         }
 
