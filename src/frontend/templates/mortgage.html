@@ -18,11 +18,11 @@ block custom_styles %}
           <thead>
             <tr>
               <th scope="col">Mortgage ID</th>
-              <th scope="col">Amount (in Rs.)</th>
-              <th scope="col">Term (in years)</th>
-              <!-- <th scope="col">Interest Rate (%)</th> -->
-              <th scope="col">Property Value (in Rs.)</th>
-              <th scope="col">Outstanding Balance (in Rs.)</th>
+              <th scope="col">Amount <br />(in Rs.)</th>
+              <th scope="col">Term <br />(in years)</th>
+              <th scope="col">Monthly Payment <br />(in Rs./month)</th>
+              <th scope="col">Property Value <br />(in Rs.)</th>
+              <th scope="col">Outstanding Balance <br />(in Rs.)</th>
               <th scope="col">Status</th>
             </tr>
           </thead>
@@ -32,7 +32,7 @@ block custom_styles %}
               <td>{{ mortgage.mortgage_id }}</td>
               <td>{{ mortgage.amount }}</td>
               <td>{{ mortgage.term }}</td>
-              <!-- <td>{{ mortgage.interest_rate }}</td> -->
+              <td>{{ mortgage.monthly_payment }}</td>
               <td>{{ mortgage.property_value }}</td>
               <td>{{ mortgage.outstanding_balance }}</td>
               <td>{{ mortgage.status }}</td>
