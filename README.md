@@ -13,7 +13,7 @@ databases consist of **in-memory `memcached`**, and **persistent `MongoDB`** ins
 (BankInfoDB) that includes information about the bank, its
 services, and representatives.
 
--> 1st Compose
+
 
 ## Resources:
 
