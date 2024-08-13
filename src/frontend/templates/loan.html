@@ -89,16 +89,6 @@ custom_styles %}
       <div class="card-header">Pay Off a Loan</div>
       <div class="card-body">
         <form id="payLoanForm" method="post" action="/payout_loan">
-          <!-- <div class="mb-3">
-            <label for="usernamePay" class="form-label">Username</label>
-            <input
-              type="text"
-              class="form-control"
-              id="usernamePay"
-              placeholder="Enter your username"
-              required
-            />
-          </div> -->
           <div class="mb-3">
             <label for="loanId" class="form-label">Loan ID</label>
             <input
@@ -127,88 +117,5 @@ custom_styles %}
       </div>
     </div>
   </div>
-
-  <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-      $(document).ready(function () {
-        // View Loans
-        $("#viewLoansForm").on("submit", function (event) {
-          event.preventDefault();
-          let username = $("#usernameView").val();
-          $.ajax({
-            url: `/loans/${username}`,
-            method: "GET",
-            success: function (response) {
-              let loansHtml = '<ul class="list-group">';
-              response.forEach((loan) => {
-                loansHtml += `<li class="list-group-item">
-                                Loan ID: ${loan.loan_id}, Amount: ${loan.amount}, Term: ${loan.term}, Purpose: ${loan.purpose}, Status: ${loan.status}
-                            </li>`;
-              });
-              loansHtml += "</ul>";
-              $("#loansList").html(loansHtml);
-            },
-            error: function (response) {
-              $("#loansList").html(
-                `<p class="text-danger">${response.responseJSON.message}</p>`
-              );
-            },
-          });
-        });
-
-        // Apply for Loan
-        $("#applyLoanForm").on("submit", function (event) {
-          event.preventDefault();
-          let loanData = {
-            username: $("#usernameApply").val(),
-            amount: $("#loanAmount").val(),
-            term: $("#loanTerm").val(),
-            purpose: $("#loanPurpose").val(),
-          };
-          $.ajax({
-            url: "/apply",
-            method: "POST",
-            contentType: "application/json",
-            data: JSON.stringify(loanData),
-            success: function (response) {
-              $("#applyLoanResult").html(
-                `<p class="text-success">${response.approved}</p>`
-              );
-            },
-            error: function (response) {
-              $("#applyLoanResult").html(
-                `<p class="text-danger">${response.responseJSON.message}</p>`
-              );
-            },
-          });
-        });
-
-        // Pay Loan
-        $("#payLoanForm").on("submit", function (event) {
-          event.preventDefault();
-          let payData = {
-            username: $("#usernamePay").val(),
-            loan_id: $("#loanId").val(),
-            pay_amount: $("#payAmount").val(),
-          };
-          $.ajax({
-            url: "/pay_loan",
-            method: "POST",
-            contentType: "application/json",
-            data: JSON.stringify(payData),
-            success: function (response) {
-              $("#payLoanResult").html(
-                `<p class="text-success">${response.message}</p>`
-              );
-            },
-            error: function (response) {
-              $("#payLoanResult").html(
-                `<p class="text-danger">${response.responseJSON.message}</p>`
-              );
-            },
-          });
-        });
-      });
-    </script> -->
 </div>
 {% endblock %}
