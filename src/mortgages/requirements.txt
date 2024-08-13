@@ -1,4 +1,0 @@
-Flask==3.0.3
-pymongo==4.7.2
-requests==2.32.2
-pymemcache==4.0.0
