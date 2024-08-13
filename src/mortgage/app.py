@@ -1,7 +1,7 @@
 import os
 import hashlib
-import datetime
 import requests
+from datetime import datetime
 from pymongo import MongoClient
 from pymemcache.client import base
 from flask import Flask, render_template, request, jsonify
@@ -129,11 +129,11 @@ def pay_mortgage():
     customer_data = response.json()
     acc_balance = customer_data.get('acc_balance')
     
-    if int(pay_amount) > acc_balance:
+    if int(pay_amount) > int(acc_balance):
         return jsonify({"status": "error", "message": "Insufficient funds"}), 400
     
     # Update customer's account balance
-    new_balance = acc_balance - int(pay_amount)
+    new_balance = int(acc_balance) - int(pay_amount)
     response = requests.put(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo', json={"username": username, "acc_balance": new_balance})
     if response.status_code != 200:
         return jsonify({"status": "error", "message": "Can't update the balance"}), 404
@@ -163,10 +163,10 @@ def check_eligibility(username, property_value, down_payment):
     if response.status_code != 200:
         return False, 0
     
-    down_payment_ratio = down_payment / property_value
+    down_payment_ratio = int(down_payment) / int(property_value)
 
     if down_payment_ratio >= 0.2:
-        return True, 0.8 * property_value
+        return True, 0.8 * int(property_value)
     else:
         return False, 0
 
@@ -174,6 +174,9 @@ def calculate_monthly_payment(amount, term, interest_rate):
     '''
       Calculate monthly payment based on mortgage amount, term, and interest rate.
     '''
+    amount = float(amount)  # Convert amount to float
+    term = int(term)  # Convert term to integer
+
     monthly_rate = interest_rate / 12 / 100
     num_payments = term * 12
     monthly_payment = (amount * monthly_rate) / (1 - (1 + monthly_rate) ** -num_payments)
