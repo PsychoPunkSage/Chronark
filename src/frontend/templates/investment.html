@@ -1,0 +1,157 @@
+{% extends "base.html" %} {% block title %}Investment Management{% endblock %}
+{% block custom_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+{% endblock %} {% block content %}
+
+<div class="main-container">
+  <div class="container mt-5">
+    <h1 class="text-center">Investment Management</h1>
+
+    <!-- View Investments Section -->
+    <div class="card mt-4">
+      <div class="card-header">View Your Investments</div>
+      <div class="card-body">
+        {% if investments|length == 0 %}
+        <p>No investments available.</p>
+        {% else %}
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th scope="col">Investment ID</th>
+              <th scope="col">Amount <br />(in Rs.)</th>
+              <th scope="col">Duration <br />(in months)</th>
+              <th scope="col">Invested In</th>
+              <th scope="col">Investment Type</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for investment in investments %}
+            <tr>
+              <td>{{ investment.investment_id }}</td>
+              <td>{{ investment.amount }}</td>
+              <td>{{ investment.duration }}</td>
+              <td>{{ investment.invested_in }}</td>
+              <td>{{ investment.investment_type }}</td>
+              <td>{{ investment.status }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Apply for Investment Section -->
+    <div class="card mt-4">
+      <div class="card-header">Apply for an Investment</div>
+      <div class="card-body">
+        <form
+          id="applyInvestmentForm"
+          method="post"
+          action="/record_investment"
+        >
+          <div class="mb-3">
+            <label for="investmentAmount" class="form-label"
+              >Investment Amount</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              id="investmentAmount"
+              name="amount"
+              placeholder="Enter investment amount"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="investmentDuration" class="form-label"
+              >Duration (in months)</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              id="investmentDuration"
+              name="duration"
+              placeholder="Enter duration in months"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="investedIn" class="form-label">Invested In</label>
+            <input
+              type="text"
+              class="form-control"
+              id="investedIn"
+              name="invested_in"
+              placeholder="Enter what you are investing in"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="investmentType" class="form-label"
+              >Investment Type</label
+            >
+            <select
+              class="form-control"
+              id="investmentType"
+              name="investment_type"
+              placeholder="Enter the type of Investment"
+              required
+            >
+              <option value="Stock Market">Stock Market</option>
+              <option value="Mutual Funds">Mutual Funds</option>
+              <option value="Govt. Bonds">Govt. Bonds</option>
+              <option value="Foreign Investment">Foreign Investment</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-success">
+            Apply for Investment
+          </button>
+        </form>
+        <div id="applyInvestmentResult" class="mt-4"></div>
+      </div>
+    </div>
+
+    <!-- Redeem Investment Section -->
+    <div class="card mt-4">
+      <div class="card-header">Redeem Investment</div>
+      <div class="card-body">
+        <form
+          id="redeemInvestmentForm"
+          method="post"
+          action="/redeem_investment"
+        >
+          <div class="mb-3">
+            <label for="investmentId" class="form-label">Investment ID</label>
+            <input
+              type="text"
+              class="form-control"
+              id="investmentId"
+              name="investment_id"
+              placeholder="Enter investment ID"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="amountRedeem" class="form-label">Redeem Amount</label>
+            <input
+              type="number"
+              class="form-control"
+              id="amountRedeem"
+              name="amount_redeem"
+              placeholder="Enter amount to redeem"
+              required
+            />
+          </div>
+          <button type="submit" class="btn btn-warning">
+            Redeem Investment
+          </button>
+        </form>
+        <div id="redeemInvestmentResult" class="mt-4"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
