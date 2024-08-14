@@ -43,10 +43,15 @@ PERSONAL_LENDING_SERVICE_HOST = os.environ.get('PERSONAL_LENDING_SERVICE_HOST')
 PERSONAL_LENDING_SERVICE_PORT = os.environ.get('PERSONAL_LENDING_SERVICE_PORT')
 PERSONAL_LENDING_SERVICE_URL = f'http://{PERSONAL_LENDING_SERVICE_HOST}:{PERSONAL_LENDING_SERVICE_PORT}'
 
-# MORTGAGES Service
+# MORTGAGE Service
 MORTGAGE_SERVICE_HOST = os.environ.get('MORTGAGE_SERVICE_HOST')
 MORTGAGE_SERVICE_PORT = os.environ.get('MORTGAGE_SERVICE_PORT')
 MORTGAGE_SERVICE_URL = f'http://{MORTGAGE_SERVICE_HOST}:{MORTGAGE_SERVICE_PORT}'
+
+# INVESTMENT Service
+INVESTMENT_SERVICE_HOST = os.environ.get('INVESTMENT_SERVICE_HOST')
+INVESTMENT_SERVICE_PORT = os.environ.get('INVESTMENT_SERVICE_PORT')
+INVESTMENT_SERVICE_URL = f'http://{INVESTMENT_SERVICE_HOST}:{INVESTMENT_SERVICE_PORT}'
 
 # Jaegar integration
 JAEGER_AGENT_HOST = os.environ.get('JAEGER_AGENT_HOST')
@@ -102,6 +107,76 @@ def home():
 
     return render_template('index.html', banner=banner, is_logged_in=is_logged_in, **user_info)
 
+################################### INVESTMENT PAGE ###################################
+
+@app.route('/investment', methods=['GET'])
+# @tracing.trace()
+def investment():
+    is_logged_in = 'token' in session
+    username = session.get('username') if 'token' in session else None
+    if not is_logged_in:
+        return redirect(url_for('login'))
+    
+    investments = requests.get(f"{INVESTMENT_SERVICE_URL}/investments/{username}")
+    print(f"investments::> {investments}")
+    
+    return render_template('investment.html', investments=investments.json(), is_logged_in=is_logged_in)
+
+@app.route('/record_investment', methods=['POST', "GET"])
+def invest_amount():
+    if request.method == 'POST':
+        amount = request.form['amount']
+        duration = request.form['duration']
+        invested_in = request.form['invested_in']
+        investment_type = request.form['investment_type']
+        username = session.get('username') if 'token' in session else None
+
+        if not duration or not amount or not invested_in or not username or not investment_type:
+            return 'Form data missing!', 400
+
+        data = {
+            'username': username,
+            'amount': amount,
+            'duration': duration,
+            'invested_in': invested_in,
+            'investment_type': investment_type,
+        }
+
+        response = requests.post(f'{INVESTMENT_SERVICE_URL}/investment', json=data)
+
+        if response.status_code == 200:
+            return 'Form submitted successfully!'
+        else:
+            return f'Failed to submit form.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+        
+    else:
+        pass
+
+@app.route('/redeem_investment', methods=['POST', "GET"])
+def redeem_investment():
+    if request.method == 'POST':
+        amount_redeem = request.form['amount_redeem']
+        investment_id = request.form['investment_id']
+        username = session.get('username') if 'token' in session else None
+
+        if not investment_id or not amount_redeem or not username:
+            return 'Form data missing!', 400
+
+        data = {
+            'username': username,
+            'amount_redeem': amount_redeem,
+            'investment_id': investment_id,
+        }
+
+        response = requests.post(f'{INVESTMENT_SERVICE_URL}/redeem_investment', json=data)
+
+        if response.status_code == 200:
+            return 'Investment application accepted'
+        else:
+            return f'Failed to initiate Investment Redemption. <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+    else:
+        pass
+
 ################################### PERSONAL LENDING PAGE ###################################
 
 @app.route('/loan', methods=['GET'])
@@ -140,7 +215,7 @@ def apply_for_loans():
         if response.status_code == 200:
             return 'Form submitted successfully!'
         else:
-            return f'Failed to submit form. {response.status_code} || {response.json()}'
+            return f'Failed to submit form.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
         
     else:
         pass
@@ -166,7 +241,7 @@ def payout_loan():
         if response.status_code == 200:
             return 'Loan repayment application accepted'
         else:
-            return f'Failed to initiate loan repayment. {response.status_code} || {response.json()}'
+            return f'Failed to initiate loan repayment.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
         
     else:
         pass
@@ -213,7 +288,7 @@ def apply_for_mortgage():
         if response.status_code == 200:
             return 'MORTGAGE Form submitted successfully!'
         else:
-            return f'Failed to submit form. {response.status_code} || {response.json()}'
+            return f'Failed to submit form.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
         
     else:
         pass

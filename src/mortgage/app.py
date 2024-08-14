@@ -56,11 +56,11 @@ def index():
 @app.route('/apply_mortgage', methods=['POST'])
 def apply_mortgage():
     data = request.json
-    username = data.get('username')
-    amount = data.get('amount')
     term = data.get('term')
-    property_value = data.get('property_value')
+    amount = data.get('amount')
+    username = data.get('username')
     down_payment = data.get('down_payment')
+    property_value = data.get('property_value')
     
     interest_rate = 7 # %
     # Check eligibility (simplified example)

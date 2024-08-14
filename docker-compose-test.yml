@@ -130,6 +130,14 @@ services:
     networks:
       - vittmitra
 
+  memcached-investment:
+    image: memcached:latest
+    container_name: db-memcached-investment
+    ports:
+      - "11213:11211"
+    networks:
+      - vittmitra
+
   offer-banner:
     build:
       context: ./src/offer_banner
@@ -347,7 +355,41 @@ services:
       - jaeger
       - mongo
       - mongo-express
-      - memcached-mortgage
+      - memcached-pl
+      - customer-info
+
+  investment:
+    build:
+      context: ./src/investment-account
+      dockerfile: Dockerfile.investment
+    container_name: ms-investment
+    volumes:
+      - ./src/investment-account/app.py:/app/app.py
+      - ./src/investment-account/requirements.txt:/app/requirements.txt
+      - ./src/investment-account/static/:/app/static/
+      - ./src/investment-account/templates/:/app/templates/
+    ports:
+      - 5009:5009
+    networks:
+      - vittmitra
+    environment:
+      - SELF_PORT=5009
+      - MONGO_DB_HOST=db-mongo-bank-info
+      - MONGO_DB_PORT=27017
+      - MONGO_DB_USERNAME=mongocontact
+      - MONGO_DB_PASSWORD=contact
+      # - MEMCACHED_HOST=db-memcached-investment
+      # - MEMCACHED_PORT=11213
+      - MEMCACHED_HOST=db-memcached-personal-lending
+      - MEMCACHED_PORT=11211
+      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_PORT=5006
+    command: python app.py
+    depends_on:
+      - jaeger
+      - mongo
+      - mongo-express
+      - memcached-pl
       - customer-info
 
   frontend:
@@ -380,6 +422,8 @@ services:
       - PERSONAL_LENDING_SERVICE_PORT=5007
       - MORTGAGE_SERVICE_HOST=ms-mortgage
       - MORTGAGE_SERVICE_PORT=5008
+      - INVESTMENT_SERVICE_HOST=ms-investment
+      - INVESTMENT_SERVICE_PORT=5009
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
@@ -395,6 +439,7 @@ services:
       - customer-info
       - personal-lending
       - mortgage
+      - investment
 
 volumes:
   mongo_data:
