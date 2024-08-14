@@ -68,15 +68,15 @@ def apply_loan():
         # Create loan application
         loan_data = {
             "loan_id": get_loan_id(username, data["amount"], data["term"], data["purpose"]),
+            "term": data['term'],
             "username": username,
             "amount": data['amount'],
-            "term": data['term'],
             "purpose": data['purpose'],
             "status": "approved"
         }
         personal_lending.insert_one(loan_data)
 
-        return jsonify({"status": "pending", "approved": "Loan application accepted"}), 200
+        return jsonify({"status": "approved", "message": "Loan application accepted"}), 200
 
 @app.route('/loan/<loan_id>', methods=['GET'])
 def get_loan(loan_id):
@@ -141,6 +141,8 @@ def pay_loan():
     else:
         personal_lending.delete_one({"loan_id": loan_id})
         return jsonify({"status": "success", "message": "Loan fully paid off"}), 200
+
+# ===================================================================================================================================================================================== #
 
 def check_eligibility(username):
     '''
