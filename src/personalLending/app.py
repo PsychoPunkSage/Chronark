@@ -58,7 +58,7 @@ def apply_loan():
     username = data.get('username')
     loan_amount = data.get('amount')
     
-    # Check eligibility (simplified example)
+    # Check eligibility
     eligibility, max_loan_amount = check_eligibility(username)
     if not eligibility:
         return jsonify({"status": "denied", "message": "Not eligible for loan"}), 400
