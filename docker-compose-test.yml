@@ -424,6 +424,29 @@ services:
       - memcached-pl
       - customer-info
 
+  deposit-account:
+    build:
+      context: ./src/depositAccount
+      dockerfile: Dockerfile.depositAccount
+    container_name: ms-deposit-account
+    volumes:
+      - ./src/depositAccount/app.py:/app/app.py
+      - ./src/depositAccount/requirements.txt:/app/requirements.txt
+      - ./src/depositAccount/static/:/app/static/
+      - ./src/depositAccount/templates/:/app/templates/
+    ports:
+      - 5011:5011
+    networks:
+      - vittmitra
+    environment:
+      - SELF_PORT=5011
+      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_PORT=5006
+    command: python app.py
+    depends_on:
+      - jaeger
+      - customer-info
+
   frontend:
     build:
       context: ./src/frontend
@@ -458,6 +481,8 @@ services:
       - INVESTMENT_SERVICE_PORT=5009
       - BUSINESS_LENDING_SERVICE_HOST=ms-business-lending
       - BUSINESS_LENDING_SERVICE_PORT=5010
+      - DEPOSIT_WITHDRAWL_SERVICE_HOST=ms-deposit-account
+      - DEPOSIT_WITHDRAWL_SERVICE_PORT=5011
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
@@ -475,6 +500,7 @@ services:
       - business-lending
       - mortgage
       - investment
+      - deposit-account
 
 volumes:
   mongo_data:

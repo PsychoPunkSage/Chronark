@@ -48,15 +48,20 @@ BUSINESS_LENDING_SERVICE_HOST = os.environ.get('BUSINESS_LENDING_SERVICE_HOST')
 BUSINESS_LENDING_SERVICE_PORT = os.environ.get('BUSINESS_LENDING_SERVICE_PORT')
 BUSINESS_LENDING_SERVICE_URL = f'http://{BUSINESS_LENDING_SERVICE_HOST}:{BUSINESS_LENDING_SERVICE_PORT}'
 
-# MORTGAGE Service
+# Mortgage Service
 MORTGAGE_SERVICE_HOST = os.environ.get('MORTGAGE_SERVICE_HOST')
 MORTGAGE_SERVICE_PORT = os.environ.get('MORTGAGE_SERVICE_PORT')
 MORTGAGE_SERVICE_URL = f'http://{MORTGAGE_SERVICE_HOST}:{MORTGAGE_SERVICE_PORT}'
 
-# INVESTMENT Service
+# Investment Service
 INVESTMENT_SERVICE_HOST = os.environ.get('INVESTMENT_SERVICE_HOST')
 INVESTMENT_SERVICE_PORT = os.environ.get('INVESTMENT_SERVICE_PORT')
 INVESTMENT_SERVICE_URL = f'http://{INVESTMENT_SERVICE_HOST}:{INVESTMENT_SERVICE_PORT}'
+
+# Deposit n Withdrawl Service
+DEPOSIT_WITHDRAWL_SERVICE_HOST = os.environ.get('DEPOSIT_WITHDRAWL_SERVICE_HOST')
+DEPOSIT_WITHDRAWL_SERVICE_PORT = os.environ.get('DEPOSIT_WITHDRAWL_SERVICE_PORT')
+DEPOSIT_WITHDRAWL_SERVICE_URL = f'http://{DEPOSIT_WITHDRAWL_SERVICE_HOST}:{DEPOSIT_WITHDRAWL_SERVICE_PORT}'
 
 # Jaegar integration
 JAEGER_AGENT_HOST = os.environ.get('JAEGER_AGENT_HOST')
@@ -105,6 +110,58 @@ def home():
     user_info = fetch_customer_info(username) or {}
 
     return render_template('index.html', banner_r=banner[0], banner_l=banner[1], is_logged_in=is_logged_in, **user_info)
+
+################################### DEPOSIT/WITHDRAWL PAGE ###################################
+
+@app.route('/deposit', methods=['GET'])
+def depositNWithdrawl():
+    is_logged_in = 'token' in session
+    username = session.get('username') if 'token' in session else None
+    if not is_logged_in:
+        return redirect(url_for('login'))
+    user_info = fetch_customer_info(username) or {}
+    banner = fetch_banners(1)
+    return render_template('depositWithdraw.html', banner=banner, is_logged_in=is_logged_in, **user_info)
+
+@app.route('/record_deposit', methods=['POST'])
+def record_deposit():
+    amount = request.form['deposit_amount']
+    username = session.get('username') if 'token' in session else None
+
+    if not amount or not username:
+        return 'Form data missing!', 400
+    
+    data = {
+        'username': username,
+        'amount': amount,
+    }
+
+    response = requests.post(f'{DEPOSIT_WITHDRAWL_SERVICE_URL}/deposit', json=data)
+
+    if response.status_code == 200:
+            return 'Form submitted successfully!'
+    else:
+        return f'Failed to submit form.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
+@app.route('/record_withdraw', methods=['POST'])
+def record_withdraw():
+    amount = request.form['withdraw_amount']
+    username = session.get('username') if 'token' in session else None
+
+    if not amount or not username:
+        return 'Form data missing!', 400
+    
+    data = {
+        'username': username,
+        'amount': amount,
+    }
+
+    response = requests.post(f'{DEPOSIT_WITHDRAWL_SERVICE_URL}/withdraw', json=data)
+
+    if response.status_code == 200:
+            return 'Form submitted successfully!'
+    else:
+        return f'Failed to submit form.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
 
 ################################### INVESTMENT PAGE ###################################
 

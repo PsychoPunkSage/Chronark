@@ -1,0 +1,76 @@
+import os
+import requests
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+SELF_PORT = os.environ.get('SELF_PORT')
+# Customer Info
+CUSTOMER_INFO_SERVICE_HOST = os.environ.get('CUSTOMER_INFO_SERVICE_HOST')
+CUSTOMER_INFO_SERVICE_PORT = os.environ.get('CUSTOMER_INFO_SERVICE_PORT')
+CUSTOMER_INFO_SERVICE_URL = f'http://{CUSTOMER_INFO_SERVICE_HOST}:{CUSTOMER_INFO_SERVICE_PORT}'
+
+# ===================================================================================================================================================================================== #
+
+@app.route('/getBalance/<username>', methods=['GET'])
+def get_balance(username):
+    resp = response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
+    if resp.status_code != 200:
+        return  jsonify({"status": "error", "message": "User DNE"}), 404
+    
+    customer_data = response.json()
+    acc_balance = customer_data.get('acc_balance')
+    
+    return jsonify({"status": "success", "balance": acc_balance}), 200
+
+@app.route('/deposit', methods=['POST'])
+def deposit():
+    data = request.json
+    amount = data.get('amount')
+    username = data.get('username')
+
+    resp = response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
+    if resp.status_code != 200:
+        return  jsonify({"status": "error", "message": "Account Not found"}), 404
+    
+    customer_data = response.json()
+    acc_balance = customer_data.get('acc_balance')
+    
+    new_balance = int(acc_balance) + int(amount)
+    response = requests.put(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo', json={"username": username, "acc_balance": new_balance})
+    if response.status_code!= 200:
+        return jsonify({"status": "error", "message": "Can't update the balance"}), 404
+    
+    # Add logic to LOG the txn 
+    
+    return jsonify({"status": "success", "message": "Deposit successful", "new_balance": new_balance}), 200
+
+@app.route('/withdraw', methods=['POST'])
+def withdraw():
+    data = request.json
+    amount = data.get('amount')
+    username = data.get('username')
+
+    resp = response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
+    if resp.status_code != 200:
+        return  jsonify({"status": "error", "message": "Account Not found"}), 404
+    
+    customer_data = response.json()
+    acc_balance = customer_data.get('acc_balance')
+    
+    if int(acc_balance) < int(amount):
+        return jsonify({"status": "error", "message": "Insufficient funds"}), 400
+    
+    new_balance = int(acc_balance) - int(amount)
+    response = requests.put(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo', json={"username": username, "acc_balance": new_balance})
+    if response.status_code!= 200:
+        return jsonify({"status": "error", "message": "Can't update the balance"}), 404
+    
+    # Add logic to LOG the txn 
+
+    return jsonify({"status": "success", "message": "Withdrawal successful", "new_balance": new_balance}), 200
+
+# ===================================================================================================================================================================================== #
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=SELF_PORT, debug=True)
