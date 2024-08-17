@@ -95,17 +95,11 @@ def home():
     if not is_logged_in:
         return redirect(url_for('login'))
 
-    response = requests.get(f'{ADS_SERVICE_URL}/getAds')
-    ads = response.json()
-    banner_id = get_offer_banner(list(ads.keys()))
-    if banner_id is not None:
-        banner = ads[banner_id]
-    else:
-        banner = None
+    banner = fetch_banners(2)
 
     user_info = fetch_customer_info(username) or {}
 
-    return render_template('index.html', banner=banner, is_logged_in=is_logged_in, **user_info)
+    return render_template('index.html', banner_r=banner[0], banner_l=banner[1], is_logged_in=is_logged_in, **user_info)
 
 ################################### INVESTMENT PAGE ###################################
 
@@ -379,13 +373,6 @@ def logout():
 # @tracing.trace()
 def contact():
     is_logged_in = 'token' in session
-    # response = requests.get(f'{ADS_SERVICE_URL}/getAds')
-    # ads = response.json()
-    # banners = [get_offer_banner(list(ads.keys())) for _ in range(2)]
-    # if all(banners):
-    #     banner_r, banner_l = (ads[banners[0]], ads[banners[1]])
-    # else:
-    #     banner_r = banner_l = None
     banner = fetch_banners(2)
 
     response = requests.get(f'{CONTACT_SERVICE_URL}/getContacts')
