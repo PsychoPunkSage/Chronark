@@ -186,7 +186,7 @@ def makeCustomerInfo(jsonData):
     account_number = generate_acc_no(username, password, name, email, contact, address)
     # Dmat/Acc Balance
     dmat_balance = 0
-    acc_balance = 5000
+    acc_balance = 50000
     # Default pic
     customer_pic_url = "https://imgs.search.brave.com/QZ3mtUm8nZzRX-Ru5cyHaCL5eBj9vXxTOz81T5eq1Ao/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/cG5naXRlbS5jb20v/cGltZ3MvbS81MDQt/NTA0MDUyOF9lbXB0/eS1wcm9maWxlLXBp/Y3R1cmUtcG5nLXRy/YW5zcGFyZW50LXBu/Zy5wbmc"
 
