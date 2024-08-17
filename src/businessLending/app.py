@@ -53,10 +53,12 @@ def index():
 # ===================================================================================================================================================================================== #
 
 @app.route('/apply', methods=['POST'])
-def apply_loan():
+def apply_bloan():
     data = request.json
     username = data.get('username')
     bloan_amount = data.get('amount')
+    term = data.get('term')
+    purpose = data.get('purpose')
     
     # Check eligibility
     eligibility, max_bloan_amount = check_eligibility(username)
@@ -68,10 +70,10 @@ def apply_loan():
         # Create bloan application
         loan_data = {
             "bloan_id": get_bloan_id(username, data["amount"], data["term"], data["purpose"]),
-            "term": data['term'],
+            "term": term,
             "username": username,
-            "amount": data['amount'],
-            "purpose": data['purpose'],
+            "amount": bloan_amount,
+            "purpose": purpose,
             "status": "approved"
         }
         business_lending.insert_one(loan_data)
@@ -102,8 +104,8 @@ def get_all_bloans(username):
     
     return jsonify(bloans), 200
 
-@app.route('/pay_loan', methods=['POST'])
-def pay_loan():
+@app.route('/pay_bloan', methods=['POST'])
+def pay_bloan():
     jsonData = request.json
     bloan_id = jsonData.get('bloan_id')
     pay_amount = jsonData.get('amount')
@@ -114,7 +116,7 @@ def pay_loan():
     if not bloan:
         return jsonify({"status": "error", "message": "Business Loan not found"}), 404
     
-    resp = response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo/{username}')
+    resp = response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
     if resp.status_code != 200:
         return  jsonify({"status": "error", "message": "Unexpected"}), 404
     customer_data = response.json()
@@ -160,9 +162,9 @@ def check_eligibility(username):
         return False, 0
     
     customer_data = response.json()
-    total_balance = customer_data.get("acc_balance") + customer_data.get("assets_value")
+    total_balance = customer_data.get("acc_balance") + customer_data.get("dmat_balance")
 
-    if total_balance >= 10000:
+    if total_balance >= 5000:
         return True, 2*(total_balance)
     else:
         return False, 0
