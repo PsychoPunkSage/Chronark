@@ -4,12 +4,14 @@ custom_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
 {% endblock %} {% block content %}
 <div class="main-container">
-  <h1>Contact Us</h1>
+  <div class="mb-5">
+    <h1>Contact Us</h1>
+  </div>
 
   <!-- SEARCH Bar -->
-  <div class="container-search">
+  <div class="container-search mt-100">
     <form id="searchForms" class="search-bar" method="post" action="/search_results">
-      <input type="text" placeholder="Type your question here; e.g. bills" name="prompt" id="searchInput">
+      <input type="text" placeholder="Type your question here; e.g. upi" name="prompt" id="searchInput">
       <button type="submit"><img src="{{ url_for('static', filename='search.png') }}"></button>
     </form>
   </div>
@@ -25,9 +27,8 @@ custom_styles %}
       <!-- Main Content -->
       <div class="col-lg-8">
         <div>
-          <p>
-            If you have any questions, please fill out the form below and we'll
-            get back to you as soon as possible.
+          <p class="lead text-muted mb-4">
+            If you have any questions, please fill out the form below, and we'll get back to you as soon as possible.
           </p>
           <form class="row g-3 mb-4" id="contactForm" method="post" action="/record_conv">
             <div class="col-md-6">

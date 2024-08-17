@@ -9,10 +9,10 @@ custom_styles %}
   </div>
   <div class="add_banner">
     <img
-      src="{{ banner.url }}"
+      src="{{ banner_l.url }}"
       class="rounded mx-auto d-block"
       id="banner-img"
-      alt="{{ banner.alt }}"
+      alt="{{ banner_l.alt }}"
     />
   </div>
   <div class="add_banner">
@@ -38,7 +38,7 @@ custom_styles %}
           <div class="card-body">
             <img
               src="{{ customer_pic_url }}"
-              class="profile-img img-fluid rounded-circle mb-3"
+              class="profile-img img-fluid rounded-circle mb-3 fixed-height"
               alt="Customer Photo"
             />
             <h3 class="mt-3">{{ name }}</h3>
@@ -59,7 +59,18 @@ custom_styles %}
             <p>{{ address }}</p>
           </div>
         </div>
+
+        {% if banner_r %}
+        <div class="card mb-3 mt-3">
+          <img
+            src="{{ banner_r.url }}"
+            class="card-img-top"
+            alt="{{ banner_r.alt }}"
+          />
+        </div>
+        {% endif %}
       </div>
+
       <div class="col-md-8">
         <div class="card mb-3">
           <div class="card-body">
@@ -69,15 +80,6 @@ custom_styles %}
             <p><strong>DMAT Balance:</strong> ₹{{ dmat_balance }}</p>
           </div>
         </div>
-        {% if banner %}
-        <div class="card mb-3">
-          <img
-            src="{{ banner.url }}"
-            class="card-img-top"
-            alt="{{ banner.alt }}"
-          />
-        </div>
-        {% endif %}
         <div class="card mb-3">
           <div class="card-body">
             <h4 class="card-title">Welcome to VittMitra</h4>
