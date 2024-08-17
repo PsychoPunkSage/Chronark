@@ -43,6 +43,11 @@ PERSONAL_LENDING_SERVICE_HOST = os.environ.get('PERSONAL_LENDING_SERVICE_HOST')
 PERSONAL_LENDING_SERVICE_PORT = os.environ.get('PERSONAL_LENDING_SERVICE_PORT')
 PERSONAL_LENDING_SERVICE_URL = f'http://{PERSONAL_LENDING_SERVICE_HOST}:{PERSONAL_LENDING_SERVICE_PORT}'
 
+# Business Lending Service
+BUSINESS_LENDING_SERVICE_HOST = os.environ.get('BUSINESS_LENDING_SERVICE_HOST')
+BUSINESS_LENDING_SERVICE_PORT = os.environ.get('BUSINESS_LENDING_SERVICE_PORT')
+BUSINESS_LENDING_SERVICE_URL = f'http://{BUSINESS_LENDING_SERVICE_HOST}:{BUSINESS_LENDING_SERVICE_PORT}'
+
 # MORTGAGE Service
 MORTGAGE_SERVICE_HOST = os.environ.get('MORTGAGE_SERVICE_HOST')
 MORTGAGE_SERVICE_PORT = os.environ.get('MORTGAGE_SERVICE_PORT')
@@ -168,6 +173,75 @@ def redeem_investment():
             return 'Investment application accepted'
         else:
             return f'Failed to initiate Investment Redemption. <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+    else:
+        pass
+
+################################### BUSINESS LENDING PAGE ###################################
+
+@app.route('/business_loan', methods=['GET'])
+# @tracing.trace()
+def business_loan():
+    is_logged_in = 'token' in session
+    username = session.get('username') if 'token' in session else None
+    if not is_logged_in:
+        return redirect(url_for('login'))
+    
+    bloans = requests.get(f"{BUSINESS_LENDING_SERVICE_URL}/bloans/{username}")
+    print(f"bloans::> {bloans}")
+    
+    return render_template('bloan.html', bloans=bloans.json(), is_logged_in=is_logged_in)
+
+@app.route('/record_business_loan', methods=['POST', "GET"])
+def apply_for_business_loans():
+    if request.method == 'POST':
+        term = request.form['term']
+        amount = request.form['amount']
+        purpose = request.form['purpose']
+        username = session.get('username') if 'token' in session else None
+
+        if not term or not amount or not purpose or not username:
+            return 'Form data missing!', 400
+
+        data = {
+            'username': username,
+            'amount': amount,
+            'term': term,
+            'purpose': purpose,
+        }
+
+        response = requests.post(f'{BUSINESS_LENDING_SERVICE_URL}/apply', json=data)
+
+        if response.status_code == 200:
+            return 'Form submitted successfully!'
+        else:
+            return f'Failed to submit form.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+        
+    else:
+        pass
+
+@app.route('/payout_business_loan', methods=['POST', "GET"])
+def payout_business_loan():
+    if request.method == 'POST':
+        amount = request.form['amount']
+        bloan_id = request.form['bloan_id']
+        username = session.get('username') if 'token' in session else None
+
+        if not bloan_id or not amount or not username:
+            return 'Form data missing!', 400
+
+        data = {
+            'username': username,
+            'amount': amount,
+            'bloan_id': bloan_id,
+        }
+
+        response = requests.post(f'{BUSINESS_LENDING_SERVICE_URL}/pay_bloan', json=data)
+
+        if response.status_code == 200:
+            return 'Loan repayment application accepted'
+        else:
+            return f'Failed to initiate loan repayment.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+        
     else:
         pass
 

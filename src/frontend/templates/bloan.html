@@ -1,0 +1,122 @@
+{% extends "base.html" %} {% block title %}Banking System{% endblock %} {% block
+    custom_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+    {% endblock %} {% block content %}
+    
+    <div class="main-container">
+      <div class="container mt-5">
+        <h1 class="text-center">Business Loan Management</h1>
+    
+        <!-- View Loans Section -->
+        <div class="card mt-4">
+          <div class="card-header">View Your Business Loans</div>
+          <div class="card-body">
+            {% if bloans|length == 0 %}
+            <p>No bloans available.</p>
+            {% else %}
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th scope="col">B-Loan ID</th>
+                  <th scope="col">Amount <br />(in Rs.)</th>
+                  <th scope="col">Term <br />(in years)</th>
+                  <th scope="col">Purpose</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for bloan in bloans %}
+                <tr>
+                  <td>{{ bloan.bloan_id }}</td>
+                  <td>{{ bloan.amount }}</td>
+                  <td>{{ bloan.term }}</td>
+                  <td>{{ bloan.purpose }}</td>
+                  <td>{{ bloan.status }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% endif %}
+          </div>
+        </div>
+    
+        <!-- Apply for Loan Section -->
+        <div class="card mt-4">
+          <div class="card-header">Apply for a Business Loan</div>
+          <div class="card-body">
+            <form id="applyLoanForm" method="post" action="/record_business_loan">
+              <div class="mb-3">
+                <label for="loanAmount" class="form-label">Loan Amount</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="loanAmount"
+                  name="amount"
+                  placeholder="Enter bloan amount"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="loanTerm" class="form-label">Loan Term</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="loanTerm"
+                  name="term"
+                  placeholder="Enter bloan term"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="loanPurpose" class="form-label">Purpose</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="loanPurpose"
+                  name="purpose"
+                  placeholder="Enter bloan purpose"
+                  required
+                />
+              </div>
+              <button type="submit" class="btn btn-success">Apply for Loan</button>
+            </form>
+            <div id="applyLoanResult" class="mt-4"></div>
+          </div>
+        </div>
+    
+        <!-- Pay Loan Section -->
+        <div class="card mt-4">
+          <div class="card-header">Pay Off a Business Loan</div>
+          <div class="card-body">
+            <form id="payLoanForm" method="post" action="/payout_business_loan">
+              <div class="mb-3">
+                <label for="bloan_id" class="form-label">B-Loan ID</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="bloan_id"
+                  name="bloan_id"
+                  placeholder="Enter bloan ID"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="payAmount" class="form-label">Payment Amount</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="payAmount"
+                  name="amount"
+                  placeholder="Enter payment amount"
+                  required
+                />
+              </div>
+              <button type="submit" class="btn btn-warning">Pay B-Loan</button>
+            </form>
+            <div id="payLoanResult" class="mt-4"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endblock %}
+    

@@ -1,9 +1,9 @@
-import hashlib
 import os
+import hashlib
+import requests
 from pymongo import MongoClient
 from pymemcache.client import base
 from flask import Flask, render_template, request, jsonify
-import requests
 
 app = Flask(__name__)
 
@@ -26,8 +26,8 @@ db_client = MongoClient(
     port=int(MONGO_DB_PORT)
 )
 
-data = db_client.loans
-personal_lending = data.personal_lending
+data = db_client.bloans
+business_lending = data.business_lending
 
 # MEMCACHED Setup
 cache = base.Client(
@@ -53,66 +53,68 @@ def index():
 # ===================================================================================================================================================================================== #
 
 @app.route('/apply', methods=['POST'])
-def apply_loan():
+def apply_bloan():
     data = request.json
     username = data.get('username')
-    loan_amount = data.get('amount')
+    bloan_amount = data.get('amount')
+    term = data.get('term')
+    purpose = data.get('purpose')
     
     # Check eligibility
-    eligibility, max_loan_amount = check_eligibility(username)
+    eligibility, max_bloan_amount = check_eligibility(username)
     if not eligibility:
-        return jsonify({"status": "denied", "message": "Not eligible for loan"}), 400
+        return jsonify({"status": "denied", "message": "Not eligible for bloan"}), 400
     else:
-        if int(loan_amount) > max_loan_amount:
-            return jsonify({"status": "pending", "message": "Loan Amount exceeds Max allowable capacity"}), 200
-        # Create loan application
+        if int(bloan_amount) > max_bloan_amount:
+            return jsonify({"status": "pending", "message": "Business Loan Amount exceeds Max allowable capacity"}), 200
+        # Create bloan application
         loan_data = {
-            "loan_id": get_loan_id(username, data["amount"], data["term"], data["purpose"]),
-            "term": data['term'],
+            "bloan_id": get_bloan_id(username, data["amount"], data["term"], data["purpose"]),
+            "term": term,
             "username": username,
-            "amount": data['amount'],
-            "purpose": data['purpose'],
+            "amount": bloan_amount,
+            "purpose": purpose,
             "status": "approved"
         }
-        personal_lending.insert_one(loan_data)
+        business_lending.insert_one(loan_data)
 
-        return jsonify({"status": "approved", "message": "Loan application accepted"}), 200
+        return jsonify({"status": "approved", "message": "Business Loan application accepted"}), 200
 
-@app.route('/loan/<loan_id>', methods=['GET'])
-def get_loan(loan_id):
+@app.route('/bloan/<bloan_id>', methods=['GET'])
+def get_bloan(bloan_id):
     # Check cache first
-    loan = cache.get(loan_id)
-    if loan:
-        return loan
+    bloan = cache.get(bloan_id)
+    if bloan:
+        return bloan
     
-    loan = personal_lending.find_one({"loan_id": loan_id}, {"_id": 0})
-    if not loan:
-        return jsonify({"status": "error", "message": "Loan not found"}), 404
+    bloan = business_lending.find_one({"bloan_id": bloan_id}, {"_id": 0})
+    if not bloan:
+        return jsonify({"status": "error", "message": "Business Loan not found"}), 404
     
-    # Cache the loan details for future requests
-    cache.set(loan_id, loan) 
-    return jsonify(loan), 200
+    # Cache the bloan details for future requests
+    cache.set(bloan_id, bloan) 
+    return jsonify(bloan), 200
 
-@app.route('/loans/<username>', methods=['GET'])
-def get_all_loans(username):
-    loans = list(personal_lending.find({"username": username}, {"_id": 0}))
+@app.route('/bloans/<username>', methods=['GET'])
+def get_all_bloans(username):
+    bloans = list(business_lending.find({"username": username}, {"_id": 0}))
     
-    if not loans:
-        return jsonify({"status": "error", "message": "No loans found for this user"}), 400
+    if not bloans:
+        return jsonify({"status": "error", "message": "No bloans found for this business"}), 400
     
-    return jsonify(loans), 200
+    return jsonify(bloans), 200
 
-@app.route('/pay_loan', methods=['POST'])
-def pay_loan():
+@app.route('/pay_bloan', methods=['POST'])
+def pay_bloan():
     jsonData = request.json
-    loan_id = jsonData.get('loanId')
+    bloan_id = jsonData.get('bloan_id')
     pay_amount = jsonData.get('amount')
     username = jsonData.get('username')
 
     # Check cache first
-    loan = personal_lending.find_one({"loan_id": loan_id}, {"_id": 0})
-    if not loan:
-        return jsonify({"status": "error", "message": "Loan not found"}), 404
+    bloan = business_lending.find_one({"bloan_id": bloan_id}, {"_id": 0})
+    if not bloan:
+        return jsonify({"status": "error", "message": "Business Loan not found"}), 404
     
     resp = response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
     if resp.status_code != 200:
@@ -123,37 +125,37 @@ def pay_loan():
     if int(pay_amount) > acc_balance:
         return jsonify({"status": "error", "message": "Insufficient funds"}), 400
     
-    # Update customer's account balance
+    # Update business's account balance
     ###########
-    # VERY BIGGGG LOOPHOLE... Amount should be updated after loan has been repayed....
+    # VERY BIGGGG LOOPHOLE... Amount should be updated after bloan has been repayed....
     ###########
     new_balance = acc_balance - int(pay_amount)
     response = requests.put(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo', json={"username": username, "acc_balance": new_balance})
     if response.status_code!= 200:
         return jsonify({"status": "error", "message": "Can't update the balance"}), 404
 
-    # Update loan status
-    loan_amt = loan.get("amount")
+    # Update bloan status
+    loan_amt = bloan.get("amount")
     if int(loan_amt) > int(pay_amount):
-        personal_lending.update_one({"loan_id": loan_id}, {"$set": {"amount": int(loan_amt)-int(pay_amount)}})
+        business_lending.update_one({"bloan_id": bloan_id}, {"$set": {"amount": int(loan_amt)-int(pay_amount)}})
         return jsonify({"status": "success", "message": "Partial Payment successful"}), 200
     
     else:
-        personal_lending.delete_one({"loan_id": loan_id})
-        return jsonify({"status": "success", "message": "Loan fully paid off"}), 200
+        business_lending.delete_one({"bloan_id": bloan_id})
+        return jsonify({"status": "success", "message": "Business Loan fully paid off"}), 200
 
 # ===================================================================================================================================================================================== #
 
 def check_eligibility(username):
     '''
       If the 
-        (Acc balance + Dmat Balance) > 5000 then Max-loan = 2*(Acc balance + Dmat Balance)
+        (Acc balance + Business Assets Value) > 10000 then Max-bloan = 2*(Acc balance + Business Assets Value)
 
       Returns:
         Boolean value indicating eligibility
-        Maximum loan amount if eligible
+        Maximum bloan amount if eligible
     '''
-    # Get customer info
+    # Get business info
     response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
 
     if response.status_code != 200:
@@ -162,20 +164,20 @@ def check_eligibility(username):
     customer_data = response.json()
     total_balance = customer_data.get("acc_balance") + customer_data.get("dmat_balance")
 
-    if total_balance >= 4500:
+    if total_balance >= 5000:
         return True, 2*(total_balance)
     else:
         return False, 0
 
-def get_loan_id(username, amount, term, purpose):
+def get_bloan_id(username, amount, term, purpose):
     unique_string = f"{username}_{amount}_{term}_{purpose}"
     hash_object = hashlib.sha256(unique_string.encode())
     hex_dig = hash_object.hexdigest()
     digits = ''.join(filter(str.isdigit, hex_dig))
-    loan_id = '1' + digits[:15]
-    loan_id = loan_id.ljust(16, '0')
+    bloan_id = '4' + digits[:15]
+    bloan_id = bloan_id.ljust(16, '0')
 
-    return loan_id
+    return bloan_id
 
 
 if __name__ == '__main__':

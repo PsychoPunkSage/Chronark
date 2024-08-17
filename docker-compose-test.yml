@@ -324,6 +324,38 @@ services:
       - memcached-pl
       - customer-info
 
+  business-lending:
+    build:
+      context: ./src/businessLending
+      dockerfile: Dockerfile.businessLending
+    container_name: ms-business-lending
+    volumes:
+      - ./src/businessLending/app.py:/app/app.py
+      - ./src/businessLending/requirements.txt:/app/requirements.txt
+      - ./src/businessLending/static/:/app/static/
+      - ./src/businessLending/templates/:/app/templates/
+    ports:
+      - 5010:5010
+    networks:
+      - vittmitra
+    environment:
+      - SELF_PORT=5010
+      - MONGO_DB_HOST=db-mongo-bank-info
+      - MONGO_DB_PORT=27017
+      - MONGO_DB_USERNAME=mongocontact
+      - MONGO_DB_PASSWORD=contact
+      - MEMCACHED_HOST=db-memcached-personal-lending
+      - MEMCACHED_PORT=11211
+      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_PORT=5006
+    command: python app.py
+    depends_on:
+      - jaeger
+      - mongo
+      - mongo-express
+      - memcached-pl
+      - customer-info
+
   mortgage:
     build:
       context: ./src/mortgage
@@ -424,6 +456,8 @@ services:
       - MORTGAGE_SERVICE_PORT=5008
       - INVESTMENT_SERVICE_HOST=ms-investment
       - INVESTMENT_SERVICE_PORT=5009
+      - BUSINESS_LENDING_SERVICE_HOST=ms-business-lending
+      - BUSINESS_LENDING_SERVICE_PORT=5010
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
@@ -438,6 +472,7 @@ services:
       - authentication
       - customer-info
       - personal-lending
+      - business-lending
       - mortgage
       - investment
 
