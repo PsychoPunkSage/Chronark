@@ -41,10 +41,10 @@ def index():
     return render_template(
         'index.html', 
         m_client=db_client, 
-        MONGO_HOST=MONGO_DB_HOST, 
-        MONGO_PORT=MONGO_DB_PORT, 
-        MONGO_PASSWORD=MONGO_DB_PASSWORD, 
-        MONGO_USERNAME=MONGO_DB_USERNAME, 
+        MONGO_DB_HOST=MONGO_DB_HOST, 
+        MONGO_DB_PORT=MONGO_DB_PORT, 
+        MONGO_DB_PASSWORD=MONGO_DB_PASSWORD, 
+        MONGO_DB_USERNAME=MONGO_DB_USERNAME, 
         cache=cache,
         MEMCACHED_HOST=MEMCACHED_HOST, 
         MEMCACHED_PORT=MEMCACHED_PORT
