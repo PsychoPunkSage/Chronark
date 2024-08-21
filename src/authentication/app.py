@@ -34,6 +34,7 @@ mongo_client = MongoClient(
     host=AUTH_MONGO_DB_HOST, 
     port=int(AUTH_MONGO_DB_PORT)
 )
+
 db = mongo_client.auth_db
 users_collection = db.users
 
@@ -217,5 +218,3 @@ def generate_acc_no(username, password, name, email, contact, address):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=SELF_PORT, debug=True)
-
-# Locust...APT
