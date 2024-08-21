@@ -150,6 +150,19 @@ services:
     volumes:
       - mongodb_mortgage:/data/db
 
+  mongo-investment:
+    image: mongo:7.0
+    container_name: db-mongo-investment
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongoinvestment
+      - MONGO_INITDB_ROOT_PASSWORD=investment
+    ports:
+      - 27024:27017
+    networks:
+      - vittmitra
+    volumes:
+      - mongodb_investment:/data/db
+
   mongo-express:
     image: mongo-express
     container_name: db-mongo-express
@@ -434,7 +447,7 @@ services:
       - MONGO_DB_USERNAME=mongomortgage
       - MONGO_DB_PASSWORD=mortgage
       - MEMCACHED_HOST=db-memcached-mortgage
-      - MEMCACHED_PORT=11213
+      - MEMCACHED_PORT=11211
       - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
     command: python app.py
@@ -461,14 +474,12 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5009
-      - MONGO_DB_HOST=db-mongo-bank-info
+      - MONGO_DB_HOST=db-mongo-investment
       - MONGO_DB_PORT=27017
-      - MONGO_DB_USERNAME=mongocontact
-      - MONGO_DB_PASSWORD=contact
+      - MONGO_DB_USERNAME=mongoinvestment
+      - MONGO_DB_PASSWORD=investment
       - MEMCACHED_HOST=db-memcached-investment
-      - MEMCACHED_PORT=11213
-      # - MEMCACHED_HOST=db-memcached-personal-lending
-      # - MEMCACHED_PORT=11211
+      - MEMCACHED_PORT=11211
       - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
     command: python app.py
@@ -476,7 +487,7 @@ services:
       - jaeger
       - mongo
       - mongo-express
-      - memcached-pl
+      - memcached-investment
       - customer-info
 
   deposit-account:
@@ -570,6 +581,8 @@ volumes:
   mongodb_bl:
     driver: local
   mongodb_mortgage:
+    driver: local
+  mongodb_investment:
     driver: local
 
 networks:
