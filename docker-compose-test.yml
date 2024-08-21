@@ -124,6 +124,32 @@ services:
     volumes:
       - mongodb_pl:/data/db
 
+  mongo-business-lending:
+    image: mongo:7.0
+    container_name: db-mongo-business-lending
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongoBusinessLending
+      - MONGO_INITDB_ROOT_PASSWORD=businessLending
+    ports:
+      - 27022:27017
+    networks:
+      - vittmitra
+    volumes:
+      - mongodb_bl:/data/db
+
+  mongo-mortgage:
+    image: mongo:7.0
+    container_name: db-mongo-mortgage
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongomortgage
+      - MONGO_INITDB_ROOT_PASSWORD=mortgage
+    ports:
+      - 27023:27017
+    networks:
+      - vittmitra
+    volumes:
+      - mongodb_mortgage:/data/db
+
   mongo-express:
     image: mongo-express
     container_name: db-mongo-express
@@ -146,12 +172,20 @@ services:
       - "11211:11211"
     networks:
       - vittmitra
+  
+  memcached-bl:
+    image: memcached:latest
+    container_name: db-memcached-business-lending
+    ports:
+      - "11212:11211"
+    networks:
+      - vittmitra
 
   memcached-mortgage:
     image: memcached:latest
     container_name: db-memcached-mortgage
     ports:
-      - "11212:11211"
+      - "11213:11211"
     networks:
       - vittmitra
 
@@ -159,7 +193,7 @@ services:
     image: memcached:latest
     container_name: db-memcached-investment
     ports:
-      - "11213:11211"
+      - "11214:11211"
     networks:
       - vittmitra
 
@@ -363,20 +397,20 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5010
-      - MONGO_DB_HOST=db-mongo-bank-info
+      - MONGO_DB_HOST=db-mongo-business-lending
       - MONGO_DB_PORT=27017
-      - MONGO_DB_USERNAME=mongocontact
-      - MONGO_DB_PASSWORD=contact
-      - MEMCACHED_HOST=db-memcached-personal-lending
+      - MONGO_DB_USERNAME=mongoBusinessLending
+      - MONGO_DB_PASSWORD=businessLending
+      - MEMCACHED_HOST=db-memcached-business-lending
       - MEMCACHED_PORT=11211
       - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
     command: python app.py
     depends_on:
       - jaeger
-      - mongo-personal-lending
+      - mongo-business-lending
       - mongo-express
-      - memcached-pl
+      - memcached-bl
       - customer-info
 
   mortgage:
@@ -399,10 +433,8 @@ services:
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocontact
       - MONGO_DB_PASSWORD=contact
-      # - MEMCACHED_HOST=db-memcached-mortgage
-      # - MEMCACHED_PORT=11212
-      - MEMCACHED_HOST=db-memcached-personal-lending
-      - MEMCACHED_PORT=11211
+      - MEMCACHED_HOST=db-memcached-mortgage
+      - MEMCACHED_PORT=11213
       - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
     command: python app.py
@@ -534,6 +566,10 @@ volumes:
   mongodb_cus_info:
     driver: local
   mongodb_pl:
+    driver: local
+  mongodb_bl:
+    driver: local
+  mongodb_mortgage:
     driver: local
 
 networks:
