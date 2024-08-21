@@ -111,18 +111,18 @@ services:
     volumes:
       - mongodb_cus_info:/data/db
 
-  # mongo-auth:
-  #   image: mongo:7.0
-  #   container_name: db-mongo-auth
-  #   environment:
-  #     - MONGO_INITDB_ROOT_USERNAME=mongo_auth
-  #     - MONGO_INITDB_ROOT_PASSWORD=auth_db
-  #   ports:
-  #     - 27018:27017
-  #   networks:
-  #     - vittmitra
-  #   volumes:
-  #     - mongodb_auth:/data/db
+  mongo-personal-lending:
+    image: mongo:7.0
+    container_name: db-mongo-personal-lending
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongoPersonalLending
+      - MONGO_INITDB_ROOT_PASSWORD=personalLending
+    ports:
+      - 27021:27017
+    networks:
+      - vittmitra
+    volumes:
+      - mongodb_pl:/data/db
 
   mongo-express:
     image: mongo-express
@@ -275,10 +275,6 @@ services:
       - REDIS_HOST=db-redis-auth
       - REDIS_PORT=6381
       - REDIS_PASSWORD=authentication_complexpass
-      # - MONGO_DB_HOST=db-mongo-auth
-      # - MONGO_DB_PORT=27017
-      # - MONGO_DB_USERNAME=mongo_auth
-      # - MONGO_DB_PASSWORD=auth_db
       - MONGO_DB_HOST=db-mongo-bank-auth-info
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongoauthentication
@@ -291,7 +287,7 @@ services:
       - redis-auth-ms
       - mongo-express
       - customer-info
-      - mongo
+      - mongo-auth-info
 
   customer-info:
     build:
@@ -335,10 +331,10 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5007
-      - MONGO_DB_HOST=db-mongo-bank-info
+      - MONGO_DB_HOST=db-mongo-personal-lending
       - MONGO_DB_PORT=27017
-      - MONGO_DB_USERNAME=mongocontact
-      - MONGO_DB_PASSWORD=contact
+      - MONGO_DB_USERNAME=mongoPersonalLending
+      - MONGO_DB_PASSWORD=personalLending
       - MEMCACHED_HOST=db-memcached-personal-lending
       - MEMCACHED_PORT=11211
       - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
@@ -378,7 +374,7 @@ services:
     command: python app.py
     depends_on:
       - jaeger
-      - mongo
+      - mongo-personal-lending
       - mongo-express
       - memcached-pl
       - customer-info
@@ -536,6 +532,8 @@ volumes:
   mongo_auth:
     driver: local
   mongodb_cus_info:
+    driver: local
+  mongodb_pl:
     driver: local
 
 networks:
