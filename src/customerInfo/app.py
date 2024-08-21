@@ -39,7 +39,7 @@ class CustomerInfoTemplate:
         self.username = username
         self.password = password
         self.name = name
-        self.acc_balance = acc_balance # default = 5000
+        self.acc_balance = acc_balance # default = 50000
         self.dmat_balance = dmat_balance # default = 0
         self.account_number = account_number # generated
         self.email = email
