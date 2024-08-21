@@ -85,19 +85,44 @@ services:
       # - ./src/contact/conf/:/etc/mongo
       - mongo_data:/data/db
 
+  mongo-auth-info:
+    image: mongo:7.0
+    container_name: db-mongo-bank-auth-info
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongoauthentication
+      - MONGO_INITDB_ROOT_PASSWORD=authinfo
+    ports:
+      - 27018:27017
+    networks:
+      - vittmitra
+    volumes:
+      - mongo_auth:/data/db
+  
+  mongo-customer-info:
+    image: mongo:7.0
+    container_name: db-mongo-customer-info
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongocusinfo
+      - MONGO_INITDB_ROOT_PASSWORD=customerinfo
+    ports:
+      - 27020:27017
+    networks:
+      - vittmitra
+    volumes:
+      - mongodb_cus_info:/data/db
+
   # mongo-auth:
   #   image: mongo:7.0
-  #   container_name: db-mongo-bank-auth
+  #   container_name: db-mongo-auth
   #   environment:
-  #     - MONGO_INITDB_ROOT_USERNAME=mongoauth
-  #     - MONGO_INITDB_ROOT_PASSWORD=authentication
+  #     - MONGO_INITDB_ROOT_USERNAME=mongo_auth
+  #     - MONGO_INITDB_ROOT_PASSWORD=auth_db
   #   ports:
   #     - 27018:27017
   #   networks:
   #     - vittmitra
   #   volumes:
-  #     # - ./src/contact/conf/:/etc/mongo
-  #     - mongodb-auth:/data/db
+  #     - mongodb_auth:/data/db
 
   mongo-express:
     image: mongo-express
@@ -250,21 +275,23 @@ services:
       - REDIS_HOST=db-redis-auth
       - REDIS_PORT=6381
       - REDIS_PASSWORD=authentication_complexpass
-      - MONGO_DB_HOST=db-mongo-bank-info
+      # - MONGO_DB_HOST=db-mongo-auth
+      # - MONGO_DB_PORT=27017
+      # - MONGO_DB_USERNAME=mongo_auth
+      # - MONGO_DB_PASSWORD=auth_db
+      - MONGO_DB_HOST=db-mongo-bank-auth-info
       - MONGO_DB_PORT=27017
-      - MONGO_DB_USERNAME=mongocontact
-      - MONGO_DB_PASSWORD=contact
+      - MONGO_DB_USERNAME=mongoauthentication
+      - MONGO_DB_PASSWORD=authinfo
       - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
-      # - SECRET_KEY=super_secret_key
     command: python app.py
     depends_on:
       - jaeger
       - redis-auth-ms
-      - mongo
       - mongo-express
       - customer-info
-      # - mongo-auth
+      - mongo
 
   customer-info:
     build:
@@ -282,14 +309,14 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5006
-      - MONGO_DB_HOST=db-mongo-bank-info
+      - MONGO_DB_HOST=db-mongo-customer-info
       - MONGO_DB_PORT=27017
-      - MONGO_DB_USERNAME=mongocontact
-      - MONGO_DB_PASSWORD=contact
+      - MONGO_DB_USERNAME=mongocusinfo
+      - MONGO_DB_PASSWORD=customerinfo
     command: python app.py
     depends_on:
       - jaeger
-      - mongo
+      - mongo-customer-info
       - mongo-express
 
   personal-lending:
@@ -494,6 +521,7 @@ services:
       - redis-ob-ms
       - redis-search-ms
       - mongo
+      # - mongo-auth
       - authentication
       - customer-info
       - personal-lending
@@ -505,7 +533,9 @@ services:
 volumes:
   mongo_data:
     driver: local
-  mongodb-auth:
+  mongo_auth:
+    driver: local
+  mongodb_cus_info:
     driver: local
 
 networks:
