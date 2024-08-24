@@ -161,8 +161,8 @@ def pay_loan():
     # Send the Txn details to <Customer Activity>
     activity_data = {
         "username": username,
-        "from": account_number,
-        "to": loan_id,
+        "to": account_number,
+        "from": loan_id,
         "timestamp": datetime.now().isoformat(),
         "transaction_type": "Loan",
         "transaction_amount": pay_amount,
@@ -199,7 +199,7 @@ def check_eligibility(username):
     response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
 
     if response.status_code != 200:
-        return False, 0
+        return False, 0, customer_data.get("account_number")
     
     customer_data = response.json()
     total_balance = customer_data.get("acc_balance") + customer_data.get("dmat_balance")
