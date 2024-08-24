@@ -102,16 +102,6 @@ def updateCustomerInfo():
 
 # ===================================================================================================================================================================================== #
 
-@app.route("/getCustomerInfo/<string:username>", methods=["GET"])
-def getCustomerInfo(username):
-    customer_data = customer_collection.find_one({"username": username}, {"_id": 0})
-    if customer_data is None:
-        return jsonify({"message": "No customer found"}), 404
-    else:
-        return jsonify(customer_data)
-
-# ===================================================================================================================================================================================== #
-
 @app.route('/clearData', methods=['POST'])
 def clearContacts():
     customer_collection.delete_many({})
