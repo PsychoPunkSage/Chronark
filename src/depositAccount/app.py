@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import requests
 from flask import Flask, request, jsonify
@@ -9,6 +10,10 @@ SELF_PORT = os.environ.get('SELF_PORT')
 CUSTOMER_INFO_SERVICE_HOST = os.environ.get('CUSTOMER_INFO_SERVICE_HOST')
 CUSTOMER_INFO_SERVICE_PORT = os.environ.get('CUSTOMER_INFO_SERVICE_PORT')
 CUSTOMER_INFO_SERVICE_URL = f'http://{CUSTOMER_INFO_SERVICE_HOST}:{CUSTOMER_INFO_SERVICE_PORT}'
+# Customer Activity
+CUSTOMER_ACTIVITY_SERVICE_HOST = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_HOST')
+CUSTOMER_ACTIVITY_SERVICE_PORT = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_PORT')
+CUSTOMER_ACTIVITY_SERVICE_URL = f'http://{CUSTOMER_ACTIVITY_SERVICE_HOST}:{CUSTOMER_ACTIVITY_SERVICE_PORT}'
 
 # ===================================================================================================================================================================================== #
 
@@ -35,13 +40,27 @@ def deposit():
     
     customer_data = response.json()
     acc_balance = customer_data.get('acc_balance')
+    account_number = customer_data.get('account_number')
     
     new_balance = int(acc_balance) + int(amount)
     response = requests.put(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo', json={"username": username, "acc_balance": new_balance})
     if response.status_code!= 200:
         return jsonify({"status": "error", "message": "Can't update the balance"}), 404
     
-    # Add logic to LOG the txn 
+    # Send the Txn details to <Customer Activity>
+    activity_data = {
+        "username": username,
+        "to": account_number,
+        "from": "External",
+        "timestamp": datetime.now().isoformat(),
+        "transaction_type": "Deposit",
+        "transaction_amount": amount,
+        "comments": "Money Deposited: Self"
+    }
+
+    response = requests.post(f'{CUSTOMER_ACTIVITY_SERVICE_URL}/updateCustomerActivity', json=activity_data)
+    if response.status_code != 200:
+        return f'Failed to Update Activity  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
     
     return jsonify({"status": "success", "message": "Deposit successful", "new_balance": new_balance}), 200
 
@@ -57,6 +76,7 @@ def withdraw():
     
     customer_data = response.json()
     acc_balance = customer_data.get('acc_balance')
+    account_number = customer_data.get('account_number')
     
     if int(acc_balance) < int(amount):
         return jsonify({"status": "error", "message": "Insufficient funds"}), 400
@@ -66,7 +86,21 @@ def withdraw():
     if response.status_code!= 200:
         return jsonify({"status": "error", "message": "Can't update the balance"}), 404
     
-    # Add logic to LOG the txn 
+    # Send the Txn details to <Customer Activity>
+    activity_data = {
+        "username": username,
+        "from": account_number,
+        "to": "External",
+        "timestamp": datetime.now().isoformat(),
+        "transaction_type": "Withdrawl",
+        "transaction_amount": amount,
+        "comments": "Money Withdrawl: Self"
+    }
+
+    response = requests.post(f'{CUSTOMER_ACTIVITY_SERVICE_URL}/updateCustomerActivity', json=activity_data)
+    if response.status_code != 200:
+        return f'Failed to Update Activity  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
 
     return jsonify({"status": "success", "message": "Withdrawal successful", "new_balance": new_balance}), 200
 

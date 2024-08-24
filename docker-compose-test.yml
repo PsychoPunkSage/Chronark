@@ -554,6 +554,8 @@ services:
       - SELF_PORT=5011
       - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
     command: python app.py
     depends_on:
       - jaeger
