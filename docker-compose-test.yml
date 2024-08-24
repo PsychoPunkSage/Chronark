@@ -110,6 +110,19 @@ services:
       - vittmitra
     volumes:
       - mongodb_cus_info:/data/db
+  
+  mongo-customer-activity:
+    image: mongo:7.0
+    container_name: db-mongo-customer-activity
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongocusactivity
+      - MONGO_INITDB_ROOT_PASSWORD=customeractivity
+    ports:
+      - 27025:27017
+    networks:
+      - vittmitra
+    volumes:
+      - mongodb_cus_activity:/data/db
 
   mongo-personal-lending:
     image: mongo:7.0
@@ -362,6 +375,32 @@ services:
       - mongo-customer-info
       - mongo-express
 
+  customer-activity:
+    build:
+      context: ./src/customerActivity
+      dockerfile: Dockerfile.customerActivity
+    container_name: ms-customer-activity
+    volumes:
+      - ./src/customerActivity/app.py:/app/app.py
+      - ./src/customerActivity/requirements.txt:/app/requirements.txt
+      - ./src/customerActivity/static/:/app/static/
+      - ./src/customerActivity/templates/:/app/templates/
+    ports:
+      - 5012:5012
+    networks:
+      - vittmitra
+    environment:
+      - SELF_PORT=5012
+      - MONGO_DB_HOST=db-mongo-customer-activity
+      - MONGO_DB_PORT=27017
+      - MONGO_DB_USERNAME=mongocusactivity
+      - MONGO_DB_PASSWORD=customeractivity
+    command: python app.py
+    depends_on:
+      - jaeger
+      - mongo-customer-activity
+      - mongo-express
+
   personal-lending:
     build:
       context: ./src/personalLending
@@ -386,6 +425,8 @@ services:
       - MEMCACHED_PORT=11211
       - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
     command: python app.py
     depends_on:
       - jaeger
@@ -393,6 +434,7 @@ services:
       - mongo-express
       - memcached-pl
       - customer-info
+      - customer-activity
 
   business-lending:
     build:
@@ -549,6 +591,8 @@ services:
       - BUSINESS_LENDING_SERVICE_PORT=5010
       - DEPOSIT_WITHDRAWL_SERVICE_HOST=ms-deposit-account
       - DEPOSIT_WITHDRAWL_SERVICE_PORT=5011
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
@@ -560,9 +604,9 @@ services:
       - redis-ob-ms
       - redis-search-ms
       - mongo
-      # - mongo-auth
       - authentication
       - customer-info
+      - customer-activity
       - personal-lending
       - business-lending
       - mortgage
@@ -583,6 +627,8 @@ volumes:
   mongodb_mortgage:
     driver: local
   mongodb_investment:
+    driver: local
+  mongodb_cus_activity:
     driver: local
 
 networks:
