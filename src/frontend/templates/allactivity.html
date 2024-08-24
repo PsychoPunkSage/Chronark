@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Banking System{% endblock %}
+{% block custom_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+{% endblock %}
+{% block content %}
+
+<div class="main-container">
+    <div class="container mt-5">
+        <h1 class="text-center">Financial Activity Log</h1>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <img src="{{ customer_pic_url }}" class="profile-img img-fluid rounded-circle mb-3 fixed-height"
+                            alt="Customer Photo" />
+                        <h3 class="mt-3">{{ name }}</h3>
+                        <div class="input-group flex-nowrap justify-content-center">
+                            <span class="input-group-text" id="addon-wrapping">@</span>
+                            <input type="text" class="form-control text-center" placeholder="{{ username }}"
+                                aria-label="Username" aria-describedby="addon-wrapping" disabled />
+                        </div>
+                        <hr />
+                        <p class="text-muted">{{ email }}</p>
+                        <p>{{ contact_no }}</p>
+                        <p>{{ address }}</p>
+                    </div>
+                </div>
+
+                {% if banner_r %}
+                <div class="card mb-3 mt-3">
+                    <img src="{{ banner_r.url }}" class="card-img-top" alt="{{ banner_r.alt }}" />
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-9">
+                <!-- View Activity Log Section -->
+                <div class="card mt-4">
+                    <div class="card-header">View Your Activity Log</div>
+                    <div class="card-body">
+                        {% if activity_info|length == 0 %}
+                        <p>No Activity to show.</p>
+                        {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Transaction ID</th>
+                                        <th scope="col">From</th>
+                                        <th scope="col">To</th>
+                                        <th scope="col">Timestamp</th>
+                                        <th scope="col">Type</th>
+                                        <th scope="col">Amount <br />(in Rs.)</th>
+                                        <th scope="col">Comments</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for info in activity_info|sort(attribute='timestamp', reverse=True) %}
+                                    <tr>
+                                        <td>{{ info.transaction_id }}</td>
+                                        <td>{{ info.from }}</td>
+                                        <td>{{ info.to }}</td>
+                                        <td>{{ info.timestamp }}</td>
+                                        <td>{{ info.transaction_type }}</td>
+                                        <td>{{ info.transaction_amount }}</td>
+                                        <td>{{ info.comments }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
