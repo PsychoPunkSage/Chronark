@@ -86,8 +86,6 @@ def updateCustomerInfo():
     if request.method == "POST":
         if existing_user:
             # Preserve the existing values for account_balance, dmat_balance, and account_number
-            # jsondata['acc_balance'] = existing_user.get('acc_balance')
-            # jsondata['dmat_balance'] = existing_user.get('dmat_balance')
             jsondata['account_number'] = existing_user.get('account_number')
 
             customer_collection.update_one({"username": username}, {"$set": jsondata})
@@ -101,6 +99,16 @@ def updateCustomerInfo():
         else:
             return jsonify({"message": "No customer found"}), 404
         return "Success", 200
+
+# ===================================================================================================================================================================================== #
+
+@app.route("/getCustomerInfo/<string:username>", methods=["GET"])
+def getCustomerInfo(username):
+    customer_data = customer_collection.find_one({"username": username}, {"_id": 0})
+    if customer_data is None:
+        return jsonify({"message": "No customer found"}), 404
+    else:
+        return jsonify(customer_data)
 
 # ===================================================================================================================================================================================== #
 
