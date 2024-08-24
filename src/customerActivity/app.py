@@ -1,4 +1,5 @@
 import os
+import hashlib
 from pymongo import MongoClient
 from flask import Flask, render_template, request, jsonify
 
@@ -29,6 +30,7 @@ class CustomerActivityTemplate:
             username="",
             form="", # acc_number
             to="", # acc_number
+            timestamp="",
             transaction_type="", 
             transaction_amount="",
             comments="",
@@ -37,6 +39,7 @@ class CustomerActivityTemplate:
         self.username = username
         self.form = form
         self.to = to
+        self.timestamp = timestamp  # datetime.now()
         self.transaction_type = transaction_type
         self.transaction_amount = transaction_amount
         self.comments = comments
@@ -54,42 +57,49 @@ def index():
 
 # ===================================================================================================================================================================================== #
 
-@app.route("/getCustomerInfo/<string:account_number>", methods=["GET"])
-def getCustomerInfo(account_number):
+@app.route("/getCustomerActivity/<string:account_number>", methods=["GET"])
+def getCustomerActivity(account_number):
     customer_activity_data = list(customer_activity.find(
-        {"$or": [{"From": account_number}, {"To": account_number}]}, 
+        {"$or": [{"from": account_number}, {"to": account_number}]}, 
         {"_id": 0}
     ))
-    
+    print("CAD::>", customer_activity_data)
     return jsonify(customer_activity_data)
 
 @app.route("/getAllCustomerActivities", methods=["GET"])
-def getCustomerInfos():
+def getAllCustomerActivities():
     customer_datas = customer_activity.find()
     datas = []
     for contact in customer_datas:
         contact_dict = {key: value for key, value in contact.items() if key != '_id'}
         datas.append(contact_dict)
+    print("CAD(all)::>", data)
     return jsonify(datas)
 
 @app.route("/updateCustomerActivity", methods=["POST", "PUT"])
 def updateCustomerActivity():
     jsondata = request.json
-    transaction_id = jsondata.get('transaction_id')
-    existing_tx = customer_activity.find_one({"transaction_id": transaction_id})
+    username = jsondata.get('username')
+    froms = jsondata.get('from')
+    to = jsondata.get('to')
+    timestamp = jsondata.get('timestamp')
+    transaction_type = jsondata.get('transaction_type')
+    transaction_amount = jsondata.get('transaction_amount')
+    comments = jsondata.get('comments')
+    
+    transaction_id = get_txn_id(username, froms, to, timestamp, transaction_type, transaction_amount, comments)
+    jsondata['transaction_id'] = transaction_id
 
     if request.method == "POST":
-        if existing_tx:
-            return "Unexpected behaviour: Txn already exist", 404
-        else:
-            customer_activity.insert_one(jsondata)
+        customer_activity.insert_one(jsondata)
         return "Success", 200
     
     if request.method == "PUT":
+        existing_tx = customer_activity.find_one({"transaction_id": transaction_id})
         if existing_tx:
             customer_activity.update_one({"transaction_id": transaction_id}, {"$set": jsondata})
         else:
-            return jsonify({"message": "No such txn found"}), 404
+            customer_activity.insert_one(jsondata)
         return "Success", 200
     
 # =====================================================================================================================================================================================
@@ -98,6 +108,18 @@ def updateCustomerActivity():
 def clearContacts():
     customer_activity.delete_many({})
     return "All data cleared from contacts collection", 200
+
+# =====================================================================================================================================================================================
+
+def get_txn_id(username, froms, to, timestamp, transaction_type, transaction_amount, comments):
+    unique_string = f"{username}_{froms}_{to}_{timestamp}_{transaction_type}_{transaction_amount}_{comments}"
+    hash_object = hashlib.sha256(unique_string.encode())
+    hex_dig = hash_object.hexdigest()
+    digits = ''.join(filter(str.isdigit, hex_dig))
+    tx_id = '0x' + digits[:20]
+    tx_id = tx_id.ljust(22, '0')
+
+    return tx_id
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=SELF_PORT, debug=True)
