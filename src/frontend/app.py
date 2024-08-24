@@ -63,6 +63,11 @@ DEPOSIT_WITHDRAWL_SERVICE_HOST = os.environ.get('DEPOSIT_WITHDRAWL_SERVICE_HOST'
 DEPOSIT_WITHDRAWL_SERVICE_PORT = os.environ.get('DEPOSIT_WITHDRAWL_SERVICE_PORT')
 DEPOSIT_WITHDRAWL_SERVICE_URL = f'http://{DEPOSIT_WITHDRAWL_SERVICE_HOST}:{DEPOSIT_WITHDRAWL_SERVICE_PORT}'
 
+# Customer Activity Service
+CUSTOMER_ACTIVITY_SERVICE_HOST = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_HOST')
+CUSTOMER_ACTIVITY_SERVICE_PORT = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_PORT')
+CUSTOMER_ACTIVITY_SERVICE_URL = f'http://{CUSTOMER_ACTIVITY_SERVICE_HOST}:{CUSTOMER_ACTIVITY_SERVICE_PORT}'
+
 # Jaegar integration
 JAEGER_AGENT_HOST = os.environ.get('JAEGER_AGENT_HOST')
 JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
@@ -110,6 +115,34 @@ def home():
     user_info = fetch_customer_info(username) or {}
 
     return render_template('index.html', banner_r=banner[0], banner_l=banner[1], is_logged_in=is_logged_in, **user_info)
+
+################################### ACTIVITY LOG PAGE ###################################
+
+@app.route('/activity', methods=['GET'])
+def activity():
+    is_logged_in = 'token' in session
+    username = session.get('username') if 'token' in session else None
+    if not is_logged_in:
+        return redirect(url_for('login'))
+    user_info = fetch_customer_info(username) or {}
+    account_number = user_info.get('account_number')
+    print("Account number::>", account_number)
+    activity_info = requests.get(f"{CUSTOMER_ACTIVITY_SERVICE_URL}/getCustomerActivity/{account_number}")
+    print(f"activity_info (one)::> {activity_info.json()}")
+    banner = fetch_banners(1)
+    return render_template('activity.html', banner=banner, is_logged_in=is_logged_in, **user_info, activity_info=activity_info.json())
+
+@app.route('/all-activity', methods=['GET'])
+def allActivity():
+    is_logged_in = 'token' in session
+    username = session.get('username') if 'token' in session else None
+    if not is_logged_in:
+        return redirect(url_for('login'))
+    user_info = fetch_customer_info(username) or {}
+    activity_info = requests.get(f"{CUSTOMER_ACTIVITY_SERVICE_URL}/getAllCustomerActivities")
+    print(f"activity_info (all)::> {activity_info.json()}")
+    banner = fetch_banners(1)
+    return render_template('allactivity.html', banner=banner, is_logged_in=is_logged_in, **user_info, activity_info=activity_info.json())
 
 ################################### DEPOSIT/WITHDRAWL PAGE ###################################
 
@@ -665,10 +698,6 @@ def fetch_customer_info(username):
     }
 
     return user_info
-    
-
-
-
 
 
 
