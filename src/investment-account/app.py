@@ -119,7 +119,6 @@ def investment():
         if response.status_code != 200:
             return f'Failed to Update Activity  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
 
-
         investment_db.insert_one(investment_data)
 
         return jsonify({"status": "approved", "message": "Investment Successful"})
