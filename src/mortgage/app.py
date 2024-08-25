@@ -19,6 +19,10 @@ MEMCACHED_PORT = os.environ.get('MEMCACHED_PORT')
 CUSTOMER_INFO_SERVICE_HOST = os.environ.get('CUSTOMER_INFO_SERVICE_HOST')
 CUSTOMER_INFO_SERVICE_PORT = os.environ.get('CUSTOMER_INFO_SERVICE_PORT')
 CUSTOMER_INFO_SERVICE_URL = f'http://{CUSTOMER_INFO_SERVICE_HOST}:{CUSTOMER_INFO_SERVICE_PORT}'
+# Customer Activity
+CUSTOMER_ACTIVITY_SERVICE_HOST = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_HOST')
+CUSTOMER_ACTIVITY_SERVICE_PORT = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_PORT')
+CUSTOMER_ACTIVITY_SERVICE_URL = f'http://{CUSTOMER_ACTIVITY_SERVICE_HOST}:{CUSTOMER_ACTIVITY_SERVICE_PORT}'
 
 db_client = MongoClient(
     username=MONGO_DB_USERNAME, 
@@ -64,15 +68,16 @@ def apply_mortgage():
     
     interest_rate = 7 # %
     # Check eligibility (simplified example)
-    eligibility, max_mortgage_amount = check_eligibility(username, property_value, down_payment)
+    eligibility, max_mortgage_amount, account_number = check_eligibility(username, property_value, down_payment)
     if not eligibility:
         return jsonify({"status": "denied", "message": "Not eligible for mortgage"}), 400
     if int(amount) > max_mortgage_amount:
         return jsonify({"status": "denied", "message": "Requested amount exceeds max mortgage limit"}), 400
 
+    mortgage_id = get_mortgage_id(username, amount, term, interest_rate, property_value, down_payment)
     # Create mortgage application
     mortgage_data = {
-        "mortgage_id": get_mortgage_id(username, amount, term, interest_rate, property_value, down_payment),
+        "mortgage_id": mortgage_id,
         "username": username,
         "amount": amount,
         "term": term,
@@ -84,6 +89,21 @@ def apply_mortgage():
         "monthly_payment": calculate_monthly_payment(amount, term, interest_rate),
         "outstanding_balance": amount
     }
+
+    # Send the Txn details to <Customer Activity>
+    activity_data = {
+        "username": username,
+        "to": account_number,
+        "from": mortgage_id,
+        "timestamp": datetime.now().isoformat(),
+        "transaction_type": f"Mortgage: {amount}",
+        "transaction_amount": down_payment,
+        "comments": f"for Property: ₹{property_value}"
+    }
+    response = requests.post(f'{CUSTOMER_ACTIVITY_SERVICE_URL}/updateCustomerActivity', json=activity_data)
+    if response.status_code != 200:
+        return f'Failed to Update Activity  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
     mortgage_collection.insert_one(mortgage_data)
 
     return jsonify({"status": "pending", "approved": "Mortgage application accepted"}), 200
@@ -122,12 +142,15 @@ def pay_mortgage():
     mortgage = mortgage_collection.find_one({"mortgage_id": mortgage_id}, {"_id": 0})
     if not mortgage:
         return jsonify({"status": "error", "message": "Mortgage not found"}), 404
-    
+    outstanding_balance = mortgage.get("outstanding_balance")
+    property_value = mortgage.get("property_value")
+
     response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
     if response.status_code != 200:
         return jsonify({"status": "error", "message": "Unexpected"}), 404
     customer_data = response.json()
     acc_balance = customer_data.get('acc_balance')
+    account_number = customer_data.get('account_number')
     
     if int(pay_amount) > int(acc_balance):
         return jsonify({"status": "error", "message": "Insufficient funds"}), 400
@@ -138,8 +161,22 @@ def pay_mortgage():
     if response.status_code != 200:
         return jsonify({"status": "error", "message": "Can't update the balance"}), 404
 
+     # Send the Txn details to <Customer Activity>
+    activity_data = {
+        "username": username,
+        "from": account_number,
+        "to": mortgage_id,
+        "timestamp": datetime.now().isoformat(),
+        "transaction_type": f"Mortgage Payment: {outstanding_balance}",
+        "transaction_amount": pay_amount,
+        "comments": f"for Property: ₹{property_value}"
+    }
+    response = requests.post(f'{CUSTOMER_ACTIVITY_SERVICE_URL}/updateCustomerActivity', json=activity_data)
+    if response.status_code != 200:
+        return f'Failed to Update Activity  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
     # Update mortgage status
-    outstanding_balance = mortgage.get("outstanding_balance")
+    
     if int(outstanding_balance) > int(pay_amount):
         mortgage_collection.update_one({"mortgage_id": mortgage_id}, {"$set": {"outstanding_balance": int(outstanding_balance) - int(pay_amount)}})
         return jsonify({"status": "success", "message": "Partial Payment successful"}), 200
@@ -161,14 +198,15 @@ def check_eligibility(username, property_value, down_payment):
     response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
 
     if response.status_code != 200:
-        return False, 0
+        return False, 0, customer_data.get("account_number").get("account_number")
     
+    customer_data = response.json()
     down_payment_ratio = int(down_payment) / int(property_value)
 
     if down_payment_ratio >= 0.2:
-        return True, 0.8 * int(property_value)
+        return True, 0.8 * int(property_value), customer_data.get("account_number")
     else:
-        return False, 0
+        return False, 0, customer_data.get("account_number")
 
 def calculate_monthly_payment(amount, term, interest_rate):
     '''

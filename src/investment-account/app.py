@@ -19,6 +19,10 @@ MEMCACHED_PORT = os.environ.get('MEMCACHED_PORT')
 CUSTOMER_INFO_SERVICE_HOST = os.environ.get('CUSTOMER_INFO_SERVICE_HOST')
 CUSTOMER_INFO_SERVICE_PORT = os.environ.get('CUSTOMER_INFO_SERVICE_PORT')
 CUSTOMER_INFO_SERVICE_URL = f'http://{CUSTOMER_INFO_SERVICE_HOST}:{CUSTOMER_INFO_SERVICE_PORT}'
+# Customer Activity
+CUSTOMER_ACTIVITY_SERVICE_HOST = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_HOST')
+CUSTOMER_ACTIVITY_SERVICE_PORT = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_PORT')
+CUSTOMER_ACTIVITY_SERVICE_URL = f'http://{CUSTOMER_ACTIVITY_SERVICE_HOST}:{CUSTOMER_ACTIVITY_SERVICE_PORT}'
 
 db_client = MongoClient(
     username=MONGO_DB_USERNAME, 
@@ -62,7 +66,7 @@ def investment():
     invested_in = data.get('invested_in')
     investment_type = data.get('investment_type')
 
-    eligibility, max_invest_amount = check_eligibility(int(amount), username)
+    eligibility, max_invest_amount, account_number = check_eligibility(int(amount), username)
 
     if not eligibility:
         return jsonify({"status": "denied", "message": "Not eligible for investment"}), 400
@@ -70,9 +74,10 @@ def investment():
     else:
         if int(amount) > max_invest_amount:
             return jsonify({"status": "pending", "message": "Investment Amount exceeds Max allowable capacity"}), 200
-        
+
+        investment_id = get_investment_id(username, amount, duration, invested_in, investment_type)
         investment_data = {
-            "investment_id": get_investment_id(username, amount, duration, invested_in, investment_type),
+            "investment_id": investment_id,
             "username": username,
             "amount": amount,
             "duration": duration,
@@ -81,7 +86,6 @@ def investment():
             "investment_type": investment_type,
             "status": "approved",
         }
-        investment_db.insert_one(investment_data)
 
         # Deduct `amount` from User Balance:
         resp = response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
@@ -99,6 +103,23 @@ def investment():
         response = requests.put(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo', json={"username": username, "dmat_balance": int(dmat_balance) + int(amount)})
         if response.status_code!= 200:
             return jsonify({"status": "error", "message": "Can't update the balance"}), 404
+
+        # Send the Txn details to <Customer Activity>
+        activity_data = {
+            "username": username,
+            "from": account_number,
+            "to": investment_id,
+            "timestamp": datetime.now().isoformat(),
+            "transaction_type": f"Investment: {investment_type}",
+            "transaction_amount": amount,
+            "comments": f"in {invested_in}"
+        }
+
+        response = requests.post(f'{CUSTOMER_ACTIVITY_SERVICE_URL}/updateCustomerActivity', json=activity_data)
+        if response.status_code != 200:
+            return f'Failed to Update Activity  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
+        investment_db.insert_one(investment_data)
 
         return jsonify({"status": "approved", "message": "Investment Successful"})
 
@@ -140,6 +161,8 @@ def redeem_investment():
         return jsonify({"status": "error", "message": "Investment not approved"}), 400
     
     invested_amount = int(investment.get('amount'))
+    investment_type = investment.get('investment_type')
+    invested_in = investment.get('invested_in')
     
     resp = response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
     if resp.status_code != 200:
@@ -147,6 +170,7 @@ def redeem_investment():
     customer_data = response.json()
     acc_balance = customer_data.get('acc_balance')
     dmat_balance = customer_data.get('dmat_balance')
+    account_number = customer_data.get('account_number')
 
     if int(amount_redeem) > invested_amount:
         return jsonify({"status": "error", "message": "Investment amount is less than redeem amount"}), 400
@@ -168,6 +192,21 @@ def redeem_investment():
     if response.status_code!= 200:
         return jsonify({"status": "error", "message": "Can't update the balance <DMAT>"}), 404
 
+    # Send the Txn details to <Customer Activity>
+    activity_data = {
+        "username": username,
+        "to": account_number,
+        "from": investment_id,
+        "timestamp": datetime.now().isoformat(),
+        "transaction_type": "Investment: Redeem",
+        "transaction_amount": amount_redeem,
+        "comments": f"from {investment_type}:{invested_in}"
+    }
+
+    response = requests.post(f'{CUSTOMER_ACTIVITY_SERVICE_URL}/updateCustomerActivity', json=activity_data)
+    if response.status_code != 200:
+        return f'Failed to Update Activity  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
     return jsonify({"status": "success", "message": "Investment Redeemed Successfully"}), 200
 
 # ===================================================================================================================================================================================== #
@@ -187,15 +226,15 @@ def check_eligibility(amount, username):
     response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
 
     if response.status_code != 200:
-        return False, 0
+        return False, 0, customer_data.get("account_number")
     
     customer_data = response.json()
     total_balance = customer_data.get("acc_balance")
 
     if int(total_balance) > amount:
-        return True, int(total_balance)
+        return True, int(total_balance), customer_data.get("account_number")
     
-    return False, 0
+    return False, 0, customer_data.get("account_number")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=SELF_PORT, debug=True)

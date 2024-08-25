@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import hashlib
 import requests
@@ -18,6 +19,10 @@ MEMCACHED_PORT = os.environ.get('MEMCACHED_PORT')
 CUSTOMER_INFO_SERVICE_HOST = os.environ.get('CUSTOMER_INFO_SERVICE_HOST')
 CUSTOMER_INFO_SERVICE_PORT = os.environ.get('CUSTOMER_INFO_SERVICE_PORT')
 CUSTOMER_INFO_SERVICE_URL = f'http://{CUSTOMER_INFO_SERVICE_HOST}:{CUSTOMER_INFO_SERVICE_PORT}'
+# Customer Activity
+CUSTOMER_ACTIVITY_SERVICE_HOST = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_HOST')
+CUSTOMER_ACTIVITY_SERVICE_PORT = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_PORT')
+CUSTOMER_ACTIVITY_SERVICE_URL = f'http://{CUSTOMER_ACTIVITY_SERVICE_HOST}:{CUSTOMER_ACTIVITY_SERVICE_PORT}'
 
 db_client = MongoClient(
     username=MONGO_DB_USERNAME, 
@@ -61,21 +66,39 @@ def apply_bloan():
     purpose = data.get('purpose')
     
     # Check eligibility
-    eligibility, max_bloan_amount = check_eligibility(username)
+    eligibility, max_bloan_amount, account_number = check_eligibility(username)
     if not eligibility:
         return jsonify({"status": "denied", "message": "Not eligible for bloan"}), 400
     else:
         if int(bloan_amount) > max_bloan_amount:
             return jsonify({"status": "pending", "message": "Business Loan Amount exceeds Max allowable capacity"}), 200
+
+        bloan_id = get_bloan_id(username, bloan_amount, term, purpose)
         # Create bloan application
         loan_data = {
-            "bloan_id": get_bloan_id(username, data["amount"], data["term"], data["purpose"]),
+            "bloan_id": bloan_id,
             "term": term,
             "username": username,
             "amount": bloan_amount,
             "purpose": purpose,
             "status": "approved"
         }
+
+        # Send the Txn details to <Customer Activity>
+        activity_data = {
+            "username": username,
+            "from": account_number,
+            "to": bloan_id,
+            "timestamp": datetime.now().isoformat(),
+            "transaction_type": "B-Loan",
+            "transaction_amount": bloan_amount,
+            "comments": purpose
+        }
+
+        response = requests.post(f'{CUSTOMER_ACTIVITY_SERVICE_URL}/updateCustomerActivity', json=activity_data)
+        if response.status_code != 200:
+            return f'Failed to Update Activity  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
         business_lending.insert_one(loan_data)
 
         return jsonify({"status": "approved", "message": "Business Loan application accepted"}), 200
@@ -121,6 +144,7 @@ def pay_bloan():
         return  jsonify({"status": "error", "message": "Unexpected"}), 404
     customer_data = response.json()
     acc_balance = customer_data.get('acc_balance')
+    account_number = customer_data.get('account_number')
     
     if int(pay_amount) > acc_balance:
         return jsonify({"status": "error", "message": "Insufficient funds"}), 400
@@ -133,6 +157,22 @@ def pay_bloan():
     response = requests.put(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo', json={"username": username, "acc_balance": new_balance})
     if response.status_code!= 200:
         return jsonify({"status": "error", "message": "Can't update the balance"}), 404
+
+    # Send the Txn details to <Customer Activity>
+    activity_data = {
+        "username": username,
+        "to": account_number,
+        "from": bloan_id,
+        "timestamp": datetime.now().isoformat(),
+        "transaction_type": "B-Loan",
+        "transaction_amount": pay_amount,
+        "comments": "REPAYMENT"
+    }
+
+    response = requests.post(f'{CUSTOMER_ACTIVITY_SERVICE_URL}/updateCustomerActivity', json=activity_data)
+    if response.status_code != 200:
+        return f'Failed to Update Activity  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
 
     # Update bloan status
     loan_amt = bloan.get("amount")
@@ -159,15 +199,15 @@ def check_eligibility(username):
     response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
 
     if response.status_code != 200:
-        return False, 0
+        return False, 0, customer_data.get("account_number")
     
     customer_data = response.json()
     total_balance = customer_data.get("acc_balance") + customer_data.get("dmat_balance")
 
     if total_balance >= 5000:
-        return True, 2*(total_balance)
+        return True, 2*(total_balance), customer_data.get("account_number")
     else:
-        return False, 0
+        return False, 0, customer_data.get("account_number")
 
 def get_bloan_id(username, amount, term, purpose):
     unique_string = f"{username}_{amount}_{term}_{purpose}"

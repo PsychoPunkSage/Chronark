@@ -86,8 +86,6 @@ def updateCustomerInfo():
     if request.method == "POST":
         if existing_user:
             # Preserve the existing values for account_balance, dmat_balance, and account_number
-            # jsondata['acc_balance'] = existing_user.get('acc_balance')
-            # jsondata['dmat_balance'] = existing_user.get('dmat_balance')
             jsondata['account_number'] = existing_user.get('account_number')
 
             customer_collection.update_one({"username": username}, {"$set": jsondata})

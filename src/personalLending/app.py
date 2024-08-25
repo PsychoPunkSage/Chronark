@@ -1,3 +1,4 @@
+from datetime import datetime
 import hashlib
 import os
 from pymongo import MongoClient
@@ -18,6 +19,10 @@ MEMCACHED_PORT = os.environ.get('MEMCACHED_PORT')
 CUSTOMER_INFO_SERVICE_HOST = os.environ.get('CUSTOMER_INFO_SERVICE_HOST')
 CUSTOMER_INFO_SERVICE_PORT = os.environ.get('CUSTOMER_INFO_SERVICE_PORT')
 CUSTOMER_INFO_SERVICE_URL = f'http://{CUSTOMER_INFO_SERVICE_HOST}:{CUSTOMER_INFO_SERVICE_PORT}'
+# Customer Activity
+CUSTOMER_ACTIVITY_SERVICE_HOST = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_HOST')
+CUSTOMER_ACTIVITY_SERVICE_PORT = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_PORT')
+CUSTOMER_ACTIVITY_SERVICE_URL = f'http://{CUSTOMER_ACTIVITY_SERVICE_HOST}:{CUSTOMER_ACTIVITY_SERVICE_PORT}'
 
 db_client = MongoClient(
     username=MONGO_DB_USERNAME, 
@@ -55,25 +60,45 @@ def index():
 @app.route('/apply', methods=['POST'])
 def apply_loan():
     data = request.json
+    loan_term = data.get('term')
     username = data.get('username')
     loan_amount = data.get('amount')
+    loan_purpose = data.get('purpose')
     
     # Check eligibility
-    eligibility, max_loan_amount = check_eligibility(username)
+    eligibility, max_loan_amount, account_number = check_eligibility(username)
     if not eligibility:
         return jsonify({"status": "denied", "message": "Not eligible for loan"}), 400
     else:
         if int(loan_amount) > max_loan_amount:
             return jsonify({"status": "pending", "message": "Loan Amount exceeds Max allowable capacity"}), 200
+
+        loan_id = get_loan_id(username, loan_amount, loan_term, loan_purpose)
         # Create loan application
         loan_data = {
-            "loan_id": get_loan_id(username, data["amount"], data["term"], data["purpose"]),
-            "term": data['term'],
+            "loan_id": loan_id,
+            "term": loan_term,
             "username": username,
-            "amount": data['amount'],
-            "purpose": data['purpose'],
+            "amount": loan_amount,
+            "purpose": loan_purpose,
             "status": "approved"
         }
+
+        # Send the Txn details to <Customer Activity>
+        activity_data = {
+            "username": username,
+            "from": account_number,
+            "to": loan_id,
+            "timestamp": datetime.now().isoformat(),
+            "transaction_type": "Loan",
+            "transaction_amount": loan_amount,
+            "comments": loan_purpose
+        }
+
+        response = requests.post(f'{CUSTOMER_ACTIVITY_SERVICE_URL}/updateCustomerActivity', json=activity_data)
+        if response.status_code != 200:
+            return f'Failed to Update Activity  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
         personal_lending.insert_one(loan_data)
 
         return jsonify({"status": "approved", "message": "Loan application accepted"}), 200
@@ -119,6 +144,7 @@ def pay_loan():
         return  jsonify({"status": "error", "message": "Unexpected"}), 404
     customer_data = response.json()
     acc_balance = customer_data.get('acc_balance')
+    account_number = customer_data.get('account_number')
     
     if int(pay_amount) > acc_balance:
         return jsonify({"status": "error", "message": "Insufficient funds"}), 400
@@ -131,6 +157,22 @@ def pay_loan():
     response = requests.put(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo', json={"username": username, "acc_balance": new_balance})
     if response.status_code!= 200:
         return jsonify({"status": "error", "message": "Can't update the balance"}), 404
+    
+    # Send the Txn details to <Customer Activity>
+    activity_data = {
+        "username": username,
+        "to": account_number,
+        "from": loan_id,
+        "timestamp": datetime.now().isoformat(),
+        "transaction_type": "Loan",
+        "transaction_amount": pay_amount,
+        "comments": "REPAYMENT"
+    }
+
+    response = requests.post(f'{CUSTOMER_ACTIVITY_SERVICE_URL}/updateCustomerActivity', json=activity_data)
+    if response.status_code != 200:
+        return f'Failed to Update Activity  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
 
     # Update loan status
     loan_amt = loan.get("amount")
@@ -157,15 +199,15 @@ def check_eligibility(username):
     response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
 
     if response.status_code != 200:
-        return False, 0
+        return False, 0, customer_data.get("account_number")
     
     customer_data = response.json()
     total_balance = customer_data.get("acc_balance") + customer_data.get("dmat_balance")
 
     if total_balance >= 4500:
-        return True, 2*(total_balance)
+        return True, 2*(total_balance), customer_data.get("account_number")
     else:
-        return False, 0
+        return False, 0, customer_data.get("account_number")
 
 def get_loan_id(username, amount, term, purpose):
     unique_string = f"{username}_{amount}_{term}_{purpose}"
