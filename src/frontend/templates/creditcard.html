@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Credit Card Management{% endblock %}
+{% block custom_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+{% endblock %}
+{% block content %}
+<div class="main-container">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <img src="{{ customer_pic_url }}" class="profile-img img-fluid rounded-circle mb-3 fixed-height"
+                        alt="Customer Photo" />
+                    <h3 class="mt-3">{{ name }}</h3>
+                    <div class="mb-3">
+                        <span class="input-group-text text-center" id="addon-wrapping">Account Balance (₹)</span>
+                        <input type="text" class="form-control text-center" placeholder="{{ acc_balance }}"
+                            aria-label="Account Balance" aria-describedby="addon-wrapping" disabled />
+                    </div>
+                </div>
+            </div>
+
+            {% if banner %}
+            <div class="card mb-3 mt-3">
+                <img src="{{ banner.url }}" class="card-img-top" alt="{{ banner.alt }}" />
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-8">
+            {% if not credit_card %}
+            <!-- Form for generating a new credit card -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h2>Generate Credit Card</h2>
+                    <form id="create-credit-card-form" method="post" action="/generate_credit_card">
+                        <div class="input-group flex-nowrap justify-content-center">
+                            <span class="input-group-text" id="addon-wrapping">Initial Balance (₹):</span>
+                            <input type="number" class="form-control text-center" placeholder="Enter Initial Balance"
+                                aria-label="Initial Balance" aria-describedby="addon-wrapping" id="initial_balance"
+                                name="initial_balance" min="1" required />
+                        </div>
+                        <div class="input-group flex-nowrap justify-content-center mt-3">
+                            <span class="input-group-text" id="addon-wrapping">Secret Passphrase:</span>
+                            <input type="password" class="form-control text-center"
+                                placeholder="Enter Secret Passphrase" aria-label="Secret Passphrase"
+                                aria-describedby="addon-wrapping" id="secret_passphrase" name="secret_passphrase"
+                                required />
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">Generate Credit Card</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <!-- Display existing credit card details and balance adjustment forms -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h2>Credit Card Details</h2>
+                    <p><strong>Credit Card Number:</strong> {{ credit_card }}</p>
+                    <p><strong>Credit Card Balance (₹):</strong> {{ card_info.balance }}</p>
+
+                    <!-- Deposit Funds Form -->
+                    <form id="deposit-form" method="post" action="/deposit_funds">
+                        <h3>Deposit Funds</h3>
+                        <div class="input-group flex-nowrap justify-content-center">
+                            <span class="input-group-text" id="addon-wrapping">Amount (₹):</span>
+                            <input type="number" class="form-control text-center" placeholder="0.00"
+                                aria-label="Deposit Amount" aria-describedby="addon-wrapping" id="deposit_amount"
+                                name="deposit_amount" min="1" required />
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-success">Deposit</button>
+                        </div>
+                    </form>
+
+                    <hr>
+
+                    <!-- Withdraw Funds Form -->
+                    <form id="withdraw-form" method="post" action="/withdraw_funds">
+                        <h3>Withdraw Funds</h3>
+                        <div class="input-group flex-nowrap justify-content-center">
+                            <span class="input-group-text" id="addon-wrapping">Amount (₹):</span>
+                            <input type="number" class="form-control text-center" placeholder="0.00"
+                                aria-label="Withdraw Amount" aria-describedby="addon-wrapping" id="withdraw_amount"
+                                name="withdraw_amount" min="1" required />
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-warning">Withdraw</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -7,20 +7,15 @@ custom_styles %}
   <div class="heading">
     <h1 class="text-center mt-2 mb-4">VittMitra</h1>
   </div>
-  <div class="add_banner">
-    <img
-      src="{{ banner_l.url }}"
-      class="rounded mx-auto d-block"
-      id="banner-img"
-      alt="{{ banner_l.alt }}"
-    />
-  </div>
-  <div class="add_banner">
+
+  <div class="add_banner text-center">
+    <img src="{{ banner_l.url }}" class="rounded mx-auto d-block mb-3" id="banner-img" alt="{{ banner_l.alt }}" />
     <p>{{ contacts }}</p>
   </div>
+
   <div class="border-bottom" id="about">
     <h2 class="text-center mt-2">About</h2>
-    <p class="lead">
+    <p class="lead text-justify">
       Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
       tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
       veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
@@ -36,22 +31,13 @@ custom_styles %}
       <div class="col-md-4">
         <div class="card text-center">
           <div class="card-body">
-            <img
-              src="{{ customer_pic_url }}"
-              class="profile-img img-fluid rounded-circle mb-3 fixed-height"
-              alt="Customer Photo"
-            />
+            <img src="{{ customer_pic_url }}" class="profile-img img-fluid rounded-circle mb-3 fixed-height"
+              alt="Customer Photo" />
             <h3 class="mt-3">{{ name }}</h3>
             <div class="input-group flex-nowrap justify-content-center">
               <span class="input-group-text" id="addon-wrapping">@</span>
-              <input
-                type="text"
-                class="form-control text-center"
-                placeholder="{{ username }}"
-                aria-label="Username"
-                aria-describedby="addon-wrapping"
-                disabled
-              />
+              <input type="text" class="form-control text-center" placeholder="{{ username }}" aria-label="Username"
+                aria-describedby="addon-wrapping" disabled />
             </div>
             <hr />
             <p class="text-muted">{{ email }}</p>
@@ -62,11 +48,7 @@ custom_styles %}
 
         {% if banner_r %}
         <div class="card mb-3 mt-3">
-          <img
-            src="{{ banner_r.url }}"
-            class="card-img-top"
-            alt="{{ banner_r.alt }}"
-          />
+          <img src="{{ banner_r.url }}" class="card-img-top" alt="{{ banner_r.alt }}" />
         </div>
         {% endif %}
       </div>
@@ -80,6 +62,7 @@ custom_styles %}
             <p><strong>DMAT Balance:</strong> ₹{{ dmat_balance }}</p>
           </div>
         </div>
+
         <div class="card mb-3">
           <div class="card-body">
             <h4 class="card-title">Welcome to VittMitra</h4>
@@ -90,145 +73,69 @@ custom_styles %}
           </div>
         </div>
 
-        <div class="card mb-3">
-          <a href="/loan" class="btn btn-success btn-lg" role="button">
-            Personal Lendings
-          </a>
+        <!-- Credit Card & Debit Card Buttons -->
+        <div class="row mb-4">
+          <div class="col-md-6 text-center">
+            <a href="/creditCard" class="btn btn-info btn-lg w-100" role="button">
+              <img src="{{ url_for('static', filename='credit-card-image.png') }}" alt="Credit Card"
+                class="img-fluid mr-2" style="width: 30px;" />
+              Credit Card
+            </a>
+          </div>
+          <div class="col-md-6 text-center">
+            <a href="/debit_card" class="btn btn-secondary btn-lg w-100" role="button">
+              <img src="{{ url_for('static', filename='debit-card-image.png') }}" alt="Debit Card"
+                class="img-fluid mr-2" style="width: 30px;" />
+              Debit Card
+            </a>
+          </div>
         </div>
-        <div class="card mb-3">
-          <a href="/business_loan" class="btn btn-danger btn-lg" role="button">
-            Business Lendings
-          </a>
+
+        <div class="row text-center">
+          <div class="col-md-3">
+            <div class="card mb-3">
+              <a href="/loan" class="btn btn-success btn-lg w-100 d-flex flex-column align-items-center" role="button">
+                <img src="{{ url_for('static', filename='bussiness-lending-1.png') }}" alt="Loans"
+                  class="img-fluid mb-2 logo-filter" style="width: 50px;" />
+                <span>Loans</span>
+              </a>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card mb-3">
+              <a href="/business_loan" class="btn btn-danger btn-lg w-100 d-flex flex-column align-items-center"
+                role="button">
+                <img src="{{ url_for('static', filename='bussiness-lending.png') }}" alt="Business Loans"
+                  class="img-fluid mb-2 logo-filter" style="width: 50px;" />
+                <span>Business Loans</span>
+              </a>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card mb-3">
+              <a href="/mortgage" class="btn btn-primary btn-lg w-100 d-flex flex-column align-items-center"
+                role="button">
+                <img src="{{ url_for('static', filename='mortgage.png') }}" alt="Mortgage"
+                  class="img-fluid mb-2 logo-filter" style="width: 50px;" />
+                <span>Mortgage</span>
+              </a>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card mb-3">
+              <a href="/investment" class="btn btn-warning btn-lg w-100 d-flex flex-column align-items-center"
+                role="button">
+                <img src="{{ url_for('static', filename='investment.png') }}" alt="Investments"
+                  class="img-fluid mb-2 logo-filter" style="width: 50px;" />
+                <span>Investments</span>
+              </a>
+            </div>
+          </div>
         </div>
-        <div class="card mb-3">
-          <a href="/mortgage" class="btn btn-primary btn-lg" role="button">
-            Mortgage
-          </a>
-        </div>
-        <div class="card mb-3">
-          <a href="/investment" class="btn btn-warning btn-lg" role="button">
-            Investments
-          </a>
-        </div>
+
+
       </div>
     </div>
   </div>
-  <!-- <div
-    class="border-bottom form"
-    style="padding-bottom: 12px"
-    id="open-account"
-  >
-    <h2>Open Account</h2>
-    <form class="row g-3">
-      <div class="col-md-6">
-        <label for="inputFirstName" class="form-label">First Name</label>
-        <input type="text" class="form-control" id="inputFirstName" />
-      </div>
-      <div class="col-md-6">
-        <label for="inputLastName" class="form-label">Last Name</label>
-        <input type="text" class="form-control" id="inputLastName" />
-      </div>
-      <div class="col-md-6">
-        <label for="inputdob" class="form-label">DOB</label>
-        <input type="date" class="form-control" id="inputdob" />
-      </div>
-      <div class="col-md-6">
-        <label for="inputMobileNumber" class="form-label">Mobile No.</label>
-        <input type="tel" class="form-control" id="inputMobileNumber" />
-      </div>
-      <div class="col-12">
-        <label for="inputAddress" class="form-label">Address</label>
-        <input
-          type="text"
-          class="form-control"
-          id="inputAddress"
-          placeholder="1234 Main St"
-        />
-      </div>
-      <div class="col-12">
-        <label for="inputAddress2" class="form-label">Address 2</label>
-        <input
-          type="text"
-          class="form-control"
-          id="inputAddress2"
-          placeholder="Apartment, studio, or floor"
-        />
-      </div>
-      <div class="col-md-6">
-        <label for="inputCity" class="form-label">City</label>
-        <input type="text" class="form-control" id="inputCity" />
-      </div>
-      <div class="col-md-4">
-        <label for="inputState" class="form-label">State</label>
-        <select id="inputState" class="form-select">
-          <option selected>Choose...</option>
-          <option>Jharkhand</option>
-          <option>West Bengal</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label for="inputZip" class="form-label">Zip</label>
-        <input type="text" class="form-control" id="inputZip" />
-      </div>
-      <div class="col-12">
-        <button type="button" class="btn btn-primary btn-lg">
-          Open Account
-        </button>
-      </div>
-    </form>
-  </div> -->
-  <!-- <div
-    class="border-bottom form"
-    style="padding-bottom: 12px"
-    id="open-credit-card"
-  >
-    <h2>Generate Credit Card</h2>
-    <form class="row row-cols-lg-auto g-3 align-items-center">
-      <div class="col-12">
-        <label class="visually-hidden" for="inlineFormInputGroupUsername"
-          >Account Number</label
-        >
-        <div class="input-group">
-          <input
-            type="text"
-            class="form-control"
-            id="inlineFormInputGroupUsername"
-            placeholder="Account Number"
-          />
-        </div>
-      </div>
-
-      <div class="col-12">
-        <label class="visually-hidden" for="inlineFormInputGroupUsername"
-          >Secret Code</label
-        >
-        <div class="input-group">
-          <input
-            type="password"
-            class="form-control"
-            id="inlineFormInputGroupUsername"
-            placeholder="Passcode"
-          />
-        </div>
-      </div>
-
-      <div class="col-12">
-        <label class="visually-hidden" for="inlineFormInputGroupUsername"
-          >DoB</label
-        >
-        <div class="input-group">
-          <input
-            type="date"
-            class="form-control"
-            id="inlineFormInputGroupUsername"
-          />
-        </div>
-      </div>
-
-      <div class="col-12">
-        <button type="submit" class="btn btn-primary btn-lg">Submit</button>
-      </div>
-    </form>
-  </div> -->
 </div>
 {% endblock %}
