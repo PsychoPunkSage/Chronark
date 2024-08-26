@@ -133,3 +133,14 @@ img.profile-img {
     height: 150px;
     object-fit: cover;
 }
+
+.logo-filter {
+    filter: grayscale(100%) brightness(0);
+    opacity: 0.8;
+    /* Adjust transparency */
+}
+
+.logo-filter:hover {
+    opacity: 1;
+    /* Make fully visible on hover */
+}
