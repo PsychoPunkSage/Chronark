@@ -175,6 +175,19 @@ services:
       - vittmitra
     volumes:
       - mongodb_investment:/data/db
+  
+  mongo-credit-card:
+    image: mongo:7.0
+    container_name: db-mongo-credit-card
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongocreditcard
+      - MONGO_INITDB_ROOT_PASSWORD=creditcard
+    ports:
+      - 27026:27017
+    networks:
+      - vittmitra
+    volumes:
+      - mongodb_credit_card:/data/db
 
   mongo-express:
     image: mongo-express
@@ -250,6 +263,37 @@ services:
       - redis-ob-ms
       - mongo
       - authentication
+
+  credit-card:
+    build:
+      context: ./src/creditCard
+      dockerfile: Dockerfile.creditCard
+    container_name: ms-credit-card
+    volumes:
+      - ./src/creditCard/app.py:/app/app.py
+      - ./src/creditCard/requirements.txt:/app/requirements.txt
+      - ./src/creditCard/static/:/app/static/
+      - ./src/creditCard/templates/:/app/templates/
+    ports:
+      - 5013:5013
+    networks:
+      - vittmitra
+    environment:
+      - SELF_PORT=5013
+      - MONGO_DB_HOST=db-mongo-credit-card
+      - MONGO_DB_PORT=27017
+      - MONGO_DB_USERNAME=mongocreditcard
+      - MONGO_DB_PASSWORD=creditcard
+      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_PORT=5006
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
+    command: python app.py
+    depends_on:
+      - jaeger
+      - mongo-credit-card
+      - customer-info
+
 
   contacts:
     build:
@@ -601,6 +645,8 @@ services:
       - DEPOSIT_WITHDRAWL_SERVICE_PORT=5011
       - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
+      - CREDIT_CARD_SERVICE_HOST=ms-credit-card
+      - CREDIT_CARD_SERVICE_PORT=5013
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
@@ -620,6 +666,7 @@ services:
       - mortgage
       - investment
       - deposit-account
+      - credit-card
 
 volumes:
   mongo_data:
@@ -637,6 +684,8 @@ volumes:
   mongodb_investment:
     driver: local
   mongodb_cus_activity:
+    driver: local
+  mongodb_credit_card:
     driver: local
 
 networks:

@@ -23,6 +23,11 @@ CONTACT_SERVICE_HOST = os.environ.get('CONTACT_SERVICE_HOST')
 CONTACT_SERVICE_PORT = os.environ.get('CONTACT_SERVICE_PORT')
 CONTACT_SERVICE_URL = 'http://' + CONTACT_SERVICE_HOST + ':' + CONTACT_SERVICE_PORT
 
+# Credit Card Service
+CREDIT_CARD_SERVICE_HOST = os.environ.get('CREDIT_CARD_SERVICE_HOST')
+CREDIT_CARD_SERVICE_PORT = os.environ.get('CREDIT_CARD_SERVICE_PORT')
+CREDIT_CARD_SERVICE_URL = 'http://' + CREDIT_CARD_SERVICE_HOST + ':' + CREDIT_CARD_SERVICE_PORT
+
 # Search url
 SEARCH_SERVICE_HOST = os.environ.get('SEARCH_SERVICE_HOST')
 SEARCH_SERVICE_PORT = os.environ.get('SEARCH_SERVICE_PORT')
@@ -116,6 +121,87 @@ def home():
 
     return render_template('index.html', banner_r=banner[0], banner_l=banner[1], is_logged_in=is_logged_in, **user_info)
 
+################################### CREDIT CARD ###################################
+@app.route('/creditCard', methods=['GET'])
+def creditCard():
+    is_logged_in = 'token' in session
+    username = session.get('username') if 'token' in session else None
+    if not is_logged_in:
+        return redirect(url_for('login'))
+    user_info = fetch_customer_info(username) or {}
+    card_info = requests.get(f'{CREDIT_CARD_SERVICE_URL}/get_credit_card_info/{username}')
+    banner = fetch_banners(1)
+    return render_template('creditcard.html', banner=banner, is_logged_in=is_logged_in, **user_info, card_info=card_info.json())
+
+@app.route('/generate_credit_card', methods=['POST'])
+def generate_credit_card():
+    balance = request.form['initial_balance']
+    secret_passcode = request.form['secret_passphrase']
+    username = session.get('username') if 'token' in session else None
+
+    user_info = fetch_customer_info(username) or {}
+    account_number = user_info.get('account_number')
+
+    if not secret_passcode or not username or not account_number or not balance:
+        return 'Form data missing!', 400
+    
+    data = {
+        'username': username,
+        'account_number': account_number,
+        'secret_passcode': secret_passcode,
+        'balance': balance,
+    }
+
+    response = requests.post(f'{CREDIT_CARD_SERVICE_URL}/generate_credit_card', json=data)
+
+    if response.status_code == 200:
+            return 'Form submitted successfully!'
+    else:
+        return f'Failed to submit form.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
+@app.route('/deposit_funds', methods=['POST'])
+def deposit_funds():
+    deposit_amount = request.form['deposit_amount']
+    username = session.get('username') if 'token' in session else None
+
+    if not deposit_amount or not username:
+        return 'Form data missing!', 400
+    
+    data = {
+        'username': username,
+        'deposit_amount': deposit_amount,
+    }
+
+    print(f"DATA::> {data}")
+
+    response = requests.post(f'{CREDIT_CARD_SERVICE_URL}/deposit_funds', json=data)
+
+    if response.status_code == 200:
+            return 'Form submitted successfully!'
+    else:
+        return f'Failed to submit form.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
+@app.route('/withdraw_funds', methods=['POST'])
+def withdraw_funds():
+    withdraw_amount = request.form['withdraw_amount']
+    username = session.get('username') if 'token' in session else None
+
+    if not withdraw_amount or not username:
+        return 'Form data missing!', 400
+    
+    data = {
+        'username': username,
+        'withdraw_amount': withdraw_amount,
+    }
+
+    response = requests.post(f'{CREDIT_CARD_SERVICE_URL}/withdraw_funds', json=data)
+
+    if response.status_code == 200:
+            return 'Form submitted successfully!'
+    else:
+        return f'Failed to submit form.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
+
 ################################### ACTIVITY LOG PAGE ###################################
 
 @app.route('/activity', methods=['GET'])
@@ -126,9 +212,9 @@ def activity():
         return redirect(url_for('login'))
     user_info = fetch_customer_info(username) or {}
     account_number = user_info.get('account_number')
-    print("Account number::>", account_number)
+    # print("Account number::>", account_number)
     activity_info = requests.get(f"{CUSTOMER_ACTIVITY_SERVICE_URL}/getCustomerActivity/{account_number}")
-    print(f"activity_info (one)::> {activity_info.json()}")
+    # print(f"activity_info (one)::> {activity_info.json()}")
     banner = fetch_banners(1)
     return render_template('activity.html', banner=banner, is_logged_in=is_logged_in, **user_info, activity_info=activity_info.json())
 
@@ -140,7 +226,7 @@ def allActivity():
         return redirect(url_for('login'))
     user_info = fetch_customer_info(username) or {}
     activity_info = requests.get(f"{CUSTOMER_ACTIVITY_SERVICE_URL}/getAllCustomerActivities")
-    print(f"activity_info (all)::> {activity_info.json()}")
+    # print(f"activity_info (all)::> {activity_info.json()}")
     banner = fetch_banners(1)
     return render_template('allactivity.html', banner=banner, is_logged_in=is_logged_in, **user_info, activity_info=activity_info.json())
 
@@ -691,6 +777,7 @@ def fetch_customer_info(username):
         "acc_balance": customer_data.get("acc_balance", "0"),
         "dmat_balance": customer_data.get("dmat_balance", "0"),
         "account_number": customer_data.get("account_number", ""),
+        "credit_card": customer_data.get("credit_card", ""),
         "email": customer_data.get("email", ""),
         "contact_no": customer_data.get("contact_no", ""),
         "address": customer_data.get("address", ""),
@@ -699,7 +786,22 @@ def fetch_customer_info(username):
 
     return user_info
 
+def fetch_credit_card_info(username):
+    response = requests.get(f'{CREDIT_CARD_SERVICE_URL}/get_credit_card_info/{username}')
 
+    if response.status_code != 200:
+        return None
+
+    card_data = response.json()
+
+    card_info = {
+        "username": card_data.get("username", ""),
+        "account_number": card_data.get("account_number", ""),
+        "credit_card": card_data.get("credit_card", ""),
+        "balance": card_data.get("balance", ""),
+    }
+
+    return card_info
 
 
 
@@ -740,14 +842,6 @@ def open_account():
     pan_card = request.form['pan_card']
     email = request.form['email']
     address = request.form['address']
-    return redirect(url_for('index'))
-
-@app.route('/generate-credit-card', methods=['POST'])
-def generate_credit_card():
-    # Process the form data
-    account_number = request.form['account_number']
-    secret_passcode = request.form['secret_passcode']
-    dob = request.form['dob']
     return redirect(url_for('index'))
 
 def get_offer_banner(banner_list):

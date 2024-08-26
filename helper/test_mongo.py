@@ -2,9 +2,9 @@ import os
 from pymongo import MongoClient
 
 AUTH_MONGO_DB_HOST = "localhost"
-AUTH_MONGO_DB_PORT = 27025
-AUTH_MONGO_DB_USERNAME = "mongocusactivity"
-AUTH_MONGO_DB_PASSWORD = "customeractivity"
+AUTH_MONGO_DB_PORT = 27026
+AUTH_MONGO_DB_USERNAME = "mongocreditcard"
+AUTH_MONGO_DB_PASSWORD = "creditcard"
 
 mongo_client = MongoClient(
     username=AUTH_MONGO_DB_USERNAME, 
@@ -56,7 +56,7 @@ def retrieve_all_data_from_all_databases():
 
         # Step 2: Iterate over all databases
         for db_name in databases:
-            if db_name == "info":
+            if db_name == "credit_card":
                 print(f"Accessing Database: {db_name}")
                 database = mongo_client[db_name]
                 
