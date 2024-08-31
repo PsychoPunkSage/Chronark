@@ -23,6 +23,17 @@ services:
     networks:
       - vittmitra
 
+  opa:
+    image: openpolicyagent/opa:latest
+    ports:
+      - "8181:8181"
+    volumes:
+      - ./policies:/policies
+    command:
+      - "run"
+      - "--server"
+      - "/policies/rbac.rego"
+      
   # redis-ob-ms:
   #   build:
   #     context: scripts/Redis/CVE-2023-45145
