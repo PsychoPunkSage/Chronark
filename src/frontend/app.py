@@ -73,6 +73,11 @@ CUSTOMER_ACTIVITY_SERVICE_HOST = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_HOST'
 CUSTOMER_ACTIVITY_SERVICE_PORT = os.environ.get('CUSTOMER_ACTIVITY_SERVICE_PORT')
 CUSTOMER_ACTIVITY_SERVICE_URL = f'http://{CUSTOMER_ACTIVITY_SERVICE_HOST}:{CUSTOMER_ACTIVITY_SERVICE_PORT}'
 
+# Payments Service
+PAYMENTS_SERVICE_HOST = os.environ.get('PAYMENTS_SERVICE_HOST')
+PAYMENTS_SERVICE_PORT = os.environ.get('PAYMENTS_SERVICE_PORT')
+PAYMENTS_SERVICE_URL = f'http://{PAYMENTS_SERVICE_HOST}:{PAYMENTS_SERVICE_PORT}'
+
 # Jaegar integration
 JAEGER_AGENT_HOST = os.environ.get('JAEGER_AGENT_HOST')
 JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
@@ -121,7 +126,51 @@ def home():
 
     return render_template('index.html', banner_r=banner[0], banner_l=banner[1], is_logged_in=is_logged_in, **user_info)
 
+################################### PAYMENTS ###################################
+
+@app.route('/payments', methods=['GET'])
+def payments():
+    is_logged_in = 'token' in session
+    username = session.get('username') if 'token' in session else None
+    if not is_logged_in:
+        return redirect(url_for('login'))
+    user_info = fetch_customer_info(username) or {}
+    banner = fetch_banners(3)
+    return render_template('payments.html', banner1=banner[0], banner2=banner[1], banner3=banner[2], is_logged_in=is_logged_in, **user_info)
+
+@app.route('/relay_payments', methods=['POST'])
+def relay_payments():
+    receiver_username = request.form['receiver_username']
+    username = session.get('username') if 'token' in session else None
+    account_number = request.form['account_number']
+    comments = request.form['comments']
+    receiver = request.form['receiver']
+    amount = request.form['amount']
+
+    if not receiver_username or not account_number or not amount or not comments or not username or not receiver:
+        return 'Form data missing!', 400
+    
+    data = {
+        'receiver_username': receiver_username,
+        'username': username,
+        'account_number': account_number,
+        'comments':comments,
+        'to': receiver,
+        'amount': amount
+    }
+
+    print(f"DATA::> {data}")
+
+    response = requests.post(f'{PAYMENTS_SERVICE_URL}/pay', json=data)
+
+    if response.status_code == 200:
+            return 'Form submitted successfully!'
+    else:
+        return f'Failed to submit form.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+
+
 ################################### CREDIT CARD ###################################
+
 @app.route('/creditCard', methods=['GET'])
 def creditCard():
     is_logged_in = 'token' in session
