@@ -607,6 +607,32 @@ services:
       - jaeger
       - customer-info
 
+  payments:
+    build:
+      context: ./src/payments
+      dockerfile: Dockerfile.payments
+    container_name: ms-payments
+    volumes:
+      - ./src/payments/app.py:/app/app.py
+      - ./src/payments/requirements.txt:/app/requirements.txt
+      - ./src/payments/static/:/app/static/
+      - ./src/payments/templates/:/app/templates/
+    ports:
+      - 5014:5014
+    networks:
+      - vittmitra
+    environment:
+      - SELF_PORT=5014
+      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_PORT=5006
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
+    command: python app.py
+    depends_on:
+      - jaeger
+      - customer-info
+      - customer-activity
+
   frontend:
     build:
       context: ./src/frontend
@@ -647,6 +673,8 @@ services:
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
       - CREDIT_CARD_SERVICE_HOST=ms-credit-card
       - CREDIT_CARD_SERVICE_PORT=5013
+      - PAYMENTS_SERVICE_HOST=ms-payments
+      - PAYMENTS_SERVICE_PORT=5014
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
@@ -667,6 +695,7 @@ services:
       - investment
       - deposit-account
       - credit-card
+      - payments
 
 volumes:
   mongo_data:
