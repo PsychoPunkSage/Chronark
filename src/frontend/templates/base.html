@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
+<hebanner>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}Banking System{% endblock %}</title>
@@ -11,7 +11,7 @@
   {% block custom_styles %}
   <!-- Default custom styles can be placed here -->
   {% endblock %}
-</head>
+</hebanner>
 
 <body>
   <!-- <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
@@ -90,6 +90,10 @@
             <a class="nav-link" href="/deposit">Deposit/Withdrawal</a>
           </li>
 
+          <li class="nav-item">
+            <a class="nav-link" href="/payments">Payments</a>
+          </li>
+
           <!-- Activity -->
           <li class="nav-item">
             <a class="nav-link" href="/activity">Activity</a>
@@ -116,7 +120,7 @@
   </nav>
 
 
-  <div class="container" style="padding-top: 70px">
+  <div class="container" style="pbannerding-top: 70px">
     {% block content %}{% endblock %}
   </div>
 
