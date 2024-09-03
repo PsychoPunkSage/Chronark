@@ -1,125 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PERSONAL LENDING</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f4f4f9;
-        color: #333;
-      }
 
-      header {
-        background-color: #4caf50;
-        color: white;
-        padding: 15px 10px;
-        text-align: center;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PAYMENT</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+    }
 
-      nav {
-        background: #333;
-        color: white;
-        overflow: hidden;
-      }
+    header {
+      background-color: #4caf50;
+      color: white;
+      padding: 15px 10px;
+      text-align: center;
+    }
 
-      nav a {
-        float: left;
-        display: block;
-        color: white;
-        text-align: center;
-        padding: 14px 16px;
-        text-decoration: none;
-      }
+    nav {
+      background: #333;
+      color: white;
+      overflow: hidden;
+    }
 
-      nav a:hover {
-        background-color: #ddd;
-        color: black;
-      }
+    nav a {
+      float: left;
+      display: block;
+      color: white;
+      text-align: center;
+      padding: 14px 16px;
+      text-decoration: none;
+    }
 
-      main {
-        padding: 20px;
-      }
+    nav a:hover {
+      background-color: #ddd;
+      color: black;
+    }
 
-      footer {
-        background-color: #333;
-        color: white;
-        text-align: center;
-        padding: 10px 0;
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-      }
+    main {
+      padding: 20px;
+    }
 
-      .container {
-        max-width: 1200px;
-        margin: auto;
-        overflow: hidden;
-      }
+    footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 10px 0;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
 
-      .card {
-        background: white;
-        padding: 20px;
-        margin: 20px 0;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      }
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      overflow: hidden;
+    }
 
-      .card h3 {
-        margin-top: 0;
-      }
+    .card {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
 
-      .card p {
-        line-height: 1.6;
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <h1>Welcome to My PERSONAL LENDING page</h1>
-    </header>
+    .card h3 {
+      margin-top: 0;
+    }
 
-    <main class="container">
-      <h2>Mongo Client</h2>
-      <section class="card">
-        <h3>MONGO Client</h3>
-        <p>{{m_client}}</p>
-      </section>
-      <section class="card">
-        <h3>MONGO host</h3>
-        <p>{{MONGO_DB_HOST}}</p>
-      </section>
-      <section class="card">
-        <h3>MONGO port</h3>
-        <p>{{MONGO_DB_PORT}}</p>
-      </section>
-      <section class="card">
-        <h3>MONGO username</h3>
-        <p>{{MONGO_DB_USERNAME}}</p>
-      </section>
-      <section class="card">
-        <h3>MONGO password</h3>
-        <p>{{MONGO_DB_PASSWORD}}</p>
-      </section>
-      <hr />
-      <h2>MEMCACHED Client</h2>
-      <section class="card">
-        <h3>MEMCACHED Client</h3>
-        <p>{{cache}}</p>
-      </section>
-      <section class="card">
-        <h3>MEMCACHED host</h3>
-        <p>{{MEMCACHED_HOST}}</p>
-      </section>
-      <section class="card">
-        <h3>MEMCACHED port</h3>
-        <p>{{MEMCACHED_PORT}}</p>
-    </main>
+    .card p {
+      line-height: 1.6;
+    }
+  </style>
+</head>
 
-    <footer>
-      <p>PsychoPunkSage &copy; 2024</p>
-    </footer>
-  </body>
+<body>
+  <header>
+    <h1>Welcome to My PAYMENT page</h1>
+  </header>
+
+  <main class="container">
+    <h2>Mongo Client</h2>
+    <section class="card">
+      <h3>MONGO Client</h3>
+      <p>{{m_client}}</p>
+    </section>
+    <section class="card">
+      <h3>SELF Port</h3>
+      <p>{{self_port}}</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>PsychoPunkSage &copy; 2024</p>
+  </footer>
+</body>
+
 </html>
