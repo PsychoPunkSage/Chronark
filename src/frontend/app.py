@@ -78,6 +78,11 @@ PAYMENTS_SERVICE_HOST = os.environ.get('PAYMENTS_SERVICE_HOST')
 PAYMENTS_SERVICE_PORT = os.environ.get('PAYMENTS_SERVICE_PORT')
 PAYMENTS_SERVICE_URL = f'http://{PAYMENTS_SERVICE_HOST}:{PAYMENTS_SERVICE_PORT}'
 
+# ACL Service
+ACL_SERVICE_HOST = os.environ.get('ACL_SERVICE_HOST')
+ACL_SERVICE_PORT = os.environ.get('ACL_SERVICE_PORT')
+ACL_SERVICE_URL = f'http://{ACL_SERVICE_HOST}:{ACL_SERVICE_PORT}/v1/data/authz/allow'
+
 # Jaegar integration
 JAEGER_AGENT_HOST = os.environ.get('JAEGER_AGENT_HOST')
 JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
@@ -109,6 +114,28 @@ tracer = setup_tracer(service_name="frontend", jaeger_host=JAEGER_AGENT_HOST, ja
 
 # Instrument the app
 instrument_app(app)
+
+
+def check_permissions(path, method):
+    # OPA_URL = f'http://{ACL_SERVICE_URL}/v1/data/authz/allow'
+    username = session.get('username')
+    
+    if 'admin' in username:
+        roles = ["admin", "user"]
+    else:
+        roles = ["user"]
+    
+    input_data = {
+        "input": {
+            "path": path,
+            "method": method,
+            "roles": roles
+        }
+    }
+
+    response = requests.post(ACL_SERVICE_URL, json=input_data)
+    return response.json().get('result', False)
+
 
 ################################### LANDING PAGE ###################################
 
@@ -270,9 +297,11 @@ def activity():
 @app.route('/all-activity', methods=['GET'])
 def allActivity():
     is_logged_in = 'token' in session
-    username = session.get('username') if 'token' in session else None
     if not is_logged_in:
         return redirect(url_for('login'))
+    if not check_permissions('all-activity', 'GET'):
+        return "Unauthorized", 403
+    username = session.get('username') if 'token' in session else None
     user_info = fetch_customer_info(username) or {}
     activity_info = requests.get(f"{CUSTOMER_ACTIVITY_SERVICE_URL}/getAllCustomerActivities")
     # print(f"activity_info (all)::> {activity_info.json()}")
@@ -851,47 +880,6 @@ def fetch_credit_card_info(username):
     }
 
     return card_info
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@app.route('/open-account', methods=['POST'])
-def open_account():
-    # Process the form data
-    name = request.form['name']
-    dob = request.form['dob']
-    mobile_no = request.form['mobile_no']
-    pan_card = request.form['pan_card']
-    email = request.form['email']
-    address = request.form['address']
-    return redirect(url_for('index'))
 
 def get_offer_banner(banner_list):
     if not banner_list:
