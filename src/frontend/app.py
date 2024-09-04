@@ -117,7 +117,6 @@ instrument_app(app)
 
 
 def check_permissions(path, method):
-    # OPA_URL = f'http://{ACL_SERVICE_URL}/v1/data/authz/allow'
     username = session.get('username')
     
     if 'admin' in username:
@@ -288,9 +287,7 @@ def activity():
         return redirect(url_for('login'))
     user_info = fetch_customer_info(username) or {}
     account_number = user_info.get('account_number')
-    # print("Account number::>", account_number)
     activity_info = requests.get(f"{CUSTOMER_ACTIVITY_SERVICE_URL}/getCustomerActivity/{account_number}")
-    # print(f"activity_info (one)::> {activity_info.json()}")
     banner = fetch_banners(1)
     return render_template('activity.html', banner=banner, is_logged_in=is_logged_in, **user_info, activity_info=activity_info.json())
 
@@ -302,9 +299,9 @@ def allActivity():
     if not check_permissions('all-activity', 'GET'):
         return "Unauthorized", 403
     username = session.get('username') if 'token' in session else None
+
     user_info = fetch_customer_info(username) or {}
     activity_info = requests.get(f"{CUSTOMER_ACTIVITY_SERVICE_URL}/getAllCustomerActivities")
-    # print(f"activity_info (all)::> {activity_info.json()}")
     banner = fetch_banners(1)
     return render_template('allactivity.html', banner=banner, is_logged_in=is_logged_in, **user_info, activity_info=activity_info.json())
 

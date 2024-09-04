@@ -4,7 +4,7 @@ default allow = false
 
 roles = {
     "admin": {"all-activity": ["GET"]},
-    "user": {"home": ["GET"], "payments": ["GET"], "creditCard": ["GET"], "activity": ["GET"]}
+    "user": {"activity": ["GET"]}
 }
 
 allow {
