@@ -2,12 +2,17 @@ import os
 import hashlib
 from pymongo import MongoClient
 from flask import Flask, render_template, request, jsonify
+import requests
 
 SELF_PORT = os.environ.get('SELF_PORT')
 MONGO_DB_HOST = os.environ.get('MONGO_DB_HOST')
 MONGO_DB_PORT = os.environ.get('MONGO_DB_PORT')
 MONGO_DB_USERNAME = os.environ.get('MONGO_DB_USERNAME')
 MONGO_DB_PASSWORD = os.environ.get('MONGO_DB_PASSWORD')
+# Wealth Management Service
+WEALTH_MGMT_HOST = os.environ.get('WEALTH_MGMT_HOST')
+WEALTH_MGMT_PORT = os.environ.get('WEALTH_MGMT_PORT')
+WEALTH_MGMT_URL = f'http://{WEALTH_MGMT_HOST}:{WEALTH_MGMT_PORT}'
 
 app = Flask(__name__)
 
@@ -93,6 +98,17 @@ def updateCustomerActivity():
     if request.method == "POST":
         customer_activity.insert_one(jsondata)
         return "Success", 200
+    
+    wealth_mgmt_data = {
+        "amount": transaction_amount,
+        "txn_id": transaction_id,
+        "txn_type": transaction_type,
+        "username": username,
+    }
+
+    response = requests.post(f'{WEALTH_MGMT_URL}/configureTaxSlab', json=wealth_mgmt_data)
+    if response.status_code != 200:
+        return f'Failed to Update TAX Data  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
     
     if request.method == "PUT":
         existing_tx = customer_activity.find_one({"transaction_id": transaction_id})
