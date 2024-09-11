@@ -2,9 +2,9 @@ import os
 from pymongo import MongoClient
 
 AUTH_MONGO_DB_HOST = "localhost"
-AUTH_MONGO_DB_PORT = 27026
-AUTH_MONGO_DB_USERNAME = "mongocreditcard"
-AUTH_MONGO_DB_PASSWORD = "creditcard"
+AUTH_MONGO_DB_PORT = 27027
+AUTH_MONGO_DB_USERNAME = "mongowealthmgmt"
+AUTH_MONGO_DB_PASSWORD = "wealthmgmt"
 
 mongo_client = MongoClient(
     username=AUTH_MONGO_DB_USERNAME, 
