@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Wealth Management{% endblock %}
+{% block custom_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+{% endblock %}
+{% block content %}
+
+<div class="main-container">
+    <div class="container mt-5">
+        {{tax_info}}
+        <h1 class="text-center">Wealth Management Dashboard</h1>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <img src="{{ customer_pic_url }}" class="profile-img img-fluid rounded-circle mb-3 fixed-height"
+                            alt="Customer Photo" />
+                        <h3 class="mt-3">{{ name }}</h3>
+                        <div class="input-group flex-nowrap justify-content-center">
+                            <span class="input-group-text" id="addon-wrapping">@</span>
+                            <input type="text" class="form-control text-center" placeholder="{{ username }}"
+                                aria-label="Username" aria-describedby="addon-wrapping" disabled />
+                        </div>
+                        <hr />
+                        <p class="text-muted">{{ email }}</p>
+                        <p>{{ contact_no }}</p>
+                        <p>{{ address }}</p>
+                    </div>
+                </div>
+
+                {% if banner_r %}
+                <div class="card mb-3 mt-3">
+                    <img src="{{ banner_r.url }}" class="card-img-top" alt="{{ banner_r.alt }}" />
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-9">
+                <!-- Tax Summary Section -->
+                <div class="card mt-4">
+                    <div class="card-header">Your Tax Summary</div>
+                    <div class="card-body">
+                        {% if tax_info.transactions|length == 0 %}
+                        <p>No taxable transactions available.</p>
+                        {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Transaction ID</th>
+                                        <th scope="col">From</th>
+                                        <th scope="col">To</th>
+                                        <th scope="col">Timestamp</th>
+                                        <th scope="col">Type</th>
+                                        <th scope="col">Amount <br />(in Rs.)</th>
+                                        <th scope="col">Tax <br />(in Rs.)</th>
+                                        <th scope="col">Total Amount</th>
+                                        <th scope="col">Comments</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in tax_info.transactions|sort(attribute='timestamp',
+                                    reverse=True) %}
+                                    <tr>
+                                        <td>{{ transaction.transaction_id }}</td>
+                                        <td>{{ transaction.from_acc }}</td>
+                                        <td>{{ transaction.to_acc }}</td>
+                                        <td>{{ transaction.timestamp }}</td>
+                                        <td>{{ transaction.transaction_type }}</td>
+                                        <td>{{ transaction.transaction_amount }}</td>
+                                        <td>{{ transaction.tax }}</td>
+                                        <td>{{ transaction.total_amount }}</td>
+                                        <td>{{ transaction.comments }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-end"><strong>Total Tax to Pay: Rs. {{ tax_info.total_tax }}</strong></p>
+                        <div>
+                            <form method="POST" action="/record_tax_payments">
+                                <div class="form-group mt-3">
+                                    <label for="tax_id">Tax ID</label>
+                                    <input type="text" class="form-control" id="tax_id" name="tax_id"
+                                        placeholder="Enter Tax ID" required />
+                                </div>
+                                <button type="submit" class="btn btn-lg btn-success">
+                                    Pay Tax
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
