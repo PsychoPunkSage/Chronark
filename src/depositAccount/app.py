@@ -61,7 +61,7 @@ def deposit():
     response = requests.post(f'{CUSTOMER_ACTIVITY_SERVICE_URL}/updateCustomerActivity', json=activity_data)
     if response.status_code != 200:
         return f'Failed to Update Activity  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
-    
+
     return jsonify({"status": "success", "message": "Deposit successful", "new_balance": new_balance}), 200
 
 @app.route('/withdraw', methods=['POST'])
