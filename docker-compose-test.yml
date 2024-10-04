@@ -643,22 +643,170 @@ services:
       - customer-info
       - customer-activity
 
-  frontend:
+  haproxy:
+    image: haproxy:latest
+    container_name: haproxy
+    ports:
+      - 80:80
+    volumes:
+      - ./src/frontend/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    networks:
+      - vittmitra
+    depends_on:
+      - frontend-1
+      - frontend-2
+      - frontend-3
+
+  frontend-1:
     build:
       context: ./src/frontend
-      dockerfile: Dockerfile.frontend
-    container_name: ms-frontend
+      dockerfile: Dockerfile.frontend1
+    container_name: ms-frontend-1
     volumes:
       - ./src/frontend/static/:/app/static/
       - ./src/frontend/templates/:/app/templates/
       - ./src/frontend/app.py:/app/app.py
       - ./src/frontend/tracing.py:/app/tracing.py
     ports:
-      - 5001:5001
+      - 4001:4001
     networks:
       - vittmitra
     environment:
-      - SELF_PORT=5001
+      - SELF_PORT=4001
+      - OFFER_BANNER_SERVICE_HOST=ms-offer-banner
+      - OFFER_BANNER_SERVICE_PORT=5002
+      - CONTACT_SERVICE_HOST=ms-contacts
+      - CONTACT_SERVICE_PORT=5003
+      - SEARCH_SERVICE_HOST=ms-search
+      - SEARCH_SERVICE_PORT=5004
+      - AUTH_SERVICE_HOST=authentication
+      - AUTH_SERVICE_PORT=5005
+      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_PORT=5006
+      - PERSONAL_LENDING_SERVICE_HOST=ms-personal-lending
+      - PERSONAL_LENDING_SERVICE_PORT=5007
+      - MORTGAGE_SERVICE_HOST=ms-mortgage
+      - MORTGAGE_SERVICE_PORT=5008
+      - INVESTMENT_SERVICE_HOST=ms-investment
+      - INVESTMENT_SERVICE_PORT=5009
+      - BUSINESS_LENDING_SERVICE_HOST=ms-business-lending
+      - BUSINESS_LENDING_SERVICE_PORT=5010
+      - DEPOSIT_WITHDRAWL_SERVICE_HOST=ms-deposit-account
+      - DEPOSIT_WITHDRAWL_SERVICE_PORT=5011
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
+      - CREDIT_CARD_SERVICE_HOST=ms-credit-card
+      - CREDIT_CARD_SERVICE_PORT=5013
+      - PAYMENTS_SERVICE_HOST=ms-payments
+      - PAYMENTS_SERVICE_PORT=5014
+      - ACL_SERVICE_HOST=ms-acl
+      - ACL_SERVICE_PORT=8181
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+    command: python app.py
+    depends_on:
+      - jaeger
+      - offer-banner
+      - contacts
+      - search
+      - redis-ob-ms
+      - redis-search-ms
+      - mongo
+      - authentication
+      - customer-info
+      - customer-activity
+      - personal-lending
+      - business-lending
+      - mortgage
+      - investment
+      - deposit-account
+      - credit-card
+      - payments
+      - opa
+
+  frontend-2:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile.frontend1
+    container_name: ms-frontend-2 # <<<
+    volumes:
+      - ./src/frontend/static/:/app/static/
+      - ./src/frontend/templates/:/app/templates/
+      - ./src/frontend/app.py:/app/app.py
+      - ./src/frontend/tracing.py:/app/tracing.py
+    ports:
+      - 4002:4002 # <<<
+    networks:
+      - vittmitra
+    environment:
+      - SELF_PORT=4002 # <<<
+      - OFFER_BANNER_SERVICE_HOST=ms-offer-banner
+      - OFFER_BANNER_SERVICE_PORT=5002
+      - CONTACT_SERVICE_HOST=ms-contacts
+      - CONTACT_SERVICE_PORT=5003
+      - SEARCH_SERVICE_HOST=ms-search
+      - SEARCH_SERVICE_PORT=5004
+      - AUTH_SERVICE_HOST=authentication
+      - AUTH_SERVICE_PORT=5005
+      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_PORT=5006
+      - PERSONAL_LENDING_SERVICE_HOST=ms-personal-lending
+      - PERSONAL_LENDING_SERVICE_PORT=5007
+      - MORTGAGE_SERVICE_HOST=ms-mortgage
+      - MORTGAGE_SERVICE_PORT=5008
+      - INVESTMENT_SERVICE_HOST=ms-investment
+      - INVESTMENT_SERVICE_PORT=5009
+      - BUSINESS_LENDING_SERVICE_HOST=ms-business-lending
+      - BUSINESS_LENDING_SERVICE_PORT=5010
+      - DEPOSIT_WITHDRAWL_SERVICE_HOST=ms-deposit-account
+      - DEPOSIT_WITHDRAWL_SERVICE_PORT=5011
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
+      - CREDIT_CARD_SERVICE_HOST=ms-credit-card
+      - CREDIT_CARD_SERVICE_PORT=5013
+      - PAYMENTS_SERVICE_HOST=ms-payments
+      - PAYMENTS_SERVICE_PORT=5014
+      - ACL_SERVICE_HOST=ms-acl
+      - ACL_SERVICE_PORT=8181
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+    command: python app.py
+    depends_on:
+      - jaeger
+      - offer-banner
+      - contacts
+      - search
+      - redis-ob-ms
+      - redis-search-ms
+      - mongo
+      - authentication
+      - customer-info
+      - customer-activity
+      - personal-lending
+      - business-lending
+      - mortgage
+      - investment
+      - deposit-account
+      - credit-card
+      - payments
+      - opa
+
+  frontend-3:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile.frontend1
+    container_name: ms-frontend-3 # <<<
+    volumes:
+      - ./src/frontend/static/:/app/static/
+      - ./src/frontend/templates/:/app/templates/
+      - ./src/frontend/app.py:/app/app.py
+      - ./src/frontend/tracing.py:/app/tracing.py
+    ports:
+      - 4003:4003 # <<<
+    networks:
+      - vittmitra
+    environment:
+      - SELF_PORT=4003 # <<<
       - OFFER_BANNER_SERVICE_HOST=ms-offer-banner
       - OFFER_BANNER_SERVICE_PORT=5002
       - CONTACT_SERVICE_HOST=ms-contacts
