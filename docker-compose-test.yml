@@ -311,11 +311,10 @@ services:
       dockerfile: Dockerfile.contact
     container_name: ms-contacts
     volumes:
-      - ./src/contact/app.py:/app/app.py
-      - ./src/contact/conf/mongo.conf:/app/conf/mongo.conf
-      - ./src/contact/templates/index.html:/app/templates/index.html
-      - ./src/contact/templates/contact.html:/app/templates/contact.html
-      - ./src/contact/requirements.txt:/app/requirements.txt
+      - ./src/contact/app.js:/app/app.js
+      - ./src/contact/templates/:/app/templates/
+      - ./src/contact/package.json:/app/package.json
+      - ./src/contact/package-lock.json:/app/package-lock.json
     ports:
       - 5003:5003
     networks:
@@ -328,7 +327,7 @@ services:
       - MONGO_DB_PASSWORD=contact
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
-    command: python app.py
+    command: node app.js
     depends_on:
       - jaeger
       - mongo
