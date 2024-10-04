@@ -2,7 +2,7 @@ import json
 import requests
 
 # Urls
-url_offer_banner = 'http://localhost:5001/setOfferBanner'
+url_offer_banner = 'http://localhost:4001/setOfferBanner'
 url_bank_contacts = 'http://localhost:5003/updateContacts'
 url_faq = 'http://localhost:5003/updateFaqs'
 url_index = 'http://localhost:5004/updateIndex'
