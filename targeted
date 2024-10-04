@@ -1,9 +1,9 @@
-# Nmap 7.95 scan initiated Sun Jun 30 21:02:16 2024 as: /snap/nmap/3470/usr/bin/nmap -sC -sV -v -Pn -n -p 6379,6380,5001 -oN targeted 127.0.0.1
+# Nmap 7.95 scan initiated Sun Jun 30 21:02:16 2024 as: /snap/nmap/3470/usr/bin/nmap -sC -sV -v -Pn -n -p 6379,6380,4001 -oN targeted 127.0.0.1
 Nmap scan report for 127.0.0.1
 Host is up (0.00040s latency).
 
 PORT     STATE SERVICE    VERSION
-5001/tcp open  http       Werkzeug httpd 3.0.3 (Python 3.12.0)
+4001/tcp open  http       Werkzeug httpd 3.0.3 (Python 3.12.0)
 | http-methods: 
 |_  Supported Methods: OPTIONS HEAD GET
 |_http-title: Banking System

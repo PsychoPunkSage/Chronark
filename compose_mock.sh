@@ -50,10 +50,10 @@ function start_containers() {
     echo " <ms-frontend> Building the image....."
     sudo docker build -f Dockerfile.frontend -t $FRONTEND_IMAGE .
     echo " <ms-frontend> Running the image....."
-    sudo docker run -p 5001:5001 --net $NETWORK_NAME --name $FRONTEND_CONTAINER_NAME -d -e OFFER_BANNER_SERVICE_HOST="$OFFER_BANNER_CONTAINER_NAME" -e OFFER_BANNER_SERVICE_PORT="5002"  $FRONTEND_IMAGE
+    sudo docker run -p 4001:4001 --net $NETWORK_NAME --name $FRONTEND_CONTAINER_NAME -d -e OFFER_BANNER_SERVICE_HOST="$OFFER_BANNER_CONTAINER_NAME" -e OFFER_BANNER_SERVICE_PORT="5002"  $FRONTEND_IMAGE
     
     echo "__________________________________"
-    echo "| VISIT::> http://127.0.0.1:5001 |"
+    echo "| VISIT::> http://127.0.0.1:4001 |"
     echo "|--------------------------------|"
 }
 

@@ -150,7 +150,7 @@ def home():
 
     user_info = fetch_customer_info(username) or {}
 
-    return render_template('index.html', banner_r=banner[0], banner_l=banner[1], is_logged_in=is_logged_in, **user_info)
+    return render_template('index.html', banner_r=banner[0], banner_l=banner[1], is_logged_in=is_logged_in, **user_info, port=SELF_PORT)
 
 ################################### PAYMENTS ###################################
 
