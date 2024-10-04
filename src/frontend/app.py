@@ -765,7 +765,7 @@ def record_conv():
         }
         print("++++ DATA ++++", data)
         response = requests.post(f'{CONTACT_SERVICE_URL}/updateConvs', json=data)
-        if response.status_code == 200:
+        if response.status_code == 201:
             return 'Form submitted successfully!'
         else:
             return 'Failed to submit form.', response.status_code
