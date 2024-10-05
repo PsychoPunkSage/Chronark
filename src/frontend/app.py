@@ -651,6 +651,8 @@ def login():
             session['username'] = response.json()['username']
             print("RESPONSE::>", response.json())
             return redirect(url_for('home'))
+            # redirect(url_for('home'))
+            # return response.content
         else:
             flash('Login failed. Check your username and password.')
     return render_template('login.html')
@@ -688,6 +690,7 @@ def logout():
     token = session.pop('token', None)
     if token:
         requests.post(f'{AUTH_SERVICE_URL}/logout', headers={'Authorization': token})
+        session.clear() 
     return redirect(url_for('login'))
 
 # ======================================================================================================================================================================================== #
