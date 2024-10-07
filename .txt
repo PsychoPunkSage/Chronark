@@ -1,3 +1,0 @@
-curl can handle cookie
-
-> cookiejar....

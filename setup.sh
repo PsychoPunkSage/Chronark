@@ -23,7 +23,7 @@ if [ $? -eq 0 ]; then
     echo "Python script executed successfully."
     echo ""
     echo "==================================="
-    echo "|| Visit: http://localhost:4001/ ||"
+    echo "|| Visit: http://localhost:80/ ||"
     echo "==================================="
 
     echo "Note: Visit ./src/api to get an idea of structure of API calls."
