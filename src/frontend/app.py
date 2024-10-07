@@ -169,7 +169,7 @@ def wealth_mgmt():
     user_info = fetch_customer_info(username) or {}
     username = user_info.get('username')
     tax_info= requests.get(f"{WEALTH_MGMT_URL}/getTaxes/{username}")
-    return render_template('wealth_mgmt.html', is_logged_in=is_logged_in, **user_info, tax_info=tax_info)
+    return render_template('wealth_mgmt.html', is_logged_in=is_logged_in, **user_info, tax_info=tax_info.json())
 
 @app.route('/record_tax_payments', methods=['GET', 'POST'])
 def record_tax_payments():
@@ -189,7 +189,7 @@ def record_tax_payments():
     if resp.status_code == 200:
         return 'Payment successful!', 200
     else:
-        return f'Failed to submit form.  <br>Status Code: {resp.status_code} <br>Error: {resp.json()}'
+        return f'Failed to submit form.  <br>Status Code: {resp.status_code} <br>Error: {resp.json()} Username: {username}'
 
 ################################### PAYMENTS ###################################
 

@@ -7,9 +7,9 @@
 
 <div class="main-container">
     <div class="container mt-5">
-        {{tax_info}}
         <h1 class="text-center">Wealth Management Dashboard</h1>
         <div class="row">
+            <!-- Customer Information Section -->
             <div class="col-md-3">
                 <div class="card text-center">
                     <div class="card-body">
@@ -35,63 +35,75 @@
                 {% endif %}
             </div>
 
+            <!-- Tax Summary and Payment Section -->
             <div class="col-md-9">
                 <!-- Tax Summary Section -->
                 <div class="card mt-4">
-                    <div class="card-header">Your Tax Summary</div>
+                    <div class="card-header">
+                        <h5 class="mb-0">Your Tax Summary</h5>
+                    </div>
                     <div class="card-body">
                         {% if tax_info.transactions|length == 0 %}
                         <p>No taxable transactions available.</p>
                         {% else %}
                         <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
+                            <table class="table table-striped table-bordered">
+                                <thead class="table-dark">
                                     <tr>
-                                        <th scope="col">Transaction ID</th>
-                                        <th scope="col">From</th>
-                                        <th scope="col">To</th>
-                                        <th scope="col">Timestamp</th>
-                                        <th scope="col">Type</th>
-                                        <th scope="col">Amount <br />(in Rs.)</th>
+                                        <th scope="col">Tax ID</th>
+                                        <th scope="col">Slab</th>
                                         <th scope="col">Tax <br />(in Rs.)</th>
-                                        <th scope="col">Total Amount</th>
-                                        <th scope="col">Comments</th>
+                                        <th scope="col">Amount <br />(in Rs.)</th>
+                                        <th scope="col">Txn ID</th>
+                                        <th scope="col">Txn Type</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for transaction in tax_info.transactions|sort(attribute='timestamp',
                                     reverse=True) %}
                                     <tr>
-                                        <td>{{ transaction.transaction_id }}</td>
-                                        <td>{{ transaction.from_acc }}</td>
-                                        <td>{{ transaction.to_acc }}</td>
-                                        <td>{{ transaction.timestamp }}</td>
-                                        <td>{{ transaction.transaction_type }}</td>
-                                        <td>{{ transaction.transaction_amount }}</td>
+                                        <td>{{ transaction.tax_id }}</td>
+                                        <td>{{ transaction.taxSlab }}</td>
                                         <td>{{ transaction.tax }}</td>
-                                        <td>{{ transaction.total_amount }}</td>
-                                        <td>{{ transaction.comments }}</td>
+                                        <td>{{ transaction.amount }}</td>
+                                        <td>{{ transaction.txn_id }}</td>
+                                        <td>{{ transaction.txn_type }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-                        <p class="text-end"><strong>Total Tax to Pay: Rs. {{ tax_info.total_tax }}</strong></p>
-                        <div>
-                            <form method="POST" action="/record_tax_payments">
-                                <div class="form-group mt-3">
-                                    <label for="tax_id">Tax ID</label>
-                                    <input type="text" class="form-control" id="tax_id" name="tax_id"
-                                        placeholder="Enter Tax ID" required />
-                                </div>
-                                <button type="submit" class="btn btn-lg btn-success">
-                                    Pay Tax
-                                </button>
-                            </form>
+
+                        <!-- Total Tax Display -->
+                        <div class="alert alert-info text-center mt-4" role="alert">
+                            <h4>Total Tax to Pay: <strong>Rs. {{ tax_info.total_tax }}</strong></h4>
                         </div>
+
                         {% endif %}
                     </div>
                 </div>
+
+                <!-- Pay Tax Section -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Pay Your Tax</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/record_tax_payments">
+                            <div class="form-group mb-3">
+                                <label for="tax_id">Tax ID</label>
+                                <input type="text" class="form-control" id="tax_id" name="tax_id"
+                                    placeholder="Enter Tax ID" required />
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-lg btn-success">
+                                    Pay Tax
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
