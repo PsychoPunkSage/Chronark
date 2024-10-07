@@ -9,104 +9,80 @@ block custom_styles %}
 
     <!-- View Mortgages Section -->
     <div class="card mt-4">
-      <div class="card-header">View Your Mortgages</div>
+      <div class="card-header">
+        <h5 class="mb-0">
+          View Your Mortgages
+        </h5>
+      </div>
       <div class="card-body">
         {% if mortgages|length == 0 %}
         <p>No mortgages available.</p>
         {% else %}
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th scope="col">Mortgage ID</th>
-              <th scope="col">Amount <br />(in Rs.)</th>
-              <th scope="col">Term <br />(in years)</th>
-              <th scope="col">Monthly Payment <br />(in Rs./month)</th>
-              <th scope="col">Property Value <br />(in Rs.)</th>
-              <th scope="col">Outstanding Balance <br />(in Rs.)</th>
-              <th scope="col">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for mortgage in mortgages %}
-            <tr>
-              <td>{{ mortgage.mortgage_id }}</td>
-              <td>{{ mortgage.amount }}</td>
-              <td>{{ mortgage.term }}</td>
-              <td>{{ mortgage.monthly_payment }}</td>
-              <td>{{ mortgage.property_value }}</td>
-              <td>{{ mortgage.outstanding_balance }}</td>
-              <td>{{ mortgage.status }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">Mortgage ID</th>
+                <th scope="col">Amount <br />(in Rs.)</th>
+                <th scope="col">Term <br />(in years)</th>
+                <th scope="col">Monthly Payment <br />(in Rs./month)</th>
+                <th scope="col">Property Value <br />(in Rs.)</th>
+                <th scope="col">Outstanding Balance <br />(in Rs.)</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for mortgage in mortgages %}
+              <tr>
+                <td>{{ mortgage.mortgage_id }}</td>
+                <td>{{ mortgage.amount }}</td>
+                <td>{{ mortgage.term }}</td>
+                <td>{{ mortgage.monthly_payment }}</td>
+                <td>{{ mortgage.property_value }}</td>
+                <td>{{ mortgage.outstanding_balance }}</td>
+                <td>{{ mortgage.status }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
         {% endif %}
       </div>
     </div>
 
     <!-- Apply for Mortgage Section -->
     <div class="card mt-4">
-      <div class="card-header">Apply for a Mortgage</div>
+      <div class="card-header">
+        <h5 class="mb-0">
+          Apply for a Mortgage
+        </h5>
+      </div>
       <div class="card-body">
         <form id="applyMortgageForm" method="post" action="/record_mortgage">
           <div class="mb-3">
-            <label for="mortgageAmount" class="form-label"
-              >Mortgage Amount</label
-            >
-            <input
-              type="number"
-              class="form-control"
-              id="mortgageAmount"
-              name="amount"
-              placeholder="Enter mortgage amount"
-              required
-            />
+            <label for="mortgageAmount" class="form-label">Mortgage Amount</label>
+            <input type="number" class="form-control" id="mortgageAmount" name="amount"
+              placeholder="Enter mortgage amount" required />
           </div>
           <div class="mb-3">
             <label for="mortgageTerm" class="form-label">Mortgage Term</label>
-            <input
-              type="text"
-              class="form-control"
-              id="mortgageTerm"
-              name="term"
-              placeholder="Enter mortgage term"
-              required
-            />
+            <input type="text" class="form-control" id="mortgageTerm" name="term" placeholder="Enter mortgage term"
+              required />
           </div>
           <div class="mb-3">
-            <label for="mortgagePurpose" class="form-label"
-              >Property Purpose</label
-            >
-            <input
-              type="text"
-              class="form-control"
-              id="mortgagePurpose"
-              name="purpose"
-              placeholder="Enter property purpose"
-              required
-            />
+            <label for="mortgagePurpose" class="form-label">Property Purpose</label>
+            <input type="text" class="form-control" id="mortgagePurpose" name="purpose"
+              placeholder="Enter property purpose" required />
           </div>
           <div class="mb-3">
             <label for="propertyValue" class="form-label">Property Value</label>
-            <input
-              type="number"
-              class="form-control"
-              id="propertyValue"
-              name="property_value"
-              placeholder="Enter property value"
-              required
-            />
+            <input type="number" class="form-control" id="propertyValue" name="property_value"
+              placeholder="Enter property value" required />
           </div>
           <div class="mb-3">
             <label for="downPayment" class="form-label">Down Payment</label>
-            <input
-              type="number"
-              class="form-control"
-              id="downPayment"
-              name="down_payment"
-              placeholder="Enter down payment"
-              required
-            />
+            <input type="number" class="form-control" id="downPayment" name="down_payment"
+              placeholder="Enter down payment" required />
           </div>
           <button type="submit" class="btn btn-success">
             Apply for Mortgage
@@ -118,30 +94,22 @@ block custom_styles %}
 
     <!-- Pay Mortgage Section -->
     <div class="card mt-4">
-      <div class="card-header">Pay Off a Mortgage</div>
+      <div class="card-header">
+        <h5 class="mb-0">
+          Pay Off a Mortgage
+        </h5>
+      </div>
       <div class="card-body">
         <form id="payMortgageForm" method="post" action="/payout_mortgage">
           <div class="mb-3">
             <label for="mortgageId" class="form-label">Mortgage ID</label>
-            <input
-              type="text"
-              class="form-control"
-              id="mortgageId"
-              name="mortgage_id"
-              placeholder="Enter mortgage ID"
-              required
-            />
+            <input type="text" class="form-control" id="mortgageId" name="mortgage_id" placeholder="Enter mortgage ID"
+              required />
           </div>
           <div class="mb-3">
             <label for="payAmount" class="form-label">Payment Amount</label>
-            <input
-              type="number"
-              class="form-control"
-              id="payAmount"
-              name="pay_amount"
-              placeholder="Enter payment amount"
-              required
-            />
+            <input type="number" class="form-control" id="payAmount" name="pay_amount"
+              placeholder="Enter payment amount" required />
           </div>
           <button type="submit" class="btn btn-warning">Pay Mortgage</button>
         </form>

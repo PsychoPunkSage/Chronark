@@ -1,14 +1,16 @@
-{% extends "base.html" %} {% block title %}Banking System{% endblock %} {% block
-custom_styles %}
+{% extends "base.html" %}
+{% block title %}Banking System{% endblock %}
+{% block custom_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
-{% endblock %} {% block content %}
+{% endblock %}
+{% block content %}
 
 <div class="main-container">
     <div class="container mt-5">
         <h1 class="text-center">Payment Processing</h1>
         <div class="row">
+            <!-- Sender Info Section -->
             <div class="col-md-3">
-                <!-- Sender Info Card -->
                 <div class="card text-center">
                     <div class="card-body">
                         <img src="{{ customer_pic_url }}" class="profile-img img-fluid rounded-circle mb-3 fixed-height"
@@ -27,55 +29,77 @@ custom_styles %}
                 </div>
 
                 <!-- Ad Space 1 -->
+                {% if banner1 %}
                 <div class="card mb-3 mt-3">
                     <img src="{{ banner1.url }}" class="card-img-top" alt="{{ banner1.alt }}" />
                 </div>
+                {% endif %}
             </div>
 
+            <!-- Payment Details Section -->
             <div class="col-md-6">
-                <!-- Payment Details Card -->
-                <form method="POST" action="/relay_payments">
-                    <div class="form-group mt-3">
-                        <label for="receiver_username">Receiver Username</label>
-                        <input type="text" class="form-control" id="receiver_username" name="receiver_username"
-                            placeholder="Enter receiver's username" required />
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Enter Payment Details</h5>
                     </div>
+                    <div class="card-body">
+                        <form method="POST" action="/relay_payments">
+                            <div class="form-group mb-3">
+                                <label for="receiver_username">Receiver Username</label>
+                                <input type="text" class="form-control" id="receiver_username" name="receiver_username"
+                                    placeholder="Enter receiver's username" required />
+                            </div>
 
-                    <div class="form-group mt-3">
-                        <label for="account_number">Receiver Account Number</label>
-                        <input type="text" class="form-control" id="account_number" name="account_number"
-                            placeholder="Enter receiver's account number" required />
+                            <div class="form-group mb-3">
+                                <label for="account_number">Receiver Account Number</label>
+                                <input type="text" class="form-control" id="account_number" name="account_number"
+                                    placeholder="Enter receiver's account number" required />
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="receiver">Receiver Name</label>
+                                <input type="text" class="form-control" id="receiver" name="receiver"
+                                    placeholder="Enter receiver's name" required />
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="amount">Amount (in Rs.)</label>
+                                <input type="number" class="form-control" id="amount" name="amount"
+                                    placeholder="Enter amount to send" required />
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="comments">Comments (Optional)</label>
+                                <textarea class="form-control" id="comments" name="comments" rows="3"
+                                    placeholder="Add any comments (optional)"></textarea>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-lg btn-success">Submit Payment</button>
+                            </div>
+                        </form>
                     </div>
+                </div>
+            </div>
 
-                    <div class="form-group mt-3">
-                        <label for="account_number">Receiver Name</label>
-                        <input type="text" class="form-control" id="receiver" name="receiver"
-                            placeholder="Enter receiver's account number" required />
-                    </div>
-
-                    <div class="form-group mt-3">
-                        <label for="amount">Amount (in Rs.)</label>
-                        <input type="number" class="form-control" id="amount" name="amount"
-                            placeholder="Enter amount to send" required />
-                    </div>
-
-                    <div class="form-group mt-3">
-                        <label for="comments">Comments (Optional)</label>
-                        <textarea class="form-control" id="comments" name="comments" rows="3"
-                            placeholder="Add any comments (optional)"></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-lg btn-success mt-4">Submit Payment</button>
-                </form>
+            <!-- Ad Space 2 -->
+            <div class="col-md-3">
+                {% if banner2 %}
+                <div class="card mb-3 mt-3">
+                    <img src="{{ banner2.url }}" class="card-img-top" alt="{{ banner2.alt }}" />
+                </div>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Ad Space 3 -->
+        <!-- Ad Space 3 (Full-width) -->
         <div class="row mt-5">
             <div class="col-md-12">
+                {% if banner3 %}
                 <div class="card">
                     <img src="{{ banner3.url }}" class="card-img-top" alt="{{ banner3.alt }}" />
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>

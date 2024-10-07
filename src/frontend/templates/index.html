@@ -56,12 +56,26 @@ custom_styles %}
       <div class="col-md-8">
         <div class="card mb-3">
           <div class="card-body">
-            <h4 class="card-title">Account Details</h4>
-            <p><strong>Account Number:</strong> {{ account_number }}</p>
-            <p><strong>Account Balance:</strong> ₹{{ acc_balance }}</p>
-            <p><strong>DMAT Balance:</strong> ₹{{ dmat_balance }}</p>
+            <h4 class="card-title text-center mb-3">Account Details</h4>
+            <table class="table table-striped table-bordered">
+              <tbody>
+                <tr>
+                  <th scope="row">Account Number</th>
+                  <td>{{ account_number }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Account Balance</th>
+                  <td>₹{{ acc_balance }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">DMAT Balance</th>
+                  <td>₹{{ dmat_balance }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
+
 
         <div class="card mb-3">
           <div class="card-body">
