@@ -170,12 +170,10 @@ def wealth_mgmt():
     username = user_info.get('username')
     tax_info= requests.get(f"{WEALTH_MGMT_URL}/getTaxes/{username}")
     return render_template('wealth_mgmt.html', is_logged_in=is_logged_in, **user_info, tax_info=tax_info.json())
-
 @app.route('/record_tax_payments', methods=['GET', 'POST'])
 def record_tax_payments():
     username = session.get('username') if 'token' in session else None
     tax_id = request.form['tax_id']
-
     if not username or not tax_id:
         return 'Form data missing!', 400
     
@@ -183,9 +181,7 @@ def record_tax_payments():
         'tax_id': tax_id,
         'username': username
     }
-
     resp = requests.post(f"{WEALTH_MGMT_URL}/payTaxes", json=data)
-
     if resp.status_code == 200:
         return 'Payment successful!', 200
     else:
