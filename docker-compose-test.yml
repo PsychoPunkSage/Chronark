@@ -198,19 +198,6 @@ services:
       - vittmitra
     volumes:
       - mongodb_credit_card:/data/db
-  
-  mongo-wealth-mgmt:
-    image: mongo:7.0
-    container_name: db-mongo-wealth-mgmt
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=mongowealthmgmt
-      - MONGO_INITDB_ROOT_PASSWORD=wealthmgmt
-    ports:
-      - 27027:27017
-    networks:
-      - vittmitra
-    volumes:
-      - mongodb_wealth_mgmt:/data/db
 
   mongo-express:
     image: mongo-express
@@ -461,8 +448,6 @@ services:
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocusactivity
       - MONGO_DB_PASSWORD=customeractivity
-      - WEALTH_MGMT_HOST=ms-wealth-mgmt
-      - WEALTH_MGMT_PORT=5015
     command: python app.py
     depends_on:
       - jaeger
@@ -654,37 +639,6 @@ services:
     command: python app.py
     depends_on:
       - jaeger
-      - customer-info
-      - customer-activity
-
-  wealth-mgmt:
-    build:
-      context: ./src/wealth_mgmt
-      dockerfile: Dockerfile.wealth_mgmt
-    container_name: ms-wealth-mgmt
-    volumes:
-      - ./src/wealth_mgmt/app.py:/app/app.py
-      - ./src/wealth_mgmt/requirements.txt:/app/requirements.txt
-      - ./src/wealth_mgmt/static/:/app/static/
-      - ./src/wealth_mgmt/templates/:/app/templates/
-    ports:
-      - 5015:5015
-    networks:
-      - vittmitra
-    environment:
-      - SELF_PORT=5015
-      - MONGO_DB_HOST=db-mongo-wealth-mgmt
-      - MONGO_DB_PORT=27017
-      - MONGO_DB_USERNAME=mongowealthmgmt
-      - MONGO_DB_PASSWORD=wealthmgmt
-      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
-      - CUSTOMER_INFO_SERVICE_PORT=5006
-      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
-      - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
-    command: python app.py
-    depends_on:
-      - jaeger
-      - mongo-wealth-mgmt
       - customer-info
       - customer-activity
 
@@ -880,8 +834,6 @@ services:
       - PAYMENTS_SERVICE_PORT=5014
       - ACL_SERVICE_HOST=ms-acl
       - ACL_SERVICE_PORT=8181
-      - WEALTH_MGMT_HOST=ms-wealth-mgmt
-      - WEALTH_MGMT_PORT=5015
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
@@ -923,8 +875,6 @@ volumes:
   mongodb_cus_activity:
     driver: local
   mongodb_credit_card:
-    driver: local
-  mongodb_wealth_mgmt:
     driver: local
 
 networks:
