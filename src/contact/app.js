@@ -1,0 +1,372 @@
+require('dotenv').config();
+const express = require('express');
+const bodyParser = require('body-parser');
+const { MongoClient } = require('mongodb');
+const initTracer = require('jaeger-client').initTracer;
+const cors = require('cors');
+
+const app = express();
+app.use(bodyParser.json());
+app.use(cors());
+app.set('view engine', 'ejs');
+
+// Load environment variables
+const SELF_PORT = process.env.SELF_PORT || 5003;
+const MONGO_DB_HOST = process.env.MONGO_DB_HOST;
+const MONGO_DB_PORT = process.env.MONGO_DB_PORT;
+const MONGO_DB_USERNAME = process.env.MONGO_DB_USERNAME;
+const MONGO_DB_PASSWORD = process.env.MONGO_DB_PASSWORD;
+const JAEGER_AGENT_HOST = process.env.JAEGER_AGENT_HOST;
+const JAEGER_AGENT_PORT = process.env.JAEGER_AGENT_PORT;
+
+// Initialize Tracer
+function initializeTracer() {
+    const config = {
+        serviceName: 'contacts',
+        reporter: {
+            agentHost: JAEGER_AGENT_HOST,
+            agentPort: JAEGER_AGENT_PORT,
+        },
+        sampler: {
+            type: 'const',
+            param: 1,
+        },
+    };
+    return initTracer(config);
+}
+
+const tracer = initializeTracer();
+
+// DB connection
+let client, contactsCollection, faqsCollection, convCollection, storageCollection;
+let url = `mongodb://${MONGO_DB_USERNAME}:${MONGO_DB_PASSWORD}@${MONGO_DB_HOST}:${MONGO_DB_PORT}/`;
+
+console.log('Attempting to connect to MongoDB...');
+console.log(`MongoDB URL: ${url}`);// ****
+
+MongoClient.connect(url, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000, // 5 second timeout
+    socketTimeoutMS: 45000, // 45 second timeout
+})
+    .then((connectedClient) => {
+        client = connectedClient;
+        const db = client.db('contact');
+        contactsCollection = db.collection('contacts');
+        faqsCollection = db.collection('faq');
+        convCollection = db.collection('conversation');
+        storageCollection = db.collection('storage');
+        console.log("Connected to MongoDB successfully");
+    })
+    .catch((err) => {
+        console.error("Failed to connect to MongoDB:", err);
+    });
+
+// ===================================================================================================================================================================================== //
+
+app.get('/', (req, res) => {
+    console.log('Received request for root route');
+    res.send('Contact service is running');
+});
+
+// ===================================================================================================================================================================================== //
+
+app.get('/testMongo', async (req, res) => {
+    if (!client) {
+        return res.status(500).json({ error: 'MongoDB client not initialized' });
+    }
+    try {
+        await client.db().admin().ping();
+        res.json({ message: 'MongoDB connection successful' });
+    } catch (error) {
+        res.status(500).json({ error: 'MongoDB connection failed', details: error.message });
+    }
+});
+
+// ===================================================================================================================================================================================== //
+
+app.get('/getContacts', async (req, res) => {
+
+    if (!contactsCollection) {
+        console.error('Contacts collection is not initialized');
+        return res.status(500).json({ error: 'Database not initialized' });
+    }
+
+    try {
+        const contacts = await contactsCollection.find().toArray();
+
+        const filteredContacts = contacts.map(contact => {
+            const { _id, ...contactWithoutId } = contact;
+            return contactWithoutId;
+        });
+
+        res.json(filteredContacts);
+    } catch (error) {
+        console.error('Error fetching contacts:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+});
+
+app.post('/updateContacts', async (req, res) => {
+    if (!contactsCollection) {
+        console.error('Contacts collection is not initialized');
+        return res.status(500).json({ error: 'Database not initialized' });
+    }
+
+    const jsonData = req.body;
+    const region_id = jsonData.region_id;
+
+    if (!region_id) {
+        console.error('region_id is missing from the request body');
+        return res.status(400).json({ error: 'region_id is required' });
+    }
+
+    try {
+        const existingContact = await contactsCollection.findOne({ region_id: region_id });
+
+        if (existingContact) {
+            const result = await contactsCollection.updateOne({ region_id: region_id }, { $set: jsonData });
+            if (result.modifiedCount === 1) {
+                res.status(200).json({ message: 'Contact updated successfully' });
+            } else {
+                res.status(404).json({ error: 'Contact not found or not modified' });
+            }
+        } else {
+            const result = await contactsCollection.insertOne(jsonData);
+            if (result.insertedId) {
+                res.status(201).json({ message: 'Contact created successfully', id: result.insertedId });
+            } else {
+                res.status(500).json({ error: 'Failed to insert new contact' });
+            }
+        }
+    } catch (error) {
+        console.error('Error in updateContacts:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+});
+
+// ===================================================================================================================================================================================== //
+
+app.get('/getFaqs', async (req, res) => {
+    if (!faqsCollection) {
+        console.error('FAQs collection is not initialized');
+        res.status(500).send('Database not initialized');
+        return;
+    }
+
+    try {
+        const faqs = await faqsCollection.find().toArray();
+
+        const filteredFaqs = faqs.map(faq => {
+            const { _id, ...faqWithoutId } = faq;
+            return faqWithoutId;
+        });
+        res.json(filteredFaqs);
+    } catch (error) {
+        console.error('Error fetching faqs:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+});
+
+app.post('/updateFaqs', async (req, res) => {
+    if (!faqsCollection) {
+        console.error('Faqs collection is not initialized');
+        return res.status(500).json({ error: 'Database not initialized' });
+    }
+
+    const jsonData = req.body;
+    const question_id = jsonData.question_id;
+
+    if (!question_id) {
+        console.error('question_id is missing from the request body');
+        return res.status(400).json({ error: 'region_id is required' });
+    }
+
+    try {
+        const existingFaq = await faqsCollection.findOne({ question_id: question_id });
+
+        if (existingFaq) {
+            const result = await faqsCollection.updateOne({ question_id: question_id }, { $set: jsonData });
+            if (result.modifiedCount === 1) {
+                res.status(200).json({ message: 'Faq updated successfully' });
+            } else {
+                res.status(404).json({ error: 'Faq not found or not modified' });
+            }
+        } else {
+            const result = await faqsCollection.insertOne(jsonData);
+            if (result.insertedId) {
+                res.status(201).json({ message: 'Faq created successfully', id: result.insertedId });
+            } else {
+                res.status(500).json({ error: 'Failed to insert new faq' });
+            }
+        }
+    } catch (error) {
+        console.error('Error in updateContacts:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+});
+
+// ===================================================================================================================================================================================== //
+
+app.get('/getConvs', async (req, res) => {
+    if (!contactsCollection) {
+        console.error('Contacts collection is not initialized');
+        res.status(500).send('Database not initialized');
+        return;
+    }
+
+    try {
+        let convs = await convCollection.find().toArray();
+
+        const filteredConvs = convs.map(conv => {
+            const { _id, ...convWithoutId } = conv;
+            return convWithoutId;
+        })
+        res.json(filteredConvs);
+    } catch (error) {
+        console.error('Error fetching Conversations:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+
+})
+
+app.post('/updateConvs', async (req, res) => {
+    if (!convCollection) {
+        console.error('Conv collection is not initialized');
+        return res.status(500).json({ error: 'Database not initialized' });
+    }
+
+    const jsonData = req.body;
+    try {
+        const result = await convCollection.insertOne(jsonData);
+        if (result.insertedId) {
+            res.status(201).json({ message: 'Conversation saved successfully', id: result.insertedId });
+        } else {
+            res.status(500).json({ error: 'Failed to save new conversation. Please Retry!!' });
+        }
+    } catch (error) {
+        console.error('Error in updateConvs:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+})
+
+// ===================================================================================================================================================================================== //
+
+app.get('/getClients', async (req, res) => {
+    if (!storageCollection) {
+        console.error('Storage collection is not initialized');
+        res.status(500).send('Database not initialized');
+        return;
+    }
+
+    try {
+        let clients = await storageCollection.find().toArray();
+
+        let filteredClients = clients.map(client => {
+            const { _id, ...clientWithoutId } = client;
+            return clientWithoutId;
+        })
+
+        res.json(filteredClients);
+    } catch (error) {
+        console.error('Error fetching Clients:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+})
+
+app.get('/getClient/:id', async (req, res) => {
+    if (!storageCollection) {
+        console.error('Storage collection is not initialized');
+        res.status(500).send('Database not initialized');
+        return;
+    }
+
+    try {
+        let client = await storageCollection.findOne({ id: req.params.id });
+        if (client) {
+            res.json(client);
+        } else {
+            res.status(404).json({ error: 'Client not found' });
+        }
+    } catch (error) {
+        console.error('Error fetching Client:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+
+});
+
+app.post('/updateClient', async (req, res) => {
+    if (!storageCollection) {
+        console.error('Faqs collection is not initialized');
+        return res.status(500).json({ error: 'Database not initialized' });
+    }
+
+    const jsonData = req.body;
+    const client_id = jsonData.region_id;
+
+    if (!client_id) {
+        console.error('question_id is missing from the request body');
+        return res.status(400).json({ error: 'region_id is required' });
+    }
+
+    try {
+        const existingStorage = await storageCollection.findOne({ client_id: client_id });
+
+        if (existingStorage) {
+            const result = await storageCollection.updateOne({ client_id: client_id }, { $set: jsonData });
+            if (result.modifiedCount === 1) {
+                res.status(200).json({ message: 'Client updated successfully' });
+            } else {
+                res.status(404).json({ error: 'Client not found or not modified' });
+            }
+        } else {
+            const result = await storageCollection.insertOne(jsonData);
+            if (result.insertedId) {
+                res.status(201).json({ message: 'Client created successfully', id: result.insertedId });
+            } else {
+                res.status(500).json({ error: 'Failed to insert new client' });
+            }
+        }
+    } catch (error) {
+        console.error('Error in updateClient:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+});
+
+// ===================================================================================================================================================================================== //
+
+app.post('/clearContacts', async (req, res) => {
+    if (!contactsCollection) {
+        console.error('Contacts collection is not initialized');
+        res.status(500).send('Database not initialized');
+        return;
+    }
+
+    try {
+        let result = await contactsCollection.deleteMany({});
+        if (result.deletedCount > 0) {  // Check the number of deleted documents
+            res.status(200).json({ message: 'Contacts deleted successfully', deletedCount: result.deletedCount });
+        } else {
+            res.status(404).json({ error: 'No contacts found to delete' });
+        }
+    } catch (error) {
+        console.error('Error in clearContacts:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+})
+
+// ===================================================================================================================================================================================== //
+
+// Error handling ==> middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
+});
+
+// Start the server
+app.listen(SELF_PORT, () => {
+    console.log(`Server running on port ${SELF_PORT}`);
+}).on('error', (err) => {
+    console.error('Error starting server:', err);
+});

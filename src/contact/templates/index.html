@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CONTACT CONNECTION</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        header {
+            background-color: #4caf50;
+            color: white;
+            padding: 15px 10px;
+            text-align: center;
+        }
+
+        nav {
+            background: #333;
+            color: white;
+            overflow: hidden;
+        }
+
+        nav a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        nav a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            overflow: hidden;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-top: 0;
+        }
+
+        .card p {
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Welcome to CONTACT CONNECTION page</h1>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>MONGO Client</h2>
+            <p>{{m_client}}</p>
+        </section>
+        <section class="card">
+            <h2>MONGO host</h2>
+            <p>{{MONGO_HOST}}</p>
+        </section>
+        <section class="card">
+            <h2>MONGO port</h2>
+            <p>{{MONGO_PORT}}</p>
+        </section>
+        <section class="card">
+            <h2>MONGO username</h2>
+            <p>{{MONGO_USERNAME}}</p>
+        </section>
+        <section class="card">
+            <h2>MONGO password</h2>
+            <p>{{MONGO_PASSWORD}}</p>
+        </section>
+        <section class="card">
+            <h2>Conv Data</h2>
+            <p>{{conv_data}}</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>PsychoPunkSage &copy; 2024</p>
+    </footer>
+</body>
+
+</html>
