@@ -156,7 +156,7 @@ def home():
 
     user_info = fetch_customer_info(username) or {}
 
-    return render_template('index.html', banner_r=banner[0], banner_l=banner[1], is_logged_in=is_logged_in, **user_info)
+    return render_template('index.html', banner_r=banner[0], banner_l=banner[1], is_logged_in=is_logged_in, **user_info, port=SELF_PORT)
 
 ################################### WEALTH MGMT ###################################
 
@@ -688,6 +688,8 @@ def login():
             session['username'] = response.json()['username']
             print("RESPONSE::>", response.json())
             return redirect(url_for('home'))
+            # redirect(url_for('home'))
+            # return response.content
         else:
             flash('Login failed. Check your username and password.')
     return render_template('login.html')
@@ -725,6 +727,7 @@ def logout():
     token = session.pop('token', None)
     if token:
         requests.post(f'{AUTH_SERVICE_URL}/logout', headers={'Authorization': token})
+        session.clear() 
     return redirect(url_for('login'))
 
 # ======================================================================================================================================================================================== #
@@ -732,24 +735,30 @@ def logout():
 ##################################### CONTACT  ####################################
 
 @app.route('/contact', methods=['GET'])
-# @tracing.trace()
 def contact():
     is_logged_in = 'token' in session
     banner = fetch_banners(2)
 
-    response = requests.get(f'{CONTACT_SERVICE_URL}/getContacts')
-    contacts = response.json()
-    regional_contact = []
-    for contact in contacts:
-        if contact['region_id'] == 'tollfree':
-            tollfree_contact = contact
-        elif contact['region_id'] == 'overseas':
-            overseas_contact = contact
-        else:
-            regional_contact.append(contact)
+    try:
+        response = requests.get(f'{CONTACT_SERVICE_URL}/getContacts')
+        response.raise_for_status()  # Raises an HTTPError for bad responses
+        contacts = response.json()
+    except requests.RequestException as e:
+        print(f"Error fetching contacts: {e}")
+        contacts = []
 
-    response = requests.get(f'{CONTACT_SERVICE_URL}/getFaqs')
-    faqs = response.json()
+    tollfree_contact = next((contact for contact in contacts if contact['region_id'] == 'tollfree'), None)
+    overseas_contact = next((contact for contact in contacts if contact['region_id'] == 'overseas'), None)
+    regional_contact = [contact for contact in contacts if contact['region_id'] not in ['tollfree', 'overseas']]
+
+    try:
+        response = requests.get(f'{CONTACT_SERVICE_URL}/getFaqs')
+        response.raise_for_status()
+        faqs = response.json()
+    except requests.RequestException as e:
+        print(f"Error fetching FAQs: {e}")
+        faqs = []
+
     categories = {}
     for item in faqs:
         category = item['category']
@@ -757,7 +766,15 @@ def contact():
             categories[category] = []
         categories[category].append(item)
 
-    return render_template('contact.html', banner_r=banner[0], banner_l=banner[1], tollfree=tollfree_contact, overseas=overseas_contact, contacts=regional_contact, categories=categories, is_logged_in=is_logged_in )
+    return render_template('contact.html', 
+                           banner_r=banner[0], 
+                           banner_l=banner[1], 
+                           tollfree=tollfree_contact, 
+                           overseas=overseas_contact, 
+                           contacts=regional_contact, 
+                           categories=categories, 
+                           is_logged_in=is_logged_in
+                           )
 
 # ======================================================================================================================================================================================== #
 
@@ -788,7 +805,7 @@ def record_conv():
         }
         print("++++ DATA ++++", data)
         response = requests.post(f'{CONTACT_SERVICE_URL}/updateConvs', json=data)
-        if response.status_code == 200:
+        if response.status_code == 201:
             return 'Form submitted successfully!'
         else:
             return 'Failed to submit form.', response.status_code

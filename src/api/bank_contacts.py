@@ -1,24 +1,6 @@
 import json
 import requests
 
-# Urls
-url_offer_banner = 'http://localhost:4001/setOfferBanner'
-url_bank_contacts = 'http://localhost:5003/updateContacts'
-url_faq = 'http://localhost:5003/updateFaqs'
-url_index = 'http://localhost:5004/updateIndex'
-
-# files
-offer_banner = 'ads.json'
-bank_contacts = 'bank_contacts.json'
-faq = 'faq.json'
-index = 'index_search.json'
-
-pairs = {
-    url_offer_banner: offer_banner,
-    url_bank_contacts: bank_contacts,
-    url_faq: faq,
-    url_index: index
-}
 
 def read_json_file(file_path):
     try:
@@ -35,25 +17,31 @@ def read_json_file(file_path):
         print(f"An unexpected error occurred while reading the file {file_path}. Error: {e}")
     return None
 
-for url, file in pairs.items():
+
+def update_data():
+    url = 'http://localhost:5003/updateContacts'
+    file = "src/api/bank_contacts.json"
     data = read_json_file(file)
     if data is not None:
         for i in data:
             response = requests.post(url, json=i)
-            if response.status_code == 200:
+            if response.status_code == 201:
                 print(f"Successfully updated data for {file} at {url}")
             else:
                 print(f"Failed to update data for {file} at {url}. Status code: {response.status_code}")
     else:
         print(f"No data to update for {file} at {url}")
 
+def delete_data():
+    url = 'http://localhost:5003/clearContacts'
+    try:
+        response = requests.post(url)
+        if response.status_code == 200:
+            print("Contacts collection cleared successfully.")
+        else:
+            print("Failed to clear contacts collection. Status code:", response.status_code)
+    except requests.exceptions.RequestException as e:
+        print("Error:", e)
 
-# CLEAR ALL THE DATA
-# try:
-#     response = requests.post(url1)
-#     if response.status_code == 200:
-#         print("Contacts collection cleared successfully.")
-#     else:
-#         print("Failed to clear contacts collection. Status code:", response.status_code)
-# except requests.exceptions.RequestException as e:
-#     print("Error:", e)
+# delete_data()
+update_data()
