@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CONTACT CONNECTION</title>
+    <title>SEARCH</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -67,7 +67,7 @@
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       }
 
-      .card h2 {
+      .card h3 {
         margin-top: 0;
       }
 
@@ -78,33 +78,48 @@
   </head>
   <body>
     <header>
-      <h1>Welcome to CONTACT CONNECTION page</h1>
+      <h1>Welcome to My SEARCH page</h1>
     </header>
 
     <main class="container">
+      <h2>Redis Client</h2>
       <section class="card">
-        <h2>MONGO Client</h2>
+        <h3>REDIS Client</h3>
+        <p>{{r_client}}</p>
+      </section>
+      <section class="card">
+        <h3>REDIS host</h3>
+        <p>{{SEARCH_REDIS_HOST}}</p>
+      </section>
+      <section class="card">
+        <h3>REDIS port</h3>
+        <p>{{SEARCH_REDIS_PORT}}</p>
+      </section>
+      <section class="card">
+        <h3>REDIS password</h3>
+        <p>{{SEARCH_REDIS_PASSWORD}}</p>
+      </section>
+      <hr />
+      <h2>Mongo Client</h2>
+      <section class="card">
+        <h3>MONGO Client</h3>
         <p>{{m_client}}</p>
       </section>
       <section class="card">
-        <h2>MONGO host</h2>
-        <p>{{MONGO_HOST}}</p>
+        <h3>MONGO host</h3>
+        <p>{{MONGO_DB_HOST}}</p>
       </section>
       <section class="card">
-        <h2>MONGO port</h2>
-        <p>{{MONGO_PORT}}</p>
+        <h3>MONGO port</h3>
+        <p>{{MONGO_DB_PORT}}</p>
       </section>
       <section class="card">
-        <h2>MONGO username</h2>
-        <p>{{MONGO_USERNAME}}</p>
+        <h3>MONGO username</h3>
+        <p>{{MONGO_DB_USERNAME}}</p>
       </section>
       <section class="card">
-        <h2>MONGO password</h2>
-        <p>{{MONGO_PASSWORD}}</p>
-      </section>
-      <section class="card">
-        <h2>Conv Data</h2>
-        <p>{{conv_data}}</p>
+        <h3>MONGO password</h3>
+        <p>{{MONGO_DB_PASSWORD}}</p>
       </section>
     </main>
 

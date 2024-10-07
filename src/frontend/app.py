@@ -83,10 +83,16 @@ ACL_SERVICE_HOST = os.environ.get('ACL_SERVICE_HOST')
 ACL_SERVICE_PORT = os.environ.get('ACL_SERVICE_PORT')
 ACL_SERVICE_URL = f'http://{ACL_SERVICE_HOST}:{ACL_SERVICE_PORT}/v1/data/authz/allow'
 
+# Wealth Management Service
+WEALTH_MGMT_HOST = os.environ.get('WEALTH_MGMT_HOST')
+WEALTH_MGMT_PORT = os.environ.get('WEALTH_MGMT_PORT')
+WEALTH_MGMT_URL = f'http://{WEALTH_MGMT_HOST}:{WEALTH_MGMT_PORT}'
+
 # Jaegar integration
 JAEGER_AGENT_HOST = os.environ.get('JAEGER_AGENT_HOST')
 JAEGER_AGENT_PORT = os.environ.get('JAEGER_AGENT_PORT')
 JAEGER_SERVICE_URL = 'http://' + JAEGER_AGENT_HOST + ':' + JAEGER_AGENT_PORT
+
 # print("SEARCH_SERVICE_URL: ", JAEGER_SERVICE_URL)
 
 # Jaeger configuration - start
@@ -152,6 +158,39 @@ def home():
 
     return render_template('index.html', banner_r=banner[0], banner_l=banner[1], is_logged_in=is_logged_in, **user_info, port=SELF_PORT)
 
+################################### WEALTH MGMT ###################################
+
+@app.route('/wealth_mgmt', methods=['GET'])
+def wealth_mgmt():
+    is_logged_in = 'token' in session
+    username = session.get('username') if 'token' in session else None
+    if not is_logged_in:
+        return redirect(url_for('login'))
+    user_info = fetch_customer_info(username) or {}
+    username = user_info.get('username')
+    tax_info= requests.get(f"{WEALTH_MGMT_URL}/getTaxes/{username}")
+    return render_template('wealth_mgmt.html', is_logged_in=is_logged_in, **user_info, tax_info=tax_info.json())
+
+@app.route('/record_tax_payments', methods=['GET', 'POST'])
+def record_tax_payments():
+    username = session.get('username') if 'token' in session else None
+    tax_id = request.form['tax_id']
+
+    if not username or not tax_id:
+        return 'Form data missing!', 400
+    
+    data = {
+        'tax_id': tax_id,
+        'username': username
+    }
+
+    resp = requests.post(f"{WEALTH_MGMT_URL}/payTaxes", json=data)
+
+    if resp.status_code == 200:
+        return 'Payment successful!', 200
+    else:
+        return f'Failed to submit form.  <br>Status Code: {resp.status_code} <br>Error: {resp.json()} Username: {username}'
+
 ################################### PAYMENTS ###################################
 
 @app.route('/payments', methods=['GET'])
@@ -193,7 +232,6 @@ def relay_payments():
             return 'Form submitted successfully!'
     else:
         return f'Failed to submit form.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
-
 
 ################################### CREDIT CARD ###################################
 
@@ -275,7 +313,6 @@ def withdraw_funds():
             return 'Form submitted successfully!'
     else:
         return f'Failed to submit form.  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
-
 
 ################################### ACTIVITY LOG PAGE ###################################
 

@@ -9,74 +9,65 @@ custom_styles %}
 
     <!-- View Loans Section -->
     <div class="card mt-4">
-      <div class="card-header">View Your Loans</div>
+      <div class="card-header">
+        <h5 class="mb-0">
+          View Your Loans
+        </h5>
+      </div>
       <div class="card-body">
         {% if loans|length == 0 %}
         <p>No loans available.</p>
         {% else %}
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th scope="col">Loan ID</th>
-              <th scope="col">Amount <br />(in Rs.)</th>
-              <th scope="col">Term <br />(in months)</th>
-              <th scope="col">Purpose</th>
-              <th scope="col">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for loan in loans %}
-            <tr>
-              <td>{{ loan.loan_id }}</td>
-              <td>{{ loan.amount }}</td>
-              <td>{{ loan.term }}</td>
-              <td>{{ loan.purpose }}</td>
-              <td>{{ loan.status }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">Loan ID</th>
+                <th scope="col">Amount <br />(in Rs.)</th>
+                <th scope="col">Term <br />(in months)</th>
+                <th scope="col">Purpose</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for loan in loans %}
+              <tr>
+                <td>{{ loan.loan_id }}</td>
+                <td>{{ loan.amount }}</td>
+                <td>{{ loan.term }}</td>
+                <td>{{ loan.purpose }}</td>
+                <td>{{ loan.status }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
         {% endif %}
       </div>
     </div>
 
     <!-- Apply for Loan Section -->
     <div class="card mt-4">
-      <div class="card-header">Apply for a Loan</div>
+      <div class="card-header">
+        <h5 class="mb-0">
+          Apply for a Loan
+        </h5>
+      </div>
       <div class="card-body">
         <form id="applyLoanForm" method="post" action="/record_loan">
           <div class="mb-3">
             <label for="loanAmount" class="form-label">Loan Amount</label>
-            <input
-              type="number"
-              class="form-control"
-              id="loanAmount"
-              name="amount"
-              placeholder="Enter loan amount"
-              required
-            />
+            <input type="number" class="form-control" id="loanAmount" name="amount" placeholder="Enter loan amount"
+              required />
           </div>
           <div class="mb-3">
             <label for="loanTerm" class="form-label">Loan Term</label>
-            <input
-              type="text"
-              class="form-control"
-              id="loanTerm"
-              name="term"
-              placeholder="Enter loan term"
-              required
-            />
+            <input type="text" class="form-control" id="loanTerm" name="term" placeholder="Enter loan term" required />
           </div>
           <div class="mb-3">
             <label for="loanPurpose" class="form-label">Purpose</label>
-            <input
-              type="text"
-              class="form-control"
-              id="loanPurpose"
-              name="purpose"
-              placeholder="Enter loan purpose"
-              required
-            />
+            <input type="text" class="form-control" id="loanPurpose" name="purpose" placeholder="Enter loan purpose"
+              required />
           </div>
           <button type="submit" class="btn btn-success">Apply for Loan</button>
         </form>
@@ -86,30 +77,21 @@ custom_styles %}
 
     <!-- Pay Loan Section -->
     <div class="card mt-4">
-      <div class="card-header">Pay Off a Loan</div>
+      <div class="card-header">
+        <h5 class="mb-0">
+          Pay Off a Loan
+        </h5>
+      </div>
       <div class="card-body">
         <form id="payLoanForm" method="post" action="/payout_loan">
           <div class="mb-3">
             <label for="loanId" class="form-label">Loan ID</label>
-            <input
-              type="text"
-              class="form-control"
-              id="loanId"
-              name="loanId"
-              placeholder="Enter loan ID"
-              required
-            />
+            <input type="text" class="form-control" id="loanId" name="loanId" placeholder="Enter loan ID" required />
           </div>
           <div class="mb-3">
             <label for="payAmount" class="form-label">Payment Amount</label>
-            <input
-              type="number"
-              class="form-control"
-              id="payAmount"
-              name="amount"
-              placeholder="Enter payment amount"
-              required
-            />
+            <input type="number" class="form-control" id="payAmount" name="amount" placeholder="Enter payment amount"
+              required />
           </div>
           <button type="submit" class="btn btn-warning">Pay Loan</button>
         </form>
