@@ -21,7 +21,7 @@ CUSTOMER_INFO_SERVICE_URL = f'http://{CUSTOMER_INFO_SERVICE_HOST}:{CUSTOMER_INFO
 app = Flask(__name__)
 
 db_client = MongoClient(
-    username=MONGO_DB_USERNAME, 
+    username=MONGO_DB_USERNAME,
     password=MONGO_DB_PASSWORD, 
     host=MONGO_DB_HOST, 
     port=int(MONGO_DB_PORT)
@@ -145,7 +145,8 @@ def pay_taxes():
     
     resp = response = requests.get(f'{CUSTOMER_INFO_SERVICE_URL}/getCustomerInfo/{username}')
     if resp.status_code != 200:
-        return  jsonify({"status": "error", "message": "Unexpected"}), 404
+        print("Username: {username}".format(username=username))
+        return  jsonify({"status": "error", "message": f"Unexpected- {username}"}), 404
     customer_data = response.json()
     acc_balance = int(customer_data.get('acc_balance'))
 
@@ -167,9 +168,9 @@ def pay_taxes():
     
     # Update the customer's account balance
     new_acc_balance = acc_balance - tax_amount
-    response = requests.put(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo/{username}', json={"acc_balance": new_acc_balance})
+    response = requests.put(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo', json={"username": username, "acc_balance": new_acc_balance})
     if response.status_code!= 200:
-        return jsonify({"status": "error", "message": "Unexpected"}), 500
+        return jsonify({"status": "error", "message": "Unexpected"}), 555
     
     # Delete the transaction from the database
     wealth_mgmt_activity.delete_one({"tax_id": tax_id})
