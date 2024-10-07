@@ -6,3 +6,5 @@ redis-2/
 sentinel-0/
 sentinel-1/
 sentinel-2/
+
+node_modules/
