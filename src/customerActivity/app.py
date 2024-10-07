@@ -97,18 +97,19 @@ def updateCustomerActivity():
 
     if request.method == "POST":
         customer_activity.insert_one(jsondata)
-        return "Success", 200
     
-    wealth_mgmt_data = {
-        "amount": transaction_amount,
-        "txn_id": transaction_id,
-        "txn_type": transaction_type,
-        "username": username,
-    }
+        wealth_mgmt_data = {
+            "amount": transaction_amount,
+            "txn_id": transaction_id,
+            "txn_type": transaction_type,
+            "username": username,
+        }
 
-    response = requests.post(f'{WEALTH_MGMT_URL}/configureTaxSlab', json=wealth_mgmt_data)
-    if response.status_code != 200:
-        return f'Failed to Update TAX Data  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+        response = requests.post(f'{WEALTH_MGMT_URL}/configureTaxSlab', json=wealth_mgmt_data)
+        if response.status_code != 200:
+            return f'Failed to Update TAX Data  <br>Status Code: {response.status_code} <br>Error: {response.json()}'
+        
+        return "Success", 200
     
     if request.method == "PUT":
         existing_tx = customer_activity.find_one({"transaction_id": transaction_id})
