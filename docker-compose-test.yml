@@ -278,7 +278,7 @@ services:
       - REDIS_HOST=db-redis-offer-banner
       - REDIS_PORT=6379
       - REDIS_PASSWORD=offer_banner_cve-2022-24834
-      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_HOST=ms-jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
@@ -311,12 +311,13 @@ services:
       - CUSTOMER_INFO_SERVICE_PORT=5006
       - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
+      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
       - mongo-credit-card
       - customer-info
-
 
   contacts:
     build:
@@ -407,6 +408,8 @@ services:
       - MONGO_DB_PASSWORD=authinfo
       - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
+      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
@@ -435,6 +438,8 @@ services:
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocusinfo
       - MONGO_DB_PASSWORD=customerinfo
+      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
@@ -461,6 +466,10 @@ services:
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocusactivity
       - MONGO_DB_PASSWORD=customeractivity
+      - WEALTH_MGMT_HOST=ms-wealth-mgmt
+      - WEALTH_MGMT_PORT=5015
+      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
@@ -493,6 +502,8 @@ services:
       - CUSTOMER_INFO_SERVICE_PORT=5006
       - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
+      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
@@ -528,6 +539,8 @@ services:
       - CUSTOMER_INFO_SERVICE_PORT=5006
       - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
+      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
@@ -562,6 +575,8 @@ services:
       - CUSTOMER_INFO_SERVICE_PORT=5006
       - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
+      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
@@ -596,6 +611,8 @@ services:
       - CUSTOMER_INFO_SERVICE_PORT=5006
       - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
+      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
@@ -624,6 +641,8 @@ services:
       - CUSTOMER_INFO_SERVICE_PORT=5006
       - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
+      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
@@ -649,6 +668,8 @@ services:
       - CUSTOMER_INFO_SERVICE_PORT=5006
       - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
+      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
@@ -679,6 +700,8 @@ services:
       - CUSTOMER_INFO_SERVICE_PORT=5006
       - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
+      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
       - jaeger
@@ -745,7 +768,7 @@ services:
       - ACL_SERVICE_PORT=8181
       - WEALTH_MGMT_HOST=ms-wealth-mgmt
       - WEALTH_MGMT_PORT=5015
-      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_HOST=ms-jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
@@ -815,7 +838,7 @@ services:
       - ACL_SERVICE_PORT=8181
       - WEALTH_MGMT_HOST=ms-wealth-mgmt
       - WEALTH_MGMT_PORT=5015
-      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_HOST=ms-jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
@@ -885,7 +908,7 @@ services:
       - ACL_SERVICE_PORT=8181
       - WEALTH_MGMT_HOST=ms-wealth-mgmt
       - WEALTH_MGMT_PORT=5015
-      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_HOST=ms-jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
     depends_on:
