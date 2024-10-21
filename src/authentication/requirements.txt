@@ -3,3 +3,5 @@ redis==5.0.4
 pymongo==4.7.2
 PyJWT==2.9.0
 requests==2.32.2
+jaeger-client==4.8.0
+flask-opentracing==2.0.0
