@@ -2,3 +2,5 @@ Flask==3.0.3
 # pymongo==4.7.2
 requests==2.32.2
 # pymemcache==4.0.0
+jaeger-client==4.8.0
+flask-opentracing==2.0.0
