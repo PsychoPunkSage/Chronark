@@ -22,7 +22,7 @@ const JAEGER_AGENT_PORT = process.env.JAEGER_AGENT_PORT;
 // Initialize Tracer
 function initializeTracer() {
     const config = {
-        serviceName: 'contacts',
+        serviceName: 'ms-contacts',
         reporter: {
             agentHost: JAEGER_AGENT_HOST,
             agentPort: JAEGER_AGENT_PORT,
@@ -36,6 +36,21 @@ function initializeTracer() {
 }
 
 const tracer = initializeTracer();
+
+// app.use((req, res, next) => {
+//     // const // span = tracer.startSpan(req.path, {
+//     tags: { 'http.method': req.method, 'http.url': req.url },
+// });
+// // Attach the // span to the request object
+// req.// span = // span;
+//     res.on('finish', () => {
+//         // span.setTag(opentracing.Tags.HTTP_STATUS_CODE, res.statusCode);
+//         // span.finish();
+//     });
+// next();
+// });
+
+// =============================================================================================================== \\
 
 // DB connection
 let client, contactsCollection, faqsCollection, convCollection, storageCollection;
@@ -66,6 +81,7 @@ MongoClient.connect(url, {
 // ===================================================================================================================================================================================== //
 
 app.get('/', (req, res) => {
+    // req.// span.log({ event: 'handling / request' });
     console.log('Received request for root route');
     res.send('Contact service is running');
 });
@@ -73,13 +89,19 @@ app.get('/', (req, res) => {
 // ===================================================================================================================================================================================== //
 
 app.get('/testMongo', async (req, res) => {
+    // const // span = tracer.startSpan('testMongo', { childOf: req.// span });
+
     if (!client) {
+        // span.log({ event: 'error', message: 'MongoDB client not initialized' });
+        // span.finish();
         return res.status(500).json({ error: 'MongoDB client not initialized' });
     }
     try {
         await client.db().admin().ping();
+        // span.log({ event: 'MongoDB ping success' });
         res.json({ message: 'MongoDB connection successful' });
     } catch (error) {
+        // span.log({ event: 'MongoDB connection failed', error: error.message });
         res.status(500).json({ error: 'MongoDB connection failed', details: error.message });
     }
 });
@@ -87,9 +109,12 @@ app.get('/testMongo', async (req, res) => {
 // ===================================================================================================================================================================================== //
 
 app.get('/getContacts', async (req, res) => {
+    // const // span = tracer.startSpan('/contact/getContacts', { childOf: req.// span });
 
     if (!contactsCollection) {
         console.error('Contacts collection is not initialized');
+        // span.log({ event: 'error', message: 'Database not initialized' });
+        // span.finish();
         return res.status(500).json({ error: 'Database not initialized' });
     }
 
@@ -101,16 +126,25 @@ app.get('/getContacts', async (req, res) => {
             return contactWithoutId;
         });
 
+        // span.log({ event: 'contacts fetched', count: filteredContacts.length });
+
         res.json(filteredContacts);
     } catch (error) {
         console.error('Error fetching contacts:', error);
+        // span.log({ event: 'error', error: error.message });
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
+    // finally {
+    // span.finish();
+    // }
 });
 
 app.post('/updateContacts', async (req, res) => {
+    // const // span = tracer.startSpan('/contact/updateContacts', { childOf: req.// span });
+
     if (!contactsCollection) {
-        console.error('Contacts collection is not initialized');
+        // span.log({ event: 'error', message: 'Database not initialized' });
+        // span.finish();
         return res.status(500).json({ error: 'Database not initialized' });
     }
 
@@ -119,6 +153,8 @@ app.post('/updateContacts', async (req, res) => {
 
     if (!region_id) {
         console.error('region_id is missing from the request body');
+        // span.log({ event: 'error', message: 'region_id missing' });
+        // span.finish();
         return res.status(400).json({ error: 'region_id is required' });
     }
 
@@ -128,6 +164,7 @@ app.post('/updateContacts', async (req, res) => {
         if (existingContact) {
             const result = await contactsCollection.updateOne({ region_id: region_id }, { $set: jsonData });
             if (result.modifiedCount === 1) {
+                // span.log({ event: 'contact updated', region_id });
                 res.status(200).json({ message: 'Contact updated successfully' });
             } else {
                 res.status(404).json({ error: 'Contact not found or not modified' });
@@ -135,22 +172,30 @@ app.post('/updateContacts', async (req, res) => {
         } else {
             const result = await contactsCollection.insertOne(jsonData);
             if (result.insertedId) {
+                // span.log({ event: 'contact created', region_id });
                 res.status(201).json({ message: 'Contact created successfully', id: result.insertedId });
             } else {
                 res.status(500).json({ error: 'Failed to insert new contact' });
             }
         }
     } catch (error) {
-        console.error('Error in updateContacts:', error);
+        // span.log({ event: 'error', error: error.message });
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
+    // finally {
+    // span.finish();
+    // }
 });
 
 // ===================================================================================================================================================================================== //
 
 app.get('/getFaqs', async (req, res) => {
+    // const // span = tracer.startSpan('/contact/getFaqs', { childOf: req.// span });
+
     if (!faqsCollection) {
         console.error('FAQs collection is not initialized');
+        // span.log({ event: 'error', message: 'Database not initialized' });
+        // span.finish();
         res.status(500).send('Database not initialized');
         return;
     }
@@ -162,16 +207,27 @@ app.get('/getFaqs', async (req, res) => {
             const { _id, ...faqWithoutId } = faq;
             return faqWithoutId;
         });
+
+        // span.log({ event: 'faqs fetched', count: filteredFaqs.length });
+
         res.json(filteredFaqs);
     } catch (error) {
         console.error('Error fetching faqs:', error);
+        // span.log({ event: 'error', error: error.message });
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
+    // finally {
+    // span.finish();
+    // }
 });
 
 app.post('/updateFaqs', async (req, res) => {
+    // const // span = tracer.startSpan('/contact/updateContacts', { childOf: req.// span });
+
     if (!faqsCollection) {
         console.error('Faqs collection is not initialized');
+        // span.log({ event: 'error', message: 'Database not initialized' });
+        // span.finish();
         return res.status(500).json({ error: 'Database not initialized' });
     }
 
@@ -180,7 +236,9 @@ app.post('/updateFaqs', async (req, res) => {
 
     if (!question_id) {
         console.error('question_id is missing from the request body');
-        return res.status(400).json({ error: 'region_id is required' });
+        // span.log({ event: 'error', message: 'question_id missing' });
+        // span.finish();
+        return res.status(400).json({ error: 'question_id is required' });
     }
 
     try {
@@ -189,6 +247,7 @@ app.post('/updateFaqs', async (req, res) => {
         if (existingFaq) {
             const result = await faqsCollection.updateOne({ question_id: question_id }, { $set: jsonData });
             if (result.modifiedCount === 1) {
+                // span.log({ event: 'faq updated', region_id })
                 res.status(200).json({ message: 'Faq updated successfully' });
             } else {
                 res.status(404).json({ error: 'Faq not found or not modified' });
@@ -196,6 +255,7 @@ app.post('/updateFaqs', async (req, res) => {
         } else {
             const result = await faqsCollection.insertOne(jsonData);
             if (result.insertedId) {
+                // span.log({ event: 'faq created', region_id })
                 res.status(201).json({ message: 'Faq created successfully', id: result.insertedId });
             } else {
                 res.status(500).json({ error: 'Failed to insert new faq' });
@@ -203,15 +263,23 @@ app.post('/updateFaqs', async (req, res) => {
         }
     } catch (error) {
         console.error('Error in updateContacts:', error);
+        // span.log({ event: 'error', error: error.message });
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
+    // finally {
+    // span.finish();
+    // }
 });
 
 // ===================================================================================================================================================================================== //
 
 app.get('/getConvs', async (req, res) => {
+    // const // span = tracer.startSpan('/contact/getConvs', { childOf: req.// span });
+
     if (!contactsCollection) {
         console.error('Contacts collection is not initialized');
+        // span.log({ event: 'error', message: 'Database not initialized' });
+        // span.finish();
         res.status(500).send('Database not initialized');
         return;
     }
@@ -223,17 +291,28 @@ app.get('/getConvs', async (req, res) => {
             const { _id, ...convWithoutId } = conv;
             return convWithoutId;
         })
+
+        // span.log({ event: 'Convs fetched', count: filteredConvs.length });
+
         res.json(filteredConvs);
     } catch (error) {
         console.error('Error fetching Conversations:', error);
+        // span.log({ event: 'error', error: error.message });
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
+    // finally {
+    // span.finish();
+    // }
 
 })
 
 app.post('/updateConvs', async (req, res) => {
+    // const // span = tracer.startSpan('/contact/updateConvs', { childOf: req.// span });
+
     if (!convCollection) {
         console.error('Conv collection is not initialized');
+        // span.log({ event: 'error', message: 'Database not initialized' });
+        // span.finish();
         return res.status(500).json({ error: 'Database not initialized' });
     }
 
@@ -241,21 +320,30 @@ app.post('/updateConvs', async (req, res) => {
     try {
         const result = await convCollection.insertOne(jsonData);
         if (result.insertedId) {
+            // span.log({ event: 'Conv created', id: result.insertedId })
             res.status(201).json({ message: 'Conversation saved successfully', id: result.insertedId });
         } else {
             res.status(500).json({ error: 'Failed to save new conversation. Please Retry!!' });
         }
     } catch (error) {
         console.error('Error in updateConvs:', error);
+        // span.log({ event: 'error', error: error.message });
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
+    // finally {
+    // span.finish();
+    // }
 })
 
 // ===================================================================================================================================================================================== //
 
 app.get('/getClients', async (req, res) => {
+    // const // span = tracer.startSpan('/contact/getClients', { childOf: req.// span });
+
     if (!storageCollection) {
         console.error('Storage collection is not initialized');
+        // span.log({ event: 'error', message: 'Database not initialized' });
+        // span.finish();
         res.status(500).send('Database not initialized');
         return;
     }
@@ -268,16 +356,26 @@ app.get('/getClients', async (req, res) => {
             return clientWithoutId;
         })
 
+        // span.log({ event: 'Clients fetched', count: filteredClients.length });
+
         res.json(filteredClients);
     } catch (error) {
         console.error('Error fetching Clients:', error);
+        // span.log({ event: 'error', error: error.message });
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
+    // finally {
+    // span.finish();
+    // }
 })
 
 app.get('/getClient/:id', async (req, res) => {
+    // const // span = tracer.startSpan('/contact/getClient/:id', { childOf: req.// span });
+
     if (!storageCollection) {
         console.error('Storage collection is not initialized');
+        // span.log({ event: 'error', message: 'Database not initialized' });
+        // span.finish();
         res.status(500).send('Database not initialized');
         return;
     }
@@ -285,21 +383,31 @@ app.get('/getClient/:id', async (req, res) => {
     try {
         let client = await storageCollection.findOne({ id: req.params.id });
         if (client) {
+            // span.log({ event: 'Conv created', id: req.params.id })
             res.json(client);
         } else {
             res.status(404).json({ error: 'Client not found' });
         }
     } catch (error) {
-        console.error('Error fetching Client:', error);
+        console.error('Error fetching Clients:', error);
+        // span.log({ event: 'error', error: error.message });
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
+    // finally {
+    // span.finish();
+    // }
 
 });
 
 app.post('/updateClient', async (req, res) => {
+    // const // span = tracer.startSpan('/contact/updateClient', { childOf: req.// span });
+
     if (!storageCollection) {
-        console.error('Faqs collection is not initialized');
-        return res.status(500).json({ error: 'Database not initialized' });
+        console.error('Storage collection is not initialized');
+        // span.log({ event: 'error', message: 'Database not initialized' });
+        // span.finish();
+        res.status(500).send('Database not initialized');
+        return;
     }
 
     const jsonData = req.body;
@@ -307,7 +415,9 @@ app.post('/updateClient', async (req, res) => {
 
     if (!client_id) {
         console.error('question_id is missing from the request body');
-        return res.status(400).json({ error: 'region_id is required' });
+        // span.log({ event: 'error', message: 'client_id missing' });
+        // span.finish();
+        return res.status(400).json({ error: 'client_id is required' });
     }
 
     try {
@@ -316,6 +426,7 @@ app.post('/updateClient', async (req, res) => {
         if (existingStorage) {
             const result = await storageCollection.updateOne({ client_id: client_id }, { $set: jsonData });
             if (result.modifiedCount === 1) {
+                // span.log({ event: 'Client updated', client_id })
                 res.status(200).json({ message: 'Client updated successfully' });
             } else {
                 res.status(404).json({ error: 'Client not found or not modified' });
@@ -323,6 +434,7 @@ app.post('/updateClient', async (req, res) => {
         } else {
             const result = await storageCollection.insertOne(jsonData);
             if (result.insertedId) {
+                // span.log({ event: 'Client created', client_id })
                 res.status(201).json({ message: 'Client created successfully', id: result.insertedId });
             } else {
                 res.status(500).json({ error: 'Failed to insert new client' });
@@ -330,15 +442,23 @@ app.post('/updateClient', async (req, res) => {
         }
     } catch (error) {
         console.error('Error in updateClient:', error);
+        // span.log({ event: 'error', error: error.message });
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
+    // finally {
+    // span.finish();
+    // }
 });
 
 // ===================================================================================================================================================================================== //
 
 app.post('/clearContacts', async (req, res) => {
+    // const // span = tracer.startSpan('/contact/clearContacts', { childOf: req.// span });
+
     if (!contactsCollection) {
         console.error('Contacts collection is not initialized');
+        // span.log({ event: 'error', message: 'Database not initialized' });
+        // span.finish();
         res.status(500).send('Database not initialized');
         return;
     }
@@ -346,6 +466,7 @@ app.post('/clearContacts', async (req, res) => {
     try {
         let result = await contactsCollection.deleteMany({});
         if (result.deletedCount > 0) {  // Check the number of deleted documents
+            // span.log({ event: 'contact created', count: result.deletedCount });
             res.status(200).json({ message: 'Contacts deleted successfully', deletedCount: result.deletedCount });
         } else {
             res.status(404).json({ error: 'No contacts found to delete' });
@@ -360,6 +481,10 @@ app.post('/clearContacts', async (req, res) => {
 
 // Error handling ==> middleware
 app.use((err, req, res, next) => {
+    // if (req.// span) {
+    //     req.// span.log({ event: 'error', message: err.message });
+    //     req.// span.finish();
+    // }
     console.error(err.stack);
     res.status(500).send('Something broke!');
 });
