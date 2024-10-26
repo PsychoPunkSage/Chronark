@@ -1,0 +1,23 @@
+> Why?
+    - No talk of Sec + Vuln Testing (DeathStarBench).
+
+> Introduction
+
+Litreature Survey == DeathStarBench
+    * Shortcoming of existing works
+    * different from us
+
+Our Contribution:
+    * banking microservice explain
+    * how this was challenging?? <integration + impl> ******
+    * Attacks <Looking forward + implemented>
+    ** How we integrating vuln analysis inside DeathStarBench
+
+Experimental Results:
+    * Jaegar
+    * DeathStarBench Experimental Results <Lookout>
+    * (NodeExporter + CAdvisor)
+
+Future Work:
+    > More Attacks to be incorporated
+    > eBPF soln to detect/avoid attack {XPlog}
