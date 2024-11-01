@@ -166,10 +166,16 @@ def updateCustomerInfo():
 @tracing.trace()
 def clearContacts():
     with tracer.start_active_span('/cus-info/clearData') as scope:
+        data = request.get_json()
+        username = data.get("username")
         with tracer.start_active_span('mongo_insert') as mongo_span:
             trace_mongo_operation(mongo_span, 'delete', '/cus-info/clearContacts', {})
-            customer_collection.delete_many({})
-        return "All data cleared from contacts collection", 200
+            result = customer_collection.delete_one({"username": username})
+
+        if result.deleted_count == 1:
+            return f"Data for username '{username}' cleared from contacts collection", 200
+        else:
+            return f"No data found for username '{username}'", 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=SELF_PORT, debug=True)
