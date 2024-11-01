@@ -53,6 +53,14 @@ def init_tracer():
 tracer = init_tracer()
 tracing = FlaskTracing(tracer, True, app)
 
+def trace_mongo_operation(scope, operation: str, collection_name: str, query: dict):
+    span = scope.span
+    
+    span.set_tag('db.type', 'mongodb')
+    span.set_tag('db.collection', collection_name)
+    span.set_tag('db.operation', operation)
+    span.log_kv({'query': query})
+
 # ================================================================================================ #
 
 redis_client = redis.Redis(host=AUTH_REDIS_HOST, port=AUTH_REDIS_PORT, password=AUTH_REDIS_PASSWORD)
@@ -122,17 +130,27 @@ def register():
         jsonData = request.json
         username = jsonData.get('username')
         password = jsonData.get('password')
-        existing_user = users_collection.find_one({'username': username})
+
+        with tracer.start_active_span('mongo_find') as mongo_span:
+            trace_mongo_operation(mongo_span, 'find', '/auth/register', {'username': username})
+            existing_user = users_collection.find_one({'username': username})
 
         loginData = {'username': username, 'password': password}
 
         if existing_user:
-            users_collection.update_one({'username': username}, {"$set": loginData})
+            with tracer.start_active_span('mongo_update') as mongo_span:
+                trace_mongo_operation(mongo_span, 'update', '/auth/register', loginData)
+                users_collection.update_one({'username': username}, {"$set": loginData})
         else:
             # New User
-            users_collection.insert_one(loginData)
+            with tracer.start_active_span('mongo_insert') as mongo_span:
+                trace_mongo_operation(mongo_span, 'insert', '/auth/register', loginData)
+                users_collection.insert_one(loginData)
+
             customerData = makeCustomerInfo(jsonData=jsonData)
-            response = requests.post(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo', json = customerData)
+
+            with tracer.start_active_span('/auth/register/updateCustomerInfo') as ccScope:
+                response = requests.post(f'{CUSTOMER_INFO_SERVICE_URL}/updateCustomerInfo', json = customerData)
             if response.status_code != 200:
                 return jsonify({'message': 'Failed to Add customer'}), 500
         return "Successful Regiatration", 200
@@ -145,7 +163,11 @@ def login():
         data = request.json
         username = data.get('username')
         password = data.get('password')
-        user = users_collection.find_one({'username': username})
+
+        with tracer.start_active_span('mongo_find') as mongo_span:
+            trace_mongo_operation(mongo_span, 'find', '/auth/login', {'username': username})
+            user = users_collection.find_one({'username': username})
+
         if not user:
             return jsonify({'message': 'Username does not exist'}), 404
         else:
@@ -172,15 +194,32 @@ def logout():
 
 @app.route('/clearData', methods=['POST'])
 @tracing.trace()
-def clearContacts():
-    users_collection.delete_many({})
-    return "All data cleared from contacts collection", 200
+def clearContact():
+    with tracer.start_active_span('/auth/clearContact') as scope:
+        data = request.get_json()
+        username = data.get("username")
+
+        if not username:
+            return "Username not provided", 400
+
+        with tracer.start_active_span('mongo_delete') as mongo_span:
+            trace_mongo_operation(mongo_span, 'delete', '/auth/clearContacts', {'username': username})
+            result = users_collection.delete_one({"username": username})
+
+        if result.deleted_count == 1:
+            return f"Data for username '{username}' cleared from contacts collection", 200
+        else:
+            return f"No data found for username '{username}'", 404
 
 @app.route("/getUserInfos", methods=["GET"])
 @tracing.trace()
 def getUserInfos():
     with tracer.start_active_span('/auth/getUserInfos') as scope:
-        customer_datas = users_collection.find()
+
+        with tracer.start_active_span('mongo_find') as mongo_span:
+            trace_mongo_operation(mongo_span, 'find', '/auth/register')
+            customer_datas = users_collection.find()
+
         datas = []
         for contact in customer_datas:
             contact_dict = {key: value for key, value in contact.items() if key != '_id'}
