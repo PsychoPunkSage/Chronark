@@ -10,8 +10,10 @@ default_users=10
 
 # Function to clear data for each username
 cleanup() {
-  usernames=("$@")
-  for username in "${usernames[@]}"; do
+  start_index=$1
+  end_index=$2
+  for ((i = start_index; i < end_index; i++)); do
+    username="user$i"
     for url in "$login_data" "$customerInfo_data"; do
       response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$url" -H "Content-Type: application/json" -d "{\"username\": \"$username\"}")
       if [ "$response" -eq 200 ]; then
