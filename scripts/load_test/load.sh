@@ -95,6 +95,38 @@ logout_user() {
 #   done
 # }
 
+# ASYNC WAY
+add_users() {
+  default_users=${1:-10}
+  
+  for ((i = 11; i < 11 + default_users; i++)); do
+    username="user$i"
+    password="user$i"
+    user_data=$(jq -n --arg username "$username" --arg password "$password" \
+      --arg name "User $i" --arg email "$username@example.com" \
+      --arg contact "+91 98765432$(printf '%02d' $i)" \
+      --arg address "${i}00 Main St, Anytown, AnyState" \
+      '{username: $username, password: $password, name: $name, email: $email, contact: $contact, address: $address}')
+
+    # Register user in the background
+    (
+      register_response=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$register_url" -H "Content-Type: application/json" -d "$user_data")
+      if [ "$register_response" -eq 200 ]; then
+        echo "User $username registered successfully."
+        
+        # Login user (after registration) in the background
+        login_user "$username" "$password"
+      else
+        echo "Failed to register user $username. Status code: $register_response"
+      fi
+    ) &
+  done
+
+  # Wait for all background processes to complete
+  wait
+  echo "All users registered and logged in concurrently."
+}
+
 # Main script to handle flags
 while [[ "$#" -gt 0 ]]; do
   case $1 in
