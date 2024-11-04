@@ -25,6 +25,6 @@
 > Remove users
 
 ```sh
-./load.sh --load username1 username2 username1 .....
+./load.sh --refresh start_index (end_index + 1)
 # Ensure whitespace seperated usernames.
 ```
