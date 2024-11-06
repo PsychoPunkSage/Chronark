@@ -1,0 +1,61 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "microservices"
+    static_configs:
+      - targets: ["ms-jaeger:16686", "cadvisor:8080", "ms-acl:8181"]
+  - job_name: "redis"
+    static_configs:
+      - targets:
+          [
+            "db-redis-offer-banner:6379",
+            "db-redis-search:6379",
+            "db-redis-auth:6379",
+          ]
+  - job_name: "mongo"
+    static_configs:
+      - targets: [
+            "db-mongo-bank-info:27017", # 27017
+            "db-mongo-bank-auth-info:27017", # 27018
+            "db-mongo-customer-info:27017", # 27020
+            "db-mongo-customer-activity:27017", # 27025
+            "db-mongo-personal-lending:27017", # 27021
+            "db-mongo-business-lending:27017", # 27022
+            "db-mongo-mortgage:27017", # 27023
+            "db-mongo-investment:27017", # 27024
+            "db-mongo-credit-card:27017", # 27026
+            "db-mongo-wealth-mgmt:27017", # 27027
+          ]
+  - job_name: "memcached"
+    static_configs:
+      - targets:
+          [
+            "db-memcached-personal-lending:11211",
+            "db-memcached-business-lending:11212",
+            "db-memcached-mortgage:11213",
+            "db-memcached-investment:11214",
+          ]
+  - job_name: "microservice_containers"
+    static_configs:
+      - targets:
+          [
+            "haproxy:80",
+            "ms-offer-banner:5002",
+            "ms-contacts:5003",
+            "ms-search:5004",
+            "ms-authentication:5005",
+            "ms-customer-info:5006",
+            "ms-personal-lending:5007",
+            "ms-mortgage:5008",
+            "ms-investment:5009",
+            "ms-business-lending:5010",
+            "ms-deposit-account:5011",
+            "ms-customer-activity:5012",
+            "ms-credit-card:5013",
+            "ms-payments:5014",
+            "ms-wealth-mgmt:5015",
+            "ms-frontend-1:4001",
+            "ms-frontend-2:4002",
+            "ms-frontend-3:4003",
+          ]
