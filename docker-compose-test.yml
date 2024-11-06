@@ -51,6 +51,33 @@ services:
     # labels:
     # - com.mycompany.role=cadvisor
     restart: always
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ms-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./src/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - vittmitra
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ms-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - vittmitra
+    depends_on:
+      - prometheus
     
   # redis-ob-ms:
   #   build:
@@ -972,6 +999,7 @@ volumes:
     driver: local
   mongodb_wealth_mgmt:
     driver: local
+  grafana-data:
 
 networks:
   vittmitra:
