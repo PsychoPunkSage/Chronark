@@ -28,3 +28,6 @@ load-cleanup:
 
 cve-2020-7921:
 	python scripts/Mongodb/CVE-2020-7921/attack.py
+
+cve-2022-24834:
+	python scripts/Redis/CVE-2022-24834/redis_cve-2022-24834.py
