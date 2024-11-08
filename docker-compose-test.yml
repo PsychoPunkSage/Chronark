@@ -127,19 +127,37 @@ services:
       - ./src/authentication/conf/:/etc/redis/
     command: ["redis-server", "/etc/redis/redis.conf"]
 
+  # mongo:
+  #   image: mongo:7.0
+  #   # image: mongo:4.2.2
+  #   container_name: db-mongo-bank-info
+  #   environment:
+  #     - MONGO_INITDB_ROOT_USERNAME=mongocontact
+  #     - MONGO_INITDB_ROOT_PASSWORD=contact
+  #   ports:
+  #     - 27017:27017
+  #   command: mongod --auth --bind_ip_all
+  #   networks:
+  #     - vittmitra
+  #   volumes:
+  #     # - ./src/contact/conf/:/etc/mongo
+  #     - mongo_data:/data/db
+  
   mongo:
-    image: mongo:7.0
+    # image: mongo:7.0
+    image: mongo:4.2.2
     container_name: db-mongo-bank-info
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocontact
       - MONGO_INITDB_ROOT_PASSWORD=contact
     ports:
       - 27017:27017
+    command: mongod --auth --bind_ip_all
     networks:
       - vittmitra
     volumes:
       # - ./src/contact/conf/:/etc/mongo
-      - mongo_data:/data/db
+      - mongo_data_cve:/data/db
 
   mongo-auth-info:
     image: mongo:7.0
@@ -980,6 +998,8 @@ services:
 
 volumes:
   mongo_data:
+    driver: local
+  mongo_data_cve:
     driver: local
   mongo_auth:
     driver: local
