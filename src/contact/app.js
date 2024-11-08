@@ -166,14 +166,16 @@ app.post('/updateContacts', async (req, res) => {
             if (result.modifiedCount === 1) {
                 // span.log({ event: 'contact updated', region_id });
                 res.status(200).json({ message: 'Contact updated successfully' });
+            } else if (result.matchedCount === 1) {
+                res.status(200).json({ message: 'No changes were made; contact was already up to date' });
             } else {
-                res.status(404).json({ error: 'Contact not found or not modified' });
+                res.status(404).json({ error: 'Contact not found or update failed' });
             }
         } else {
             const result = await contactsCollection.insertOne(jsonData);
             if (result.insertedId) {
                 // span.log({ event: 'contact created', region_id });
-                res.status(201).json({ message: 'Contact created successfully', id: result.insertedId });
+                res.status(200).json({ message: 'Contact created successfully', id: result.insertedId });
             } else {
                 res.status(500).json({ error: 'Failed to insert new contact' });
             }
@@ -247,16 +249,18 @@ app.post('/updateFaqs', async (req, res) => {
         if (existingFaq) {
             const result = await faqsCollection.updateOne({ question_id: question_id }, { $set: jsonData });
             if (result.modifiedCount === 1) {
-                // span.log({ event: 'faq updated', region_id })
+                // span.log({ event: 'Faq updated', region_id });
                 res.status(200).json({ message: 'Faq updated successfully' });
+            } else if (result.matchedCount === 1) {
+                res.status(200).json({ message: 'No changes were made; Faq was already up to date' });
             } else {
-                res.status(404).json({ error: 'Faq not found or not modified' });
+                res.status(404).json({ error: 'Faq not found or update failed' });
             }
         } else {
             const result = await faqsCollection.insertOne(jsonData);
             if (result.insertedId) {
                 // span.log({ event: 'faq created', region_id })
-                res.status(201).json({ message: 'Faq created successfully', id: result.insertedId });
+                res.status(200).json({ message: 'Faq created successfully', id: result.insertedId });
             } else {
                 res.status(500).json({ error: 'Failed to insert new faq' });
             }
