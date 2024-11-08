@@ -2,7 +2,7 @@ import json
 import requests
 
 # Urls
-url_offer_banner = 'http://localhost:4001/setOfferBanner'
+url_offer_banner = 'http://localhost:80/setOfferBanner'
 url_bank_contacts = 'http://localhost:5003/updateContacts'
 url_faq = 'http://localhost:5003/updateFaqs'
 url_index = 'http://localhost:5004/updateIndex'
@@ -43,7 +43,7 @@ for url, file in pairs.items():
             if response.status_code == 200:
                 print(f"Successfully updated data for {file} at {url}")
             else:
-                print(f"Failed to update data for {file} at {url}. Status code: {response.status_code}")
+                print(f"Failed to update data for {file} at {url}. Status code: {response.status_code}. Status Message: {response.json()}")
     else:
         print(f"No data to update for {file} at {url}")
 
