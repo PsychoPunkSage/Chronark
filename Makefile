@@ -5,6 +5,12 @@ up:
 	sudo docker compose -f docker-compose-test.yml up -d
 	./setup.sh
 
+up-debug:
+	sudo docker compose -f docker-compose-test.yml up
+
+up-debug-load:
+	./setup.sh
+
 down:
 	sudo docker compose -f docker-compose-test.yml down
 
