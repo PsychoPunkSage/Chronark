@@ -25,3 +25,6 @@ load-load:
 load-cleanup:
 #  usage :> make load-cleanup L=10
 	scripts/load_test/load.sh --refresh 11 $$(($(L) + 11))
+
+cve-2020-7921:
+	python scripts/Mongodb/CVE-2020-7921/attack.py
