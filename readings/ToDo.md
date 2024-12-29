@@ -52,9 +52,9 @@
 
 ## Security Testing Parameters
 
-| Test Category  | Tool           | Test Cases                                                  | Acceptance Criteria                                              | Frequency |
-| -------------- | -------------- | ----------------------------------------------------------- | ---------------------------------------------------------------- | --------- |
-| Authentication | OWASP ZAP      | - Brute force<br>- Session fixation<br>- Token replay       | - Failed login limit<br>- Session timeout<br>- Token validation  | Daily     |
-| Authorization  | Custom Scripts | - Role escalation<br>- Resource access<br>- API permissions | - Role separation<br>- Access control<br>- Audit logs            | Weekly    |
-| API Security   | Postman/Newman | - Input validation<br>- Rate limiting<br>- Data exposure    | - Input sanitization<br>- Rate control<br>- Data masking         | Daily     |
-| Dependencies   | Snyk/SonarQube | - CVE scanning<br>- License check<br>- Version control      | - No critical CVEs<br>- License compliance<br>- Version currency | Weekly    |
+| Test Category  | Tool           | Test Cases                                                  | Acceptance Criteria                                              |
+| -------------- | -------------- | ----------------------------------------------------------- | ---------------------------------------------------------------- |
+| Authentication | OWASP ZAP      | - Brute force<br>- Session fixation<br>- Token replay       | - Failed login limit<br>- Session timeout<br>- Token validation  |
+| Authorization  | Custom Scripts | - Role escalation<br>- Resource access<br>- API permissions | - Role separation<br>- Access control<br>- Audit logs            |
+| API Security   | Postman/Newman | - Input validation<br>- Rate limiting<br>- Data exposure    | - Input sanitization<br>- Rate control<br>- Data masking         |
+| Dependencies   | Snyk/SonarQube | - CVE scanning<br>- License check<br>- Version control      | - No critical CVEs<br>- License compliance<br>- Version currency |
