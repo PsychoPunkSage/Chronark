@@ -44,4 +44,6 @@ sudo docker build -t ${REGISTRY}/payments:${TAG} -f ./src/payments/Dockerfile.pa
 sudo docker build -t ${REGISTRY}/wealth-mgmt:${TAG} -f ./src/wealth_mgmt/Dockerfile.wealth_mgmt ./src/wealth_mgmt
 
 # Build frontend
-sudo docker build -t ${REGISTRY}/frontend:${TAG} -f ./src/frontend/Dockerfile.frontend1 ./src/frontend
+sudo docker build -t ${REGISTRY}/frontend1:${TAG} -f ./src/frontend/Dockerfile.frontend1 ./src/frontend
+sudo docker build -t ${REGISTRY}/frontend2:${TAG} -f ./src/frontend/Dockerfile.frontend2 ./src/frontend
+sudo docker build -t ${REGISTRY}/frontend3:${TAG} -f ./src/frontend/Dockerfile.frontend3 ./src/frontend
