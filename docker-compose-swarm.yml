@@ -795,7 +795,7 @@ services:
     command: python app.py
 
   frontend-1:
-    image: ${REGISTRY:-local}/frontend-1:${TAG:-latest}
+    image: ${REGISTRY:-local}/frontend1:${TAG:-latest}
     deploy:
       mode: replicated
       replicas: 3
@@ -850,7 +850,7 @@ services:
     command: python app.py
   
   frontend-2:
-    image: ${REGISTRY:-local}/frontend-2:${TAG:-latest}
+    image: ${REGISTRY:-local}/frontend2:${TAG:-latest}
     deploy:
       mode: replicated
       replicas: 3
@@ -905,7 +905,7 @@ services:
     command: python app.py
   
   frontend-3:
-    image: ${REGISTRY:-local}/frontend-3:${TAG:-latest}
+    image: ${REGISTRY:-local}/frontend3:${TAG:-latest}
     deploy:
       mode: replicated
       replicas: 3
@@ -986,5 +986,4 @@ volumes:
 
 networks:
   vittmitra:
-    driver: bridge
-    # external: true
+    driver: overlay # for swarm
