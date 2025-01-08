@@ -1,7 +1,12 @@
 services:
   jaeger:
     image: jaegertracing/all-in-one:latest
-    container_name: ms-jaeger
+    deploy:
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == manager
     ports:
       - "16686:16686"
       - "5775:5775/udp"
@@ -11,21 +16,31 @@ services:
       - "14268:14268"
       - "14250:14250"
       - "9411:9411"
-
     environment:
       - COLLECTOR_ZIPKIN_HTTP_PORT=9411
       - COLLECTOR_PORT=6831
       - AGENT_HOST=jaeger
       - AGENT_PORT=6831
+    networks:
+      - vittmitra
 
+  haproxy:
+    image: haproxy:latest
+    deploy:
+      mode: replicated
+      replicas: 3
+    ports:
+      - 80:80
+    volumes:
+      - ./src/frontend/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
     networks:
       - vittmitra
 
   opa:
-    build:
-      context: ./src/acl
-      dockerfile: Dockerfile.opa
-    container_name: ms-acl
+    image: openpolicyagent/opa:latest
+    deploy:
+      mode: replicated
+      replicas: 3
     ports:
       - "8181:8181"
     networks:
@@ -33,26 +48,26 @@ services:
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.0
-    #image: google/cadvisor:latest
-    container_name: cadvisor
-    volumes:
-    - /:/rootfs:ro
-    - /var/run:/var/run:rw
-    - /sys:/sys:ro
-    - /var/lib/docker/:/var/lib/docker:ro
-    - /sys/fs/cgroup:/sys/fs/cgroup:ro
-    - /var/run/docker.sock:/var/run/docker.sock:ro
     deploy:
       mode: global
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
-    - 9091:8080 # Change the host port to 9091 and keep the container port as 8080
-    # labels:
-    # - com.mycompany.role=cadvisor
-    restart: always
+      - 9091:8080
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: ms-prometheus
+    deploy:
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == manager
     ports:
       - "9090:9090"
     volumes:
@@ -64,7 +79,12 @@ services:
 
   grafana:
     image: grafana/grafana:latest
-    container_name: ms-grafana
+    deploy:
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == manager
     ports:
       - "3000:3000"
     environment:
@@ -74,38 +94,25 @@ services:
       - grafana-data:/var/lib/grafana
     networks:
       - vittmitra
-    depends_on:
-      - prometheus
-    
-  # redis-ob-ms:
-  #   build:
-  #     context: scripts/Redis/CVE-2023-45145
-  #     dockerfile: Dockerfile.redis_cve_2023_45145
-  #   container_name: db-redis-offer-banner
-  #   ports:
-  #     - 6379:6379
-  #   networks:
-  #     - vittmitra
-  #   volumes:
-  #     - ./scripts/Redis/CVE-2023-45145/redis.conf:/etc/redis/redis.conf
-  #   command: ["redis-server", "/etc/redis/redis.conf"]
 
   redis-ob-ms:
-    # image: redis:6.0-alpine
     image: redis:6.2.12
-    container_name: db-redis-offer-banner
+    deploy:
+      mode: replicated
+      replicas: 3
     ports:
       - 6379:6379
     networks:
       - vittmitra
     volumes:
-      # - ./src/offer_banner/conf/:/etc/redis/
       - ./scripts/Redis/CVE-2022-24834/conf:/etc/redis/
     command: ["redis-server", "/etc/redis/redis.conf"]
 
   redis-search-ms:
     image: redis:6.0-alpine
-    container_name: db-redis-search
+    deploy:
+      mode: replicated
+      replicas: 3
     ports:
       - 6380:6379
     networks:
@@ -116,7 +123,9 @@ services:
 
   redis-auth-ms:
     image: redis:6.0-alpine
-    container_name: db-redis-auth
+    deploy:
+      mode: replicated
+      replicas: 3
     ports:
       - 6381:6379
     networks:
@@ -125,26 +134,12 @@ services:
       - ./src/authentication/conf/:/etc/redis/
     command: ["redis-server", "/etc/redis/redis.conf"]
 
-  # mongo:
-  #   image: mongo:7.0
-  #   # image: mongo:4.2.2
-  #   container_name: db-mongo-bank-info
-  #   environment:
-  #     - MONGO_INITDB_ROOT_USERNAME=mongocontact
-  #     - MONGO_INITDB_ROOT_PASSWORD=contact
-  #   ports:
-  #     - 27017:27017
-  #   command: mongod --auth --bind_ip_all
-  #   networks:
-  #     - vittmitra
-  #   volumes:
-  #     # - ./src/contact/conf/:/etc/mongo
-  #     - mongo_data:/data/db
-  
   mongo:
     # image: mongo:7.0
     image: mongo:4.2.2
-    container_name: db-mongo-bank-info
+    deploy:
+      mode: replicated
+      replicas: 3
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocontact
       - MONGO_INITDB_ROOT_PASSWORD=contact
@@ -154,12 +149,13 @@ services:
     networks:
       - vittmitra
     volumes:
-      # - ./src/contact/conf/:/etc/mongo
       - mongo_data_cve:/data/db
 
   mongo-auth-info:
     image: mongo:7.0
-    container_name: db-mongo-bank-auth-info
+    deploy:
+      mode: replicated
+      replicas: 3
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoauthentication
       - MONGO_INITDB_ROOT_PASSWORD=authinfo
@@ -169,10 +165,12 @@ services:
       - vittmitra
     volumes:
       - mongo_auth:/data/db
-  
+
   mongo-customer-info:
     image: mongo:7.0
-    container_name: db-mongo-customer-info
+    deploy:
+      mode: replicated
+      replicas: 3
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocusinfo
       - MONGO_INITDB_ROOT_PASSWORD=customerinfo
@@ -182,10 +180,12 @@ services:
       - vittmitra
     volumes:
       - mongodb_cus_info:/data/db
-  
+
   mongo-customer-activity:
     image: mongo:7.0
-    container_name: db-mongo-customer-activity
+    deploy:
+      mode: replicated
+      replicas: 3
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocusactivity
       - MONGO_INITDB_ROOT_PASSWORD=customeractivity
@@ -198,7 +198,9 @@ services:
 
   mongo-personal-lending:
     image: mongo:7.0
-    container_name: db-mongo-personal-lending
+    deploy:
+      mode: replicated
+      replicas: 3
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoPersonalLending
       - MONGO_INITDB_ROOT_PASSWORD=personalLending
@@ -211,7 +213,9 @@ services:
 
   mongo-business-lending:
     image: mongo:7.0
-    container_name: db-mongo-business-lending
+    deploy:
+      mode: replicated
+      replicas: 3
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoBusinessLending
       - MONGO_INITDB_ROOT_PASSWORD=businessLending
@@ -224,7 +228,9 @@ services:
 
   mongo-mortgage:
     image: mongo:7.0
-    container_name: db-mongo-mortgage
+    deploy:
+      mode: replicated
+      replicas: 3
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongomortgage
       - MONGO_INITDB_ROOT_PASSWORD=mortgage
@@ -237,7 +243,9 @@ services:
 
   mongo-investment:
     image: mongo:7.0
-    container_name: db-mongo-investment
+    deploy:
+      mode: replicated
+      replicas: 3
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoinvestment
       - MONGO_INITDB_ROOT_PASSWORD=investment
@@ -250,7 +258,9 @@ services:
   
   mongo-credit-card:
     image: mongo:7.0
-    container_name: db-mongo-credit-card
+    deploy:
+      mode: replicated
+      replicas: 3
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocreditcard
       - MONGO_INITDB_ROOT_PASSWORD=creditcard
@@ -263,7 +273,9 @@ services:
  
   mongo-wealth-mgmt:
     image: mongo:7.0
-    container_name: db-mongo-wealth-mgmt
+    deploy:
+      mode: replicated
+      replicas: 3
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongowealthmgmt
       - MONGO_INITDB_ROOT_PASSWORD=wealthmgmt
@@ -276,7 +288,9 @@ services:
 
   mongo-express:
     image: mongo-express
-    container_name: db-mongo-express
+    deploy:
+      mode: replicated
+      replicas: 1
     ports:
       - 8081:8081
     networks:
@@ -291,7 +305,9 @@ services:
 
   memcached-pl:
     image: memcached:latest
-    container_name: db-memcached-personal-lending
+    deploy:
+      mode: replicated
+      replicas: 3
     ports:
       - "11211:11211"
     networks:
@@ -299,7 +315,9 @@ services:
   
   memcached-bl:
     image: memcached:latest
-    container_name: db-memcached-business-lending
+    deploy:
+      mode: replicated
+      replicas: 3
     ports:
       - "11212:11211"
     networks:
@@ -307,7 +325,9 @@ services:
 
   memcached-mortgage:
     image: memcached:latest
-    container_name: db-memcached-mortgage
+    deploy:
+      mode: replicated
+      replicas: 3
     ports:
       - "11213:11211"
     networks:
@@ -315,45 +335,54 @@ services:
 
   memcached-investment:
     image: memcached:latest
-    container_name: db-memcached-investment
+    deploy:
+      mode: replicated
+      replicas: 3
     ports:
       - "11214:11211"
     networks:
       - vittmitra
 
+# HAVE TO WORK ON HEALTH CHECK.... (inside APPLICATION)
+
   offer-banner:
-    build:
-      context: ./src/offer_banner
-      dockerfile: Dockerfile.offer_banner
-    container_name: ms-offer-banner
+    image: ${REGISTRY:-local}/offer-banner:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/offer_banner/app.py:/app/app.py
       - ./src/offer_banner/conf/redis.conf:/app/conf/redis.conf
       - ./src/offer_banner/templates/index.html:/app/templates/index.html
       - ./src/offer_banner/requirements.txt:/app/requirements.txt
     ports:
-      - 5002:5002
+      - "5002:5002"
     networks:
       - vittmitra
     environment:
       - SELF_PORT=5002
-      - REDIS_HOST=db-redis-offer-banner
+      - REDIS_HOST=redis-ob-ms
       - REDIS_PORT=6379
       - REDIS_PASSWORD=offer_banner_cve-2022-24834
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - redis-ob-ms
-      - mongo
-      - authentication
 
   credit-card:
-    build:
-      context: ./src/creditCard
-      dockerfile: Dockerfile.creditCard
-    container_name: ms-credit-card
+    image: ${REGISTRY:-local}/credit-card:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/creditCard/app.py:/app/app.py
       - ./src/creditCard/requirements.txt:/app/requirements.txt
@@ -365,27 +394,28 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5013
-      - MONGO_DB_HOST=db-mongo-credit-card
+      - MONGO_DB_HOST=mongo-credit-card
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocreditcard
       - MONGO_DB_PASSWORD=creditcard
-      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_HOST=customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
-      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - mongo-credit-card
-      - customer-info
 
   contacts:
-    build:
-      context: ./src/contact
-      dockerfile: Dockerfile.contact
-    container_name: ms-contacts
+    image: ${REGISTRY:-local}/contacts:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/contact/app.js:/app/app.js
       - ./src/contact/templates/:/app/templates/
@@ -397,24 +427,24 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5003
-      - MONGO_DB_HOST=db-mongo-bank-info
+      - MONGO_DB_HOST=mongo
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocontact
-      - MONGO_DB_PASSWORD=contact
+      - MONGO_DB_PASSWORD=contacts
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: node app.js
-    depends_on:
-      - jaeger
-      - mongo
-      - offer-banner
-      - authentication
 
   search:
-    build:
-      context: ./src/search
-      dockerfile: Dockerfile.search
-    container_name: ms-search
+    image: ${REGISTRY:-local}/search:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/search/app.py:/app/app.py
       - ./src/search/conf/redis.conf:/app/conf/redis.conf
@@ -427,28 +457,27 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5004
-      - MONGO_DB_HOST=db-mongo-bank-info
+      - MONGO_DB_HOST=mongo
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocontact
       - MONGO_DB_PASSWORD=contact
-      - SEARCH_REDIS_HOST=db-redis-search
+      - SEARCH_REDIS_HOST=redis-search
       - SEARCH_REDIS_PORT=6380
       - SEARCH_REDIS_PASSWORD=search_complexpass
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - redis-search-ms
-      - mongo
-      - contacts
-      - authentication
 
   authentication:
-    build:
-      context: ./src/authentication
-      dockerfile: Dockerfile.authentication
-    container_name: ms-authentication
+    image: ${REGISTRY:-local}/authentication:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/authentication/app.py:/app/app.py
       - ./src/authentication/templates/:/app/templates/
@@ -461,30 +490,29 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5005
-      - REDIS_HOST=db-redis-auth
+      - REDIS_HOST=redis-auth
       - REDIS_PORT=6381
       - REDIS_PASSWORD=authentication_complexpass
-      - MONGO_DB_HOST=db-mongo-bank-auth-info
+      - MONGO_DB_HOST=mongo-auth-info
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongoauthentication
       - MONGO_DB_PASSWORD=authinfo
-      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_HOST=customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - redis-auth-ms
-      - mongo-express
-      - customer-info
-      - mongo-auth-info
 
   customer-info:
-    build:
-      context: ./src/customerInfo
-      dockerfile: Dockerfile.customerInfo
-    container_name: ms-customer-info
+    image: ${REGISTRY:-local}/customer-info:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/customerInfo/app.py:/app/app.py
       - ./src/customerInfo/requirements.txt:/app/requirements.txt
@@ -496,23 +524,24 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5006
-      - MONGO_DB_HOST=db-mongo-customer-info
+      - MONGO_DB_HOST=mongo-customer-info
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocusinfo
       - MONGO_DB_PASSWORD=customerinfo
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - mongo-customer-info
-      - mongo-express
 
   customer-activity:
-    build:
-      context: ./src/customerActivity
-      dockerfile: Dockerfile.customerActivity
-    container_name: ms-customer-activity
+    image: ${REGISTRY:-local}/customer-activity:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/customerActivity/app.py:/app/app.py
       - ./src/customerActivity/requirements.txt:/app/requirements.txt
@@ -524,25 +553,26 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5012
-      - MONGO_DB_HOST=db-mongo-customer-activity
+      - MONGO_DB_HOST=mongo-customer-activity
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocusactivity
       - MONGO_DB_PASSWORD=customeractivity
-      - WEALTH_MGMT_HOST=ms-wealth-mgmt
+      - WEALTH_MGMT_HOST=wealth-mgmt
       - WEALTH_MGMT_PORT=5015
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - mongo-customer-activity
-      - mongo-express
 
   personal-lending:
-    build:
-      context: ./src/personalLending
-      dockerfile: Dockerfile.personalLending
-    container_name: ms-personal-lending
+    image: ${REGISTRY:-local}/personal-lending:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/personalLending/app.py:/app/app.py
       - ./src/personalLending/requirements.txt:/app/requirements.txt
@@ -554,32 +584,30 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5007
-      - MONGO_DB_HOST=db-mongo-personal-lending
+      - MONGO_DB_HOST=mongo-personal-lending
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongoPersonalLending
       - MONGO_DB_PASSWORD=personalLending
-      - MEMCACHED_HOST=db-memcached-personal-lending
+      - MEMCACHED_HOST=memcached-pl
       - MEMCACHED_PORT=11211
-      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_HOST=customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
-      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - mongo
-      - mongo-express
-      - memcached-pl
-      - customer-info
-      - customer-activity
 
   business-lending:
-    build:
-      context: ./src/businessLending
-      dockerfile: Dockerfile.businessLending
-    container_name: ms-business-lending
+    image: ${REGISTRY:-local}/business-lending:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/businessLending/app.py:/app/app.py
       - ./src/businessLending/requirements.txt:/app/requirements.txt
@@ -591,31 +619,30 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5010
-      - MONGO_DB_HOST=db-mongo-business-lending
+      - MONGO_DB_HOST=mongo-business-lending
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongoBusinessLending
       - MONGO_DB_PASSWORD=businessLending
-      - MEMCACHED_HOST=db-memcached-business-lending
+      - MEMCACHED_HOST=memcached-bl
       - MEMCACHED_PORT=11211
-      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_HOST=customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
-      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - mongo-business-lending
-      - mongo-express
-      - memcached-bl
-      - customer-info
 
   mortgage:
-    build:
-      context: ./src/mortgage
-      dockerfile: Dockerfile.mortgage
-    container_name: ms-mortgage
+    image: ${REGISTRY:-local}/mortgage:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/mortgage/app.py:/app/app.py
       - ./src/mortgage/requirements.txt:/app/requirements.txt
@@ -627,31 +654,30 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5008
-      - MONGO_DB_HOST=db-mongo-mortgage
+      - MONGO_DB_HOST=mongo-mortgage
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongomortgage
       - MONGO_DB_PASSWORD=mortgage
-      - MEMCACHED_HOST=db-memcached-mortgage
+      - MEMCACHED_HOST=memcached-mortgage
       - MEMCACHED_PORT=11211
-      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_HOST=customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
-      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - mongo
-      - mongo-express
-      - memcached-pl
-      - customer-info
 
   investment:
-    build:
-      context: ./src/investment-account
-      dockerfile: Dockerfile.investment
-    container_name: ms-investment
+    image: ${REGISTRY:-local}/investment:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/investment-account/app.py:/app/app.py
       - ./src/investment-account/requirements.txt:/app/requirements.txt
@@ -663,31 +689,30 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5009
-      - MONGO_DB_HOST=db-mongo-investment
+      - MONGO_DB_HOST=mongo-investment
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongoinvestment
       - MONGO_DB_PASSWORD=investment
-      - MEMCACHED_HOST=db-memcached-investment
+      - MEMCACHED_HOST=memcached-investment
       - MEMCACHED_PORT=11211
-      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_HOST=customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
-      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - mongo
-      - mongo-express
-      - memcached-investment
-      - customer-info
 
   deposit-account:
-    build:
-      context: ./src/depositAccount
-      dockerfile: Dockerfile.depositAccount
-    container_name: ms-deposit-account
+    image: ${REGISTRY:-local}/deposit-account:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/depositAccount/app.py:/app/app.py
       - ./src/depositAccount/requirements.txt:/app/requirements.txt
@@ -699,22 +724,24 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5011
-      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_HOST=customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
-      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - customer-info
 
   payments:
-    build:
-      context: ./src/payments
-      dockerfile: Dockerfile.payments
-    container_name: ms-payments
+    image: ${REGISTRY:-local}/payments:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/payments/app.py:/app/app.py
       - ./src/payments/requirements.txt:/app/requirements.txt
@@ -726,23 +753,24 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5014
-      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_HOST=customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
-      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - customer-info
-      - customer-activity
-  
+
   wealth-mgmt:
-    build:
-      context: ./src/wealth_mgmt
-      dockerfile: Dockerfile.wealth_mgmt
-    container_name: ms-wealth-mgmt
+    image: ${REGISTRY:-local}/wealth-mgmt:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/wealth_mgmt/app.py:/app/app.py
       - ./src/wealth_mgmt/requirements.txt:/app/requirements.txt
@@ -754,41 +782,28 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=5015
-      - MONGO_DB_HOST=db-mongo-wealth-mgmt
+      - MONGO_DB_HOST=mongo-wealth-mgmt
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongowealthmgmt
       - MONGO_DB_PASSWORD=wealthmgmt
-      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_HOST=customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
-      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - customer-info
-      - customer-activity
-
-  haproxy:
-    image: haproxy:latest
-    container_name: haproxy
-    ports:
-      - 80:80
-    volumes:
-      - ./src/frontend/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
-    networks:
-      - vittmitra
-    depends_on:
-      - frontend-1
-      - frontend-2
-      - frontend-3
 
   frontend-1:
-    build:
-      context: ./src/frontend
-      dockerfile: Dockerfile.frontend1
-    container_name: ms-frontend-1
+    image: ${REGISTRY:-local}/frontend1:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/frontend/static/:/app/static/
       - ./src/frontend/templates/:/app/templates/
@@ -800,199 +815,149 @@ services:
       - vittmitra
     environment:
       - SELF_PORT=4001
-      - OFFER_BANNER_SERVICE_HOST=ms-offer-banner
+      - OFFER_BANNER_SERVICE_HOST=offer-banner
       - OFFER_BANNER_SERVICE_PORT=5002
-      - CONTACT_SERVICE_HOST=ms-contacts
+      - CONTACT_SERVICE_HOST=contacts
       - CONTACT_SERVICE_PORT=5003
-      - SEARCH_SERVICE_HOST=ms-search
+      - SEARCH_SERVICE_HOST=search
       - SEARCH_SERVICE_PORT=5004
       - AUTH_SERVICE_HOST=authentication
       - AUTH_SERVICE_PORT=5005
-      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_HOST=customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
-      - PERSONAL_LENDING_SERVICE_HOST=ms-personal-lending
+      - PERSONAL_LENDING_SERVICE_HOST=personal-lending
       - PERSONAL_LENDING_SERVICE_PORT=5007
-      - MORTGAGE_SERVICE_HOST=ms-mortgage
+      - MORTGAGE_SERVICE_HOST=mortgage
       - MORTGAGE_SERVICE_PORT=5008
-      - INVESTMENT_SERVICE_HOST=ms-investment
+      - INVESTMENT_SERVICE_HOST=investment
       - INVESTMENT_SERVICE_PORT=5009
-      - BUSINESS_LENDING_SERVICE_HOST=ms-business-lending
+      - BUSINESS_LENDING_SERVICE_HOST=business-lending
       - BUSINESS_LENDING_SERVICE_PORT=5010
-      - DEPOSIT_WITHDRAWL_SERVICE_HOST=ms-deposit-account
+      - DEPOSIT_WITHDRAWL_SERVICE_HOST=deposit-account
       - DEPOSIT_WITHDRAWL_SERVICE_PORT=5011
-      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
-      - CREDIT_CARD_SERVICE_HOST=ms-credit-card
+      - CREDIT_CARD_SERVICE_HOST=credit-card
       - CREDIT_CARD_SERVICE_PORT=5013
-      - PAYMENTS_SERVICE_HOST=ms-payments
+      - PAYMENTS_SERVICE_HOST=payments
       - PAYMENTS_SERVICE_PORT=5014
-      - ACL_SERVICE_HOST=ms-acl
+      - ACL_SERVICE_HOST=opa
       - ACL_SERVICE_PORT=8181
-      - WEALTH_MGMT_HOST=ms-wealth-mgmt
+      - WEALTH_MGMT_HOST=wealth-mgmt
       - WEALTH_MGMT_PORT=5015
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - offer-banner
-      - contacts
-      - search
-      - redis-ob-ms
-      - redis-search-ms
-      - mongo
-      - authentication
-      - customer-info
-      - customer-activity
-      - personal-lending
-      - business-lending
-      - mortgage
-      - investment
-      - deposit-account
-      - credit-card
-      - payments
-      - opa
-      - wealth-mgmt
-
+  
   frontend-2:
-    build:
-      context: ./src/frontend
-      dockerfile: Dockerfile.frontend1
-    container_name: ms-frontend-2 # <<<
+    image: ${REGISTRY:-local}/frontend2:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/frontend/static/:/app/static/
       - ./src/frontend/templates/:/app/templates/
       - ./src/frontend/app.py:/app/app.py
       - ./src/frontend/tracing.py:/app/tracing.py
     ports:
-      - 4002:4002 # <<<
+      - 4002:4002
     networks:
       - vittmitra
     environment:
-      - SELF_PORT=4002 # <<<
-      - OFFER_BANNER_SERVICE_HOST=ms-offer-banner
+      - SELF_PORT=4001
+      - OFFER_BANNER_SERVICE_HOST=offer-banner
       - OFFER_BANNER_SERVICE_PORT=5002
-      - CONTACT_SERVICE_HOST=ms-contacts
+      - CONTACT_SERVICE_HOST=contacts
       - CONTACT_SERVICE_PORT=5003
-      - SEARCH_SERVICE_HOST=ms-search
+      - SEARCH_SERVICE_HOST=search
       - SEARCH_SERVICE_PORT=5004
       - AUTH_SERVICE_HOST=authentication
       - AUTH_SERVICE_PORT=5005
-      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_HOST=customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
-      - PERSONAL_LENDING_SERVICE_HOST=ms-personal-lending
+      - PERSONAL_LENDING_SERVICE_HOST=personal-lending
       - PERSONAL_LENDING_SERVICE_PORT=5007
-      - MORTGAGE_SERVICE_HOST=ms-mortgage
+      - MORTGAGE_SERVICE_HOST=mortgage
       - MORTGAGE_SERVICE_PORT=5008
-      - INVESTMENT_SERVICE_HOST=ms-investment
+      - INVESTMENT_SERVICE_HOST=investment
       - INVESTMENT_SERVICE_PORT=5009
-      - BUSINESS_LENDING_SERVICE_HOST=ms-business-lending
+      - BUSINESS_LENDING_SERVICE_HOST=business-lending
       - BUSINESS_LENDING_SERVICE_PORT=5010
-      - DEPOSIT_WITHDRAWL_SERVICE_HOST=ms-deposit-account
+      - DEPOSIT_WITHDRAWL_SERVICE_HOST=deposit-account
       - DEPOSIT_WITHDRAWL_SERVICE_PORT=5011
-      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
-      - CREDIT_CARD_SERVICE_HOST=ms-credit-card
+      - CREDIT_CARD_SERVICE_HOST=credit-card
       - CREDIT_CARD_SERVICE_PORT=5013
-      - PAYMENTS_SERVICE_HOST=ms-payments
+      - PAYMENTS_SERVICE_HOST=payments
       - PAYMENTS_SERVICE_PORT=5014
-      - ACL_SERVICE_HOST=ms-acl
+      - ACL_SERVICE_HOST=opa
       - ACL_SERVICE_PORT=8181
-      - WEALTH_MGMT_HOST=ms-wealth-mgmt
+      - WEALTH_MGMT_HOST=wealth-mgmt
       - WEALTH_MGMT_PORT=5015
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - offer-banner
-      - contacts
-      - search
-      - redis-ob-ms
-      - redis-search-ms
-      - mongo
-      - authentication
-      - customer-info
-      - customer-activity
-      - personal-lending
-      - business-lending
-      - mortgage
-      - investment
-      - deposit-account
-      - credit-card
-      - payments
-      - opa
-      - wealth-mgmt
-
+  
   frontend-3:
-    build:
-      context: ./src/frontend
-      dockerfile: Dockerfile.frontend1
-    container_name: ms-frontend-3 # <<<
+    image: ${REGISTRY:-local}/frontend3:${TAG:-latest}
+    deploy:
+      mode: replicated
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     volumes:
       - ./src/frontend/static/:/app/static/
       - ./src/frontend/templates/:/app/templates/
       - ./src/frontend/app.py:/app/app.py
       - ./src/frontend/tracing.py:/app/tracing.py
     ports:
-      - 4003:4003 # <<<
+      - 4003:4003
     networks:
       - vittmitra
     environment:
-      - SELF_PORT=4003 # <<<
-      - OFFER_BANNER_SERVICE_HOST=ms-offer-banner
+      - SELF_PORT=4001
+      - OFFER_BANNER_SERVICE_HOST=offer-banner
       - OFFER_BANNER_SERVICE_PORT=5002
-      - CONTACT_SERVICE_HOST=ms-contacts
+      - CONTACT_SERVICE_HOST=contacts
       - CONTACT_SERVICE_PORT=5003
-      - SEARCH_SERVICE_HOST=ms-search
+      - SEARCH_SERVICE_HOST=search
       - SEARCH_SERVICE_PORT=5004
       - AUTH_SERVICE_HOST=authentication
       - AUTH_SERVICE_PORT=5005
-      - CUSTOMER_INFO_SERVICE_HOST=ms-customer-info
+      - CUSTOMER_INFO_SERVICE_HOST=customer-info
       - CUSTOMER_INFO_SERVICE_PORT=5006
-      - PERSONAL_LENDING_SERVICE_HOST=ms-personal-lending
+      - PERSONAL_LENDING_SERVICE_HOST=personal-lending
       - PERSONAL_LENDING_SERVICE_PORT=5007
-      - MORTGAGE_SERVICE_HOST=ms-mortgage
+      - MORTGAGE_SERVICE_HOST=mortgage
       - MORTGAGE_SERVICE_PORT=5008
-      - INVESTMENT_SERVICE_HOST=ms-investment
+      - INVESTMENT_SERVICE_HOST=investment
       - INVESTMENT_SERVICE_PORT=5009
-      - BUSINESS_LENDING_SERVICE_HOST=ms-business-lending
+      - BUSINESS_LENDING_SERVICE_HOST=business-lending
       - BUSINESS_LENDING_SERVICE_PORT=5010
-      - DEPOSIT_WITHDRAWL_SERVICE_HOST=ms-deposit-account
+      - DEPOSIT_WITHDRAWL_SERVICE_HOST=deposit-account
       - DEPOSIT_WITHDRAWL_SERVICE_PORT=5011
-      - CUSTOMER_ACTIVITY_SERVICE_HOST=ms-customer-activity
+      - CUSTOMER_ACTIVITY_SERVICE_HOST=customer-activity
       - CUSTOMER_ACTIVITY_SERVICE_PORT=5012
-      - CREDIT_CARD_SERVICE_HOST=ms-credit-card
+      - CREDIT_CARD_SERVICE_HOST=credit-card
       - CREDIT_CARD_SERVICE_PORT=5013
-      - PAYMENTS_SERVICE_HOST=ms-payments
+      - PAYMENTS_SERVICE_HOST=payments
       - PAYMENTS_SERVICE_PORT=5014
-      - ACL_SERVICE_HOST=ms-acl
+      - ACL_SERVICE_HOST=opa
       - ACL_SERVICE_PORT=8181
-      - WEALTH_MGMT_HOST=ms-wealth-mgmt
+      - WEALTH_MGMT_HOST=wealth-mgmt
       - WEALTH_MGMT_PORT=5015
-      - JAEGER_AGENT_HOST=ms-jaeger
+      - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
     command: python app.py
-    depends_on:
-      - jaeger
-      - offer-banner
-      - contacts
-      - search
-      - redis-ob-ms
-      - redis-search-ms
-      - mongo
-      - authentication
-      - customer-info
-      - customer-activity
-      - personal-lending
-      - business-lending
-      - mortgage
-      - investment
-      - deposit-account
-      - credit-card
-      - payments
-      - opa
-      - wealth-mgmt
 
 volumes:
   mongo_data:
@@ -1021,5 +986,4 @@ volumes:
 
 networks:
   vittmitra:
-    driver: bridge
-    # external: true
+    driver: overlay # for swarm
