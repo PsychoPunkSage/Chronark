@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-import subprocess
-import paramiko
 import time
-import os
+import paramiko
+import subprocess
 from getpass import getpass
 
 class SwarmDeployer:
