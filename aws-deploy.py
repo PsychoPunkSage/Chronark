@@ -15,8 +15,8 @@ class SwarmDeployer:
     def get_local_ip(self):
         """Get the local machine's IP address that will be used for Swarm."""
         try:
-            # Get IP address that can be reached by the worker
-            cmd = "hostname -I | awk '{print $1}'"
+            # Get IP address from the physical network interface <Specific to PsychoPunkSage>
+            cmd = "ip addr show enx0c37964e6574 | grep -w inet | awk '{print $2}' | cut -d/ -f1"
             result = subprocess.check_output(cmd, shell=True).decode().strip()
             self.manager_ip = result
             print(f"Local IP address: {self.manager_ip}")
@@ -59,58 +59,67 @@ class SwarmDeployer:
             # Connect to worker node
             ssh.connect(self.worker_ip, username=self.worker_username, password=self.worker_password)
 
-            # Create a channel for running sudo commands
-            channel = ssh.get_transport().open_session()
-            channel.get_pty()  # Request PTY
+            # # Test connectivity to manager
+            # print(f"Testing connectivity to manager node ({self.manager_ip})...")
+
+            # # Test ping
+            # channel = ssh.get_transport().open_session()
+            # channel.get_pty()
+            # channel.exec_command(f"ping -c 1 {self.manager_ip}")
+            # time.sleep(3)
+            # ping_result = channel.recv(1024).decode()
+            # print(f"Ping test result:\n{ping_result}")
+
+            # # Test Docker port
+            # channel = ssh.get_transport().open_session()
+            # channel.get_pty()
+            # channel.exec_command(f"nc -zv {self.manager_ip} 2377")
+            # time.sleep(2)
+            # port_result = channel.recv(1024).decode()
+            # print(f"Port 2377 test result:\n{port_result}")
 
             # Leave any existing swarm
-            channel.exec_command("sudo docker swarm leave --force")
-            channel.send(f"{self.worker_password}\n")  # Send password when prompted
-            time.sleep(2)
-
-            # Create a new channel for join command
             channel = ssh.get_transport().open_session()
-            channel.get_pty()  # Request PTY
+            channel.get_pty()
+            channel.exec_command("sudo docker swarm leave --force")
+            channel.send(f"{self.worker_password}\n")
+            time.sleep(2)
 
             # Join the swarm
+            channel = ssh.get_transport().open_session()
+            channel.get_pty()
             join_command = f"sudo docker swarm join --token {self.join_token} {self.manager_ip}:2377"
+            print(f"Executing join command: {join_command}")
             channel.exec_command(join_command)
-            channel.send(f"{self.worker_password}\n")  # Send password when prompted
-
-            # Wait for command to complete and check output
+            channel.send(f"{self.worker_password}\n")
             time.sleep(5)
 
-            # Verify the node joined successfully by checking node status
-            verify_channel = ssh.get_transport().open_session()
-            verify_channel.get_pty()
-            verify_channel.exec_command("sudo docker info | grep Swarm")
-            verify_channel.send(f"{self.worker_password}\n")
+            join_output = channel.recv(1024).decode()
+            join_error = channel.recv_stderr(1024).decode()
+            print(f"Join output: {join_output}")
+            if join_error:
+                print(f"Join error: {join_error}")
+
+            # Verify swarm status
+            channel = ssh.get_transport().open_session()
+            channel.get_pty()
+            channel.exec_command("sudo docker info | grep Swarm")
+            channel.send(f"{self.worker_password}\n")
             time.sleep(2)
 
-            output = verify_channel.recv(1024).decode()
-            if "active" not in output.lower():
-                print(f"Worker node failed to join swarm. Docker info output: {output}")
+            swarm_status = channel.recv(1024).decode()
+            if "active" not in swarm_status.lower():
+                print(f"Worker node failed to join swarm. Docker info output: {swarm_status}")
                 return False
 
             print("Successfully joined worker node to swarm")
-            print("Verifying connection...")
-
-            # Check if node can communicate with manager
-            test_channel = ssh.get_transport().open_session()
-            test_channel.get_pty()
-            test_channel.exec_command(f"sudo docker node ls")
-            test_channel.send(f"{self.worker_password}\n")
-            time.sleep(2)
-
-            test_output = test_channel.recv(1024).decode()
-            print(f"Node status: {test_output}")
-
             ssh.close()
             return True
+
         except Exception as e:
             print(f"Error setting up worker node: {e}")
-            return False  
-          
+            return False
+
     def build_and_deploy_stack(self):
         """Build images and deploy the stack."""
         try:
@@ -138,7 +147,7 @@ class SwarmDeployer:
 def main():
     # Configuration
     WORKER_IP = "10.5.30.190"
-    WORKER_USERNAME = "psychopunk_sage"  # Replace with actual username
+    WORKER_USERNAME = "psychopunk_sage"
     
     # Create deployer instance
     deployer = SwarmDeployer(WORKER_IP, WORKER_USERNAME)
