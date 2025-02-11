@@ -29,14 +29,14 @@ class SwarmDeployer:
         """Initialize Docker Swarm on local machine as manager."""
         try:
             # Leave any existing swarm
-            subprocess.run("docker swarm leave --force", shell=True, stderr=subprocess.PIPE)
+            subprocess.run("sudo docker swarm leave --force", shell=True, stderr=subprocess.PIPE)
             
             # Initialize new swarm
-            cmd = f"docker swarm init --advertise-addr {self.manager_ip}"
+            cmd = f"sudo docker swarm init --advertise-addr {self.manager_ip}"
             result = subprocess.check_output(cmd, shell=True).decode()
             
             # Extract join token from output
-            cmd = "docker swarm join-token worker -q"
+            cmd = "sudo docker swarm join-token worker -q"
             self.join_token = subprocess.check_output(cmd, shell=True).decode().strip()
             
             print("Successfully initialized swarm on manager node")
@@ -51,49 +51,83 @@ class SwarmDeployer:
             # Create SSH client
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            
+
             # Get password if not already set
             if not self.worker_password:
                 self.worker_password = getpass(f"Enter password for {self.worker_username}@{self.worker_ip}: ")
-            
+
             # Connect to worker node
             ssh.connect(self.worker_ip, username=self.worker_username, password=self.worker_password)
-            
+
+            # Create a channel for running sudo commands
+            channel = ssh.get_transport().open_session()
+            channel.get_pty()  # Request PTY
+
             # Leave any existing swarm
-            stdin, stdout, stderr = ssh.exec_command("docker swarm leave --force")
+            channel.exec_command("sudo docker swarm leave --force")
+            channel.send(f"{self.worker_password}\n")  # Send password when prompted
             time.sleep(2)
-            
+
+            # Create a new channel for join command
+            channel = ssh.get_transport().open_session()
+            channel.get_pty()  # Request PTY
+
             # Join the swarm
-            join_command = f"docker swarm join --token {self.join_token} {self.manager_ip}:2377"
-            stdin, stdout, stderr = ssh.exec_command(join_command)
-            
+            join_command = f"sudo docker swarm join --token {self.join_token} {self.manager_ip}:2377"
+            channel.exec_command(join_command)
+            channel.send(f"{self.worker_password}\n")  # Send password when prompted
+
             # Wait for command to complete and check output
             time.sleep(5)
-            error = stderr.read().decode().strip()
-            if error:
-                print(f"Error on worker node: {error}")
+
+            # Verify the node joined successfully by checking node status
+            verify_channel = ssh.get_transport().open_session()
+            verify_channel.get_pty()
+            verify_channel.exec_command("sudo docker info | grep Swarm")
+            verify_channel.send(f"{self.worker_password}\n")
+            time.sleep(2)
+
+            output = verify_channel.recv(1024).decode()
+            if "active" not in output.lower():
+                print(f"Worker node failed to join swarm. Docker info output: {output}")
                 return False
-                
+
             print("Successfully joined worker node to swarm")
+            print("Verifying connection...")
+
+            # Check if node can communicate with manager
+            test_channel = ssh.get_transport().open_session()
+            test_channel.get_pty()
+            test_channel.exec_command(f"sudo docker node ls")
+            test_channel.send(f"{self.worker_password}\n")
+            time.sleep(2)
+
+            test_output = test_channel.recv(1024).decode()
+            print(f"Node status: {test_output}")
+
             ssh.close()
             return True
         except Exception as e:
             print(f"Error setting up worker node: {e}")
-            return False
-
+            return False  
+          
     def build_and_deploy_stack(self):
         """Build images and deploy the stack."""
         try:
-            # Make build script executable
-            subprocess.run("chmod +x build-images.sh", shell=True, check=True)
+            # # Make build script executable
+            # subprocess.run("chmod +x build-images.sh", shell=True, check=True)
             
-            # Build images
-            print("Building Docker images...")
-            subprocess.run("./build-images.sh", shell=True, check=True)
-            
+            # # Build images
+            # print("Building Docker images...")
+            # subprocess.run("./build-images.sh", shell=True, check=True)
+
+            # Network Overlay
+            print("Creating network overlay...")
+            subprocess.run("sudo docker network create --driver overlay vittmitra", shell=True, check=True)
+
             # Deploy stack
             print("Deploying stack...")
-            subprocess.run("docker stack deploy -c paste.txt vittmitra", shell=True, check=True)
+            subprocess.run("sudo docker stack deploy -c docker-compose-swarm.yml vittmitra", shell=True, check=True)
             
             print("Successfully deployed stack")
             return True
