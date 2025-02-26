@@ -37,23 +37,9 @@ class SwarmDeployer:
                 print("Cannot proceed without a manager. Exiting.")
                 sys.exit(1)
 
-        # If manager is local, get interface if not specified
-        if self.config["manager"]["type"] == "local":
-            if not self.config["manager"].get("interface"):
-                interfaces = self._get_network_interfaces()
-                print("Available network interfaces:")
-                for idx, interface in enumerate(interfaces):
-                    print(f"{idx+1}: {interface}")
-                
-                choice = int(input("Select interface number for Docker Swarm: ")) - 1
-                if 0 <= choice < len(interfaces):
-                    self.config["manager"]["interface"] = interfaces[choice]
-                else:
-                    print("Invalid interface selection. Exiting.")
-                    sys.exit(1)
-        
-        # If manager is remote, ensure credentials
-        elif self.config["manager"]["type"] == "remote":
+        # Manager validation (both local and remote)
+        if self.config["manager"]["type"] == "remote":
+            # For remote managers, ensure we have necessary credentials
             if not self.config["manager"].get("ip"):
                 self.config["manager"]["ip"] = input("Enter manager IP address: ")
             if not self.config["manager"].get("username"):
@@ -92,59 +78,29 @@ class SwarmDeployer:
         if self.config["stack"]["run_build"] and not self.config["stack"].get("build_script"):
             self.config["stack"]["build_script"] = input("Enter build script (default: build-images.sh): ") or "build-images.sh"
 
-    def _get_network_interfaces(self):
-        """Get list of network interfaces excluding loopback."""
-        interfaces = []
-        try:
-            # Different ways to get interfaces based on OS
-            if os.name == 'posix':
-                result = subprocess.check_output("ip -br link | awk '{print $1}'", shell=True).decode().strip()
-                interfaces = [i for i in result.split('\n') if i != 'lo']
-            else:
-                # Fallback using socket
-                # Windows or other OS
-                if hasattr(socket, 'AF_PACKET'):
-                    # Linux
-                    interfaces = [i for i in os.listdir('/sys/class/net/') if i != 'lo']
-                else:
-                    # Windows/Mac - simplified
-                    interfaces = ['eth0', 'en0', 'eth1', 'en1']
-        except Exception as e:
-            print(f"Error getting network interfaces: {e}")
-            interfaces = ['eth0']
-        return interfaces
-    
     def get_manager_ip(self):
         """Get manager IP based on configuration."""
         if self.config["manager"]["type"] == "local":
-            try:
-                interface = self.config["manager"]["interface"]
-                cmd = f"ip addr show {interface} | grep -w inet | awk '{{print $2}}' | cut -d/ -f1"
-                result = subprocess.check_output(cmd, shell=True).decode().strip()
-                self.manager_ip = result
-                print(f"Local manager IP address: {self.manager_ip}")
-                return True
-            except subprocess.CalledProcessError as e:
-                print(f"Error getting local IP: {e}")
-                return False
+            # For local manager, use provided IP or get default IP
+            if self.config["manager"].get("ip"):
+                self.manager_ip = self.config["manager"]["ip"]
+                print(f"Using specified local IP address: {self.manager_ip}")
+            else:
+                try:
+                    # Get default IP address
+                    cmd = "hostname -I | awk '{print $1}'"
+                    result = subprocess.check_output(cmd, shell=True).decode().strip()
+                    self.manager_ip = result
+                    print(f"Detected local IP address: {self.manager_ip}")
+                except subprocess.CalledProcessError as e:
+                    print(f"Error getting local IP: {e}")
+                    self.manager_ip = input("Enter local IP address for Swarm: ")
+            return True
         else:
             self.manager_ip = self.config["manager"]["ip"]
             print(f"Using remote manager IP: {self.manager_ip}")
             return True    
-
-    def get_local_ip(self):
-        """Get the local machine's IP address that will be used for Swarm."""
-        try:
-            # Get IP address from the physical network interface <Specific to PsychoPunkSage>
-            cmd = "ip addr show enx0c37964e6574 | grep -w inet | awk '{print $2}' | cut -d/ -f1"
-            result = subprocess.check_output(cmd, shell=True).decode().strip()
-            self.manager_ip = result
-            print(f"Local IP address: {self.manager_ip}")
-            return True
-        except subprocess.CalledProcessError as e:
-            print(f"Error getting local IP: {e}")
-            return False
-
+        
     def init_swarm_manager(self):
         """Initialize Docker Swarm on manager node."""
         if self.config["manager"]["type"] == "local":
@@ -437,6 +393,149 @@ class SwarmDeployer:
             except Exception as e:
                 print(f"Error verifying remote deployment: {e}")
                 return False
+            
+    def cleanup_deployment(self):
+        """Remove all traces of the deployment and revert nodes to pre-deployment state."""
+        print("\n=== Cleaning Up Deployment ===")
+        
+        # Clean up manager first
+        manager_cleaned = self._cleanup_manager()
+        
+        # Clean up worker nodes
+        workers_cleaned = self._cleanup_workers()
+        
+        if manager_cleaned and workers_cleaned:
+            print("Cleanup completed successfully!")
+            return True
+        else:
+            print("Cleanup completed with some issues.")
+            return False
+    
+    def _cleanup_manager(self):
+        """Clean up the manager node."""
+        print("Cleaning up manager node...")
+        
+        if self.config["manager"]["type"] == "local":
+            try:
+                # Remove stack
+                print(f"Removing stack {self.config['stack']['name']}...")
+                subprocess.run(f"sudo docker stack rm {self.config['stack']['name']}", 
+                              shell=True, check=False)
+                
+                # Wait for stack to be removed
+                print("Waiting for stack to be fully removed...")
+                time.sleep(10)
+                
+                # Remove overlay network
+                print(f"Removing overlay network {self.config['stack']['network_name']}...")
+                subprocess.run(f"sudo docker network rm {self.config['stack']['network_name']}", 
+                              shell=True, check=False)
+                
+                # Leave swarm (forces removal of all data)
+                print("Leaving swarm and removing all swarm data...")
+                subprocess.run("sudo docker swarm leave --force", 
+                              shell=True, check=False)
+                
+                return True
+            except Exception as e:
+                print(f"Error cleaning up manager: {e}")
+                return False
+        else:
+            # Remote manager
+            try:
+                # Create SSH client
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                
+                # Connect to manager node
+                ssh.connect(
+                    self.config["manager"]["ip"],
+                    username=self.config["manager"]["username"],
+                    password=self.config["manager"]["password"]
+                )
+                
+                # Remove stack
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                print(f"Removing stack {self.config['stack']['name']}...")
+                channel.exec_command(f"sudo docker stack rm {self.config['stack']['name']}")
+                channel.send(f"{self.config['manager']['password']}\n")
+                time.sleep(5)
+                
+                # Wait for stack to be removed
+                print("Waiting for stack to be fully removed...")
+                time.sleep(10)
+                
+                # Remove network
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                print(f"Removing overlay network {self.config['stack']['network_name']}...")
+                channel.exec_command(f"sudo docker network rm {self.config['stack']['network_name']}")
+                channel.send(f"{self.config['manager']['password']}\n")
+                time.sleep(3)
+                
+                # Leave swarm
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                print("Leaving swarm and removing all swarm data...")
+                channel.exec_command("sudo docker swarm leave --force")
+                channel.send(f"{self.config['manager']['password']}\n")
+                time.sleep(3)
+                
+                ssh.close()
+                return True
+            except Exception as e:
+                print(f"Error cleaning up remote manager: {e}")
+                return False
+    
+    def _cleanup_workers(self):
+        """Clean up all worker nodes."""
+        print("Cleaning up worker nodes...")
+        
+        success = True
+        for worker in self.config["workers"]:
+            print(f"Cleaning up worker: {worker['ip']}...")
+            
+            try:
+                # Create SSH client
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                
+                # Connect to worker node
+                ssh.connect(
+                    worker["ip"],
+                    username=worker["username"],
+                    password=worker["password"]
+                )
+                
+                # Leave swarm
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                channel.exec_command("sudo docker swarm leave --force")
+                channel.send(f"{worker['password']}\n")
+                time.sleep(3)
+                
+                # Verify swarm is left
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                channel.exec_command("sudo docker info | grep Swarm")
+                channel.send(f"{worker['password']}\n")
+                time.sleep(2)
+                
+                swarm_status = channel.recv(1024).decode()
+                if "inactive" not in swarm_status.lower():
+                    print(f"Warning: Worker {worker['ip']} may still be in swarm mode")
+                    success = False
+                
+                ssh.close()
+                print(f"Worker {worker['ip']} cleaned up successfully")
+                
+            except Exception as e:
+                print(f"Error cleaning up worker {worker['ip']}: {e}")
+                success = False
+        
+        return success
+
 
 def main():
     print("=== Docker Swarm Deployer ===")
@@ -470,6 +569,20 @@ def main():
     
     # Create deployer instance
     deployer = SwarmDeployer(config_file)
+
+    # Ask user what operation to perform
+    print("\nSelect operation:")
+    print("1. Deploy Docker Swarm")
+    print("2. Clean up Docker Swarm (revert to pre-deployment state)")
+    operation = input("Enter option (1/2): ")
+
+    if operation == "2":
+        # Execute cleanup
+        if deployer.cleanup_deployment():
+            print("\n=== Cleanup Complete ===")
+        else:
+            print("\n=== Cleanup Completed with Issues ===")
+        return
     
     # Execute deployment steps
     steps = [
