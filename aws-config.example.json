@@ -1,0 +1,22 @@
+{
+    "manager": {
+        "type": "local",
+        "username": "psychopunk_sage",
+        "password": "",
+        "ip": "11.100.81.99"
+    },
+    "workers": [
+        {
+            "ip": "11.5.33.199",
+            "username": "psychopunk_sage",
+            "password": ""
+        }
+    ],
+    "stack": {
+        "name": "vittmitra",
+        "network_name": "vittmitra",
+        "compose_file": "docker-compose-swarm.yml",
+        "build_script": "build-images.sh",
+        "run_build": false
+    }
+}

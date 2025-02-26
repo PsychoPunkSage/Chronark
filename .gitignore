@@ -10,3 +10,5 @@ sentinel-2/
 node_modules/
 mongo-data/
 cookie/
+
+aws-config.json
