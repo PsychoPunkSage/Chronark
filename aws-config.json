@@ -1,10 +1,9 @@
 {
     "manager": {
         "type": "local",
-        "interface": "enx0c37964e6574",
         "username": "psychopunk_sage",
         "password": "ap123",
-        "ip": null
+        "ip": "10.105.8.94"
     },
     "workers": [
         {
