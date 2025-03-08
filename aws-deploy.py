@@ -58,6 +58,11 @@ class SwarmDeployer:
                 self.config["manager"]["auth_method"] = "password"
                 if not self.config["manager"].get("password"):
                     self.config["manager"]["password"] = getpass(f"Enter password for {self.config['manager']['username']}@{self.config['manager']['ip']}: ")
+            
+            # Ask for project directory on the remote manager
+            if not self.config["manager"].get("project_dir"):
+                project_dir = input(f"Enter project directory path on {self.config['manager']['ip']} (default: home directory): ")
+                self.config["manager"]["project_dir"] = project_dir if project_dir else f"/home/{self.config['manager']['username']}"
         
         # Validate workers
         if not self.config.get("workers") or len(self.config["workers"]) == 0:
@@ -207,13 +212,6 @@ class SwarmDeployer:
                 channel.exec_command("sudo docker swarm leave --force")
                 channel.send(f"{self.config['manager']['password']}\n")
             time.sleep(3)
-            
-            # Check if required ports are open
-            print("Checking if required ports are open for Swarm...")
-            if self.config["manager"].get("auth_method") == "keyfile":
-                stdin, stdout, stderr = ssh.exec_command("sudo ufw status 2>/dev/null || sudo iptables -L -n 2>/dev/null || echo 'Firewall check skipped'")
-                firewall_output = stdout.read().decode()
-                print(f"Firewall status: {firewall_output}")
             
             # Initialize new swarm
             print(f"Initializing new swarm on {self.manager_ip}...")
@@ -456,13 +454,13 @@ class SwarmDeployer:
 
             # Join the swarm - AWS instances need to ensure ports are open in security group
             print("Checking required ports for Docker Swarm...")
-            ports_to_check = [2377, 7946, 4789]
-            for port in ports_to_check:
-                stdin, stdout, stderr = ssh.exec_command(f"nc -zv {self.manager_ip} {port} 2>&1")
-                result = stdout.read().decode() + stderr.read().decode()
-                if "succeeded" not in result.lower() and "open" not in result.lower():
-                    print(f"WARNING: Port {port} does not appear to be accessible on manager {self.manager_ip}")
-                    print("Make sure your AWS security groups allow these ports between instances")
+            # ports_to_check = [2377, 7946, 4789]
+            # for port in ports_to_check:
+            #     stdin, stdout, stderr = ssh.exec_command(f"nc -zv {self.manager_ip} {port} 2>&1")
+            #     result = stdout.read().decode() + stderr.read().decode()
+            #     if "succeeded" not in result.lower() and "open" not in result.lower():
+            #         print(f"WARNING: Port {port} does not appear to be accessible on manager {self.manager_ip}")
+            #         print("Make sure your AWS security groups allow these ports between instances")
             
             # Join the swarm with longer timeout
             print(f"Joining the swarm with manager {self.manager_ip}...")
@@ -528,7 +526,7 @@ class SwarmDeployer:
             return self._deploy_on_local_manager()
         else:
             return self._deploy_on_remote_manager()
-
+            
     def _deploy_on_local_manager(self):
         """Build and deploy stack on local manager."""
         try:
@@ -568,50 +566,111 @@ class SwarmDeployer:
             # Connect to manager node
             self._connect_ssh(ssh, self.config["manager"])
             
+            # Get project directory
+            project_dir = self.config["manager"].get("project_dir", f"/home/{self.config['manager']['username']}")
+            
+            # Change to project directory
+            print(f"Changing to project directory: {project_dir}")
+            stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && pwd")
+            current_dir = stdout.read().decode().strip()
+            error = stderr.read().decode()
+            
+            if error:
+                print(f"Error accessing project directory: {error}")
+                return False
+                
+            print(f"Working in directory: {current_dir}")
+            
             # Run build script if configured
             if self.config["stack"]["run_build"]:
                 build_script = self.config["stack"]["build_script"]
                 
-                # Make build script executable
-                channel = ssh.get_transport().open_session()
-                channel.get_pty()
-                channel.exec_command(f"chmod +x {build_script}")
-                if self.config["manager"].get("auth_method") != "keyfile":
-                    channel.send(f"{self.config['manager']['password']}\n")
-                time.sleep(2)
+                # Check if build script exists
+                stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && ls -la {build_script}")
+                if "No such file or directory" in stderr.read().decode():
+                    print(f"Build script {build_script} not found in {project_dir}")
+                    create_script = input("Create a simple build script? (y/n): ")
+                    if create_script.lower() == 'y':
+                        stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && echo '#!/bin/bash\necho \"Simple build script\"' > {build_script} && chmod +x {build_script}")
+                        time.sleep(1)
+                    else:
+                        print("Skipping build script execution.")
+                        self.config["stack"]["run_build"] = False
                 
-                # Run build script
-                channel = ssh.get_transport().open_session()
-                channel.get_pty()
-                channel.exec_command(f"./{build_script}")
-                if self.config["manager"].get("auth_method") != "keyfile":
-                    channel.send(f"{self.config['manager']['password']}\n")
-                time.sleep(10)  # Allow time for build
-                
-                build_output = channel.recv(4096).decode()
-                print(f"Build output: {build_output}")
+                if self.config["stack"]["run_build"]:
+                    # Make build script executable
+                    print(f"Making build script executable: {build_script}")
+                    stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && chmod +x {build_script}")
+                    time.sleep(1)
+                    
+                    # Run build script
+                    print(f"Running build script: {build_script}")
+                    if self.config["manager"].get("auth_method") == "keyfile":
+                        stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && ./{build_script}", get_pty=True)
+                    else:
+                        channel = ssh.get_transport().open_session()
+                        channel.get_pty()
+                        channel.exec_command(f"cd {project_dir} && ./{build_script}")
+                        if self.config["manager"].get("auth_method") != "keyfile":
+                            channel.send(f"{self.config['manager']['password']}\n")
+                    
+                    # Allow time for build
+                    print("Waiting for build to complete...")
+                    time.sleep(10)
+                    
+                    # Get build output
+                    if self.config["manager"].get("auth_method") == "keyfile":
+                        build_output = stdout.read().decode()
+                    else:
+                        build_output = channel.recv(4096).decode()
+                    
+                    print(f"Build output: {build_output}")
+            
+            # Check if compose file exists
+            compose_file = self.config["stack"]["compose_file"]
+            stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && ls -la {compose_file}")
+            if "No such file or directory" in stderr.read().decode():
+                print(f"Compose file {compose_file} not found in {project_dir}")
+                return False
             
             # Create network overlay
             network_name = self.config["stack"]["network_name"]
-            channel = ssh.get_transport().open_session()
-            channel.get_pty()
-            channel.exec_command(f"sudo docker network create --driver overlay {network_name}")
-            if self.config["manager"].get("auth_method") != "keyfile":
-                channel.send(f"{self.config['manager']['password']}\n")
-            time.sleep(3)
+            print(f"Creating network overlay: {network_name}")
+            if self.config["manager"].get("auth_method") == "keyfile":
+                stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && sudo docker network create --driver overlay {network_name}")
+                time.sleep(3)
+                network_output = stdout.read().decode()
+                network_error = stderr.read().decode()
+                if network_error:
+                    print(f"Network creation error: {network_error}")
+            else:
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                channel.exec_command(f"cd {project_dir} && sudo docker network create --driver overlay {network_name}")
+                if self.config["manager"].get("auth_method") != "keyfile":
+                    channel.send(f"{self.config['manager']['password']}\n")
+                time.sleep(3)
             
             # Deploy stack
             stack_name = self.config["stack"]["name"]
-            compose_file = self.config["stack"]["compose_file"]
-            channel = ssh.get_transport().open_session()
-            channel.get_pty()
-            channel.exec_command(f"sudo docker stack deploy -c {compose_file} {stack_name}")
-            if self.config["manager"].get("auth_method") != "keyfile":
-                channel.send(f"{self.config['manager']['password']}\n")
-            time.sleep(5)
-            
-            deploy_output = channel.recv(2048).decode()
-            print(f"Deploy output: {deploy_output}")
+            print(f"Deploying stack {stack_name} with compose file {compose_file}")
+            if self.config["manager"].get("auth_method") == "keyfile":
+                stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && sudo docker stack deploy -c {compose_file} {stack_name}")
+                time.sleep(5)
+                deploy_output = stdout.read().decode()
+                deploy_error = stderr.read().decode()
+                print(f"Deploy output: {deploy_output}")
+                if deploy_error:
+                    print(f"Deploy error: {deploy_error}")
+            else:
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                channel.exec_command(f"cd {project_dir} && sudo docker stack deploy -c {compose_file} {stack_name}")
+                if self.config["manager"].get("auth_method") != "keyfile":
+                    channel.send(f"{self.config['manager']['password']}\n")
+                time.sleep(5)
+                deploy_output = channel.recv(2048).decode()
+                print(f"Deploy output: {deploy_output}")
             
             ssh.close()
             print("Successfully deployed stack")
@@ -645,27 +704,47 @@ class SwarmDeployer:
                 # Connect to manager node
                 self._connect_ssh(ssh, self.config["manager"])
                 
-                # Check node status
-                channel = ssh.get_transport().open_session()
-                channel.get_pty()
-                channel.exec_command("sudo docker node ls")
-                if self.config["manager"].get("auth_method") != "keyfile":
-                    channel.send(f"{self.config['manager']['password']}\n")
-                time.sleep(2)
+                # Get project directory
+                project_dir = self.config["manager"].get("project_dir", f"/home/{self.config['manager']['username']}")
                 
-                nodes_output = channel.recv(4096).decode()
+                # Check node status
+                print("\nVerifying deployment...")
+                if self.config["manager"].get("auth_method") == "keyfile":
+                    stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && sudo docker node ls")
+                    time.sleep(2)
+                    nodes_output = stdout.read().decode()
+                    nodes_error = stderr.read().decode()
+                    if nodes_error:
+                        print(f"Error retrieving node list: {nodes_error}")
+                else:
+                    channel = ssh.get_transport().open_session()
+                    channel.get_pty()
+                    channel.exec_command(f"cd {project_dir} && sudo docker node ls")
+                    if self.config["manager"].get("auth_method") != "keyfile":
+                        channel.send(f"{self.config['manager']['password']}\n")
+                    time.sleep(2)
+                    nodes_output = channel.recv(4096).decode()
+                
                 print("\nDocker Swarm Nodes:")
                 print(nodes_output)
                 
                 # Check services
-                channel = ssh.get_transport().open_session()
-                channel.get_pty()
-                channel.exec_command(f"sudo docker stack services {self.config['stack']['name']}")
-                if self.config["manager"].get("auth_method") != "keyfile":
-                    channel.send(f"{self.config['manager']['password']}\n")
-                time.sleep(2)
+                if self.config["manager"].get("auth_method") == "keyfile":
+                    stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && sudo docker stack services {self.config['stack']['name']}")
+                    time.sleep(2)
+                    services_output = stdout.read().decode()
+                    services_error = stderr.read().decode()
+                    if services_error:
+                        print(f"Error retrieving services: {services_error}")
+                else:
+                    channel = ssh.get_transport().open_session()
+                    channel.get_pty()
+                    channel.exec_command(f"cd {project_dir} && sudo docker stack services {self.config['stack']['name']}")
+                    if self.config["manager"].get("auth_method") != "keyfile":
+                        channel.send(f"{self.config['manager']['password']}\n")
+                    time.sleep(2)
+                    services_output = channel.recv(4096).decode()
                 
-                services_output = channel.recv(4096).decode()
                 print("\nStack Services:")
                 print(services_output)
                 
@@ -731,11 +810,66 @@ class SwarmDeployer:
                 # Connect to manager node
                 self._connect_ssh(ssh, self.config["manager"])
                 
+                # Get project directory
+                project_dir = self.config["manager"].get("project_dir", f"/home/{self.config['manager']['username']}")
+                
                 # Remove stack
-                channel = ssh.get_transport().open_session()
-                channel.get_pty()
                 print(f"Removing stack {self.config['stack']['name']}...")
-                channel.exec_command(f"sudo docker stack rm {self.config['stack']['name']}")
+                if self.config["manager"].get("auth_method") == "keyfile":
+                    stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && sudo docker stack rm {self.config['stack']['name']}")
+                    time.sleep(5)
+                    stack_error = stderr.read().decode()
+                    if stack_error:
+                        print(f"Stack removal error: {stack_error}")
+                else:
+                    channel = ssh.get_transport().open_session()
+                    channel.get_pty()
+                    channel.exec_command(f"cd {project_dir} && sudo docker stack rm {self.config['stack']['name']}")
+                    if self.config["manager"].get("auth_method") != "keyfile":
+                        channel.send(f"{self.config['manager']['password']}\n")
+                    time.sleep(5)
+                
+                # Wait for stack to be removed
+                print("Waiting for stack to be fully removed...")
+                time.sleep(10)
+                
+                # Remove network
+                print(f"Removing overlay network {self.config['stack']['network_name']}...")
+                if self.config["manager"].get("auth_method") == "keyfile":
+                    stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && sudo docker network rm {self.config['stack']['network_name']}")
+                    time.sleep(3)
+                    network_error = stderr.read().decode()
+                    if network_error:
+                        print(f"Network removal error: {network_error}")
+                else:
+                    channel = ssh.get_transport().open_session()
+                    channel.get_pty()
+                    channel.exec_command(f"cd {project_dir} && sudo docker network rm {self.config['stack']['network_name']}")
+                    if self.config["manager"].get("auth_method") != "keyfile":
+                        channel.send(f"{self.config['manager']['password']}\n")
+                    time.sleep(3)
+                
+                # Leave swarm
+                print("Leaving swarm and removing all swarm data...")
+                if self.config["manager"].get("auth_method") == "keyfile":
+                    stdin, stdout, stderr = ssh.exec_command("sudo docker swarm leave --force")
+                    time.sleep(3)
+                    swarm_error = stderr.read().decode()
+                    if swarm_error:
+                        print(f"Swarm leave error: {swarm_error}")
+                else:
+                    channel = ssh.get_transport().open_session()
+                    channel.get_pty()
+                    channel.exec_command("sudo docker swarm leave --force")
+                    if self.config["manager"].get("auth_method") != "keyfile":
+                        channel.send(f"{self.config['manager']['password']}\n")
+                    time.sleep(3)
+                
+                ssh.close()
+                return True
+            except Exception as e:
+                print(f"Error cleaning up remote manager: {e}")
+                # return Falsename']}")
                 if self.config["manager"].get("auth_method") != "keyfile":
                     channel.send(f"{self.config['manager']['password']}\n")
                 time.sleep(5)
