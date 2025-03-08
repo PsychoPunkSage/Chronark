@@ -44,8 +44,20 @@ class SwarmDeployer:
                 self.config["manager"]["ip"] = input("Enter manager IP address: ")
             if not self.config["manager"].get("username"):
                 self.config["manager"]["username"] = input(f"Enter username for {self.config['manager']['ip']}: ")
-            if not self.config["manager"].get("password"):
-                self.config["manager"]["password"] = getpass(f"Enter password for {self.config['manager']['username']}@{self.config['manager']['ip']}: ")
+                
+            # Ask about authentication method
+            if not self.config["manager"].get("auth_method"):
+                auth_choice = input(f"Choose authentication method for {self.config['manager']['ip']} (password/keyfile): ")
+                self.config["manager"]["auth_method"] = auth_choice.lower()
+            
+            # Get appropriate credentials based on auth method
+            if self.config["manager"]["auth_method"] == "keyfile":
+                if not self.config["manager"].get("key_file"):
+                    self.config["manager"]["key_file"] = input(f"Enter path to key file for {self.config['manager']['username']}@{self.config['manager']['ip']}: ")
+            else:  # Default to password auth
+                self.config["manager"]["auth_method"] = "password"
+                if not self.config["manager"].get("password"):
+                    self.config["manager"]["password"] = getpass(f"Enter password for {self.config['manager']['username']}@{self.config['manager']['ip']}: ")
         
         # Validate workers
         if not self.config.get("workers") or len(self.config["workers"]) == 0:
@@ -55,12 +67,32 @@ class SwarmDeployer:
                 worker = {}
                 worker["ip"] = input("Enter worker IP address: ")
                 worker["username"] = input(f"Enter username for {worker['ip']}: ")
-                worker["password"] = getpass(f"Enter password for {worker['username']}@{worker['ip']}: ")
+                
+                # Ask about authentication method
+                auth_choice = input(f"Choose authentication method for {worker['ip']} (password/keyfile): ")
+                worker["auth_method"] = auth_choice.lower()
+                
+                if worker["auth_method"] == "keyfile":
+                    worker["key_file"] = input(f"Enter path to key file for {worker['username']}@{worker['ip']}: ")
+                else:
+                    worker["auth_method"] = "password"
+                    worker["password"] = getpass(f"Enter password for {worker['username']}@{worker['ip']}: ")
+                
                 self.config["workers"] = [worker]
         else:
             # Check for missing worker credentials
             for worker in self.config["workers"]:
-                if not worker.get("password"):
+                if not worker.get("auth_method"):
+                    # Detect auth method based on available credentials
+                    if worker.get("key_file"):
+                        worker["auth_method"] = "keyfile"
+                    else:
+                        worker["auth_method"] = "password"
+                        
+                # Ensure credentials are available
+                if worker["auth_method"] == "keyfile" and not worker.get("key_file"):
+                    worker["key_file"] = input(f"Enter path to key file for {worker['username']}@{worker['ip']}: ")
+                elif worker["auth_method"] == "password" and not worker.get("password"):
                     worker["password"] = getpass(f"Enter password for {worker['username']}@{worker['ip']}: ")
 
         # Validate stack configuration
@@ -136,35 +168,120 @@ class SwarmDeployer:
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             
             # Connect to manager node
-            ssh.connect(
-                self.config["manager"]["ip"],
-                username=self.config["manager"]["username"],
-                password=self.config["manager"]["password"]
-            )
+            self._connect_ssh(ssh, self.config["manager"])
+            
+            # Check if Docker is running
+            print("Checking if Docker is running on manager...")
+            if self.config["manager"].get("auth_method") == "keyfile":
+                stdin, stdout, stderr = ssh.exec_command("systemctl status docker")
+                docker_status = stdout.read().decode()
+                if "active (running)" not in docker_status:
+                    print("Docker is not running. Starting Docker...")
+                    stdin, stdout, stderr = ssh.exec_command("sudo systemctl start docker")
+                    time.sleep(3)
+            else:
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                channel.exec_command("systemctl status docker")
+                channel.send(f"{self.config['manager']['password']}\n")
+                time.sleep(2)
+                docker_status = channel.recv(1024).decode()
+                if "active (running)" not in docker_status:
+                    print("Docker is not running. Starting Docker...")
+                    channel = ssh.get_transport().open_session()
+                    channel.get_pty()
+                    channel.exec_command("sudo systemctl start docker")
+                    channel.send(f"{self.config['manager']['password']}\n")
+                    time.sleep(3)
             
             # Leave any existing swarm
-            channel = ssh.get_transport().open_session()
-            channel.get_pty()
-            channel.exec_command("sudo docker swarm leave --force")
-            channel.send(f"{self.config['manager']['password']}\n")
-            time.sleep(2)
+            print("Leaving any existing swarm...")
+            if self.config["manager"].get("auth_method") == "keyfile":
+                stdin, stdout, stderr = ssh.exec_command("sudo docker swarm leave --force")
+                stderr_output = stderr.read().decode()
+                if stderr_output and "error" in stderr_output.lower():
+                    print(f"Leave error: {stderr_output}")
+            else:
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                channel.exec_command("sudo docker swarm leave --force")
+                channel.send(f"{self.config['manager']['password']}\n")
+            time.sleep(3)
+            
+            # Check if required ports are open
+            print("Checking if required ports are open for Swarm...")
+            if self.config["manager"].get("auth_method") == "keyfile":
+                stdin, stdout, stderr = ssh.exec_command("sudo ufw status 2>/dev/null || sudo iptables -L -n 2>/dev/null || echo 'Firewall check skipped'")
+                firewall_output = stdout.read().decode()
+                print(f"Firewall status: {firewall_output}")
             
             # Initialize new swarm
-            channel = ssh.get_transport().open_session()
-            channel.get_pty()
+            print(f"Initializing new swarm on {self.manager_ip}...")
             init_cmd = f"sudo docker swarm init --advertise-addr {self.manager_ip}"
-            channel.exec_command(init_cmd)
-            channel.send(f"{self.config['manager']['password']}\n")
-            time.sleep(5)
+            
+            if self.config["manager"].get("auth_method") == "keyfile":
+                stdin, stdout, stderr = ssh.exec_command(init_cmd, get_pty=True)
+                time.sleep(5)
+                init_output = stdout.read().decode()
+                init_error = stderr.read().decode()
+                print(f"Init output: {init_output}")
+                if init_error:
+                    print(f"Init error: {init_error}")
+                    if "address already in use" in init_error.lower():
+                        print("ERROR: The port required for Docker Swarm is already in use.")
+                        print("This may indicate another swarm is running or a service is using port 2377.")
+                        return False
+            else:
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                channel.exec_command(init_cmd)
+                channel.send(f"{self.config['manager']['password']}\n")
+                time.sleep(5)
+                init_output = channel.recv(1024).decode()
+                init_error = channel.recv_stderr(1024).decode()
+                print(f"Init output: {init_output}")
+                if init_error:
+                    print(f"Init error: {init_error}")
             
             # Extract join token
-            channel = ssh.get_transport().open_session()
-            channel.get_pty()
-            channel.exec_command("sudo docker swarm join-token worker -q")
-            channel.send(f"{self.config['manager']['password']}\n")
-            time.sleep(2)
+            print("Getting worker join token...")
+            if self.config["manager"].get("auth_method") == "keyfile":
+                stdin, stdout, stderr = ssh.exec_command("sudo docker swarm join-token worker -q")
+                time.sleep(2)
+                self.join_token = stdout.read().decode().strip()
+                
+                # Verify we got a valid token
+                if not self.join_token or len(self.join_token) < 10:
+                    print("WARNING: Join token appears invalid or empty. Retrying...")
+                    stdin, stdout, stderr = ssh.exec_command("sudo docker swarm join-token worker -q")
+                    time.sleep(3)
+                    self.join_token = stdout.read().decode().strip()
+            else:
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                channel.exec_command("sudo docker swarm join-token worker -q")
+                channel.send(f"{self.config['manager']['password']}\n")
+                time.sleep(3)
+                self.join_token = channel.recv(1024).decode().strip()
             
-            self.join_token = channel.recv(1024).decode().strip()
+            print(f"Join token: {self.join_token}")
+            
+            # Verify swarm is active
+            print("Verifying swarm is active...")
+            if self.config["manager"].get("auth_method") == "keyfile":
+                stdin, stdout, stderr = ssh.exec_command("sudo docker info | grep Swarm")
+                swarm_status = stdout.read().decode()
+            else:
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                channel.exec_command("sudo docker info | grep Swarm")
+                channel.send(f"{self.config['manager']['password']}\n")
+                time.sleep(2)
+                swarm_status = channel.recv(1024).decode()
+            
+            print(f"Swarm status: {swarm_status}")
+            if "active" not in swarm_status.lower():
+                print("WARNING: Swarm may not be properly initialized.")
             
             ssh.close()
             print("Successfully initialized swarm on remote manager node")
@@ -172,6 +289,119 @@ class SwarmDeployer:
         except Exception as e:
             print(f"Error initializing remote manager: {e}")
             return False
+        
+    def _connect_ssh(self, ssh_client, node_config):
+        """Connect to a node using SSH with password or key file."""
+        try:
+            if node_config.get("auth_method") == "keyfile":
+                # Connect using key file
+                key_path = os.path.expanduser(node_config["key_file"])
+                print(f"Connecting to {node_config['ip']} using key file: {key_path}")
+                
+                # Load private key
+                try:
+                    # For AWS .pem files, we need to handle them specially
+                    if key_path.endswith('.pem'):
+                        try:
+                            # Try RSA key first (most common for AWS)
+                            private_key = paramiko.RSAKey.from_private_key_file(key_path)
+                        except Exception as e:
+                            print(f"Failed to load as RSA key, trying other formats: {e}")
+                            try:
+                                # Try other key types if RSA fails
+                                private_key = paramiko.Ed25519Key.from_private_key_file(key_path)
+                            except:
+                                try:
+                                    private_key = paramiko.ECDSAKey.from_private_key_file(key_path)
+                                except:
+                                    # Last resort, try DSS
+                                    private_key = paramiko.DSSKey.from_private_key_file(key_path)
+                    else:
+                        # For non-AWS keys, try standard format detection
+                        try:
+                            private_key = paramiko.RSAKey.from_private_key_file(key_path)
+                        except:
+                            try:
+                                private_key = paramiko.Ed25519Key.from_private_key_file(key_path)
+                            except:
+                                try:
+                                    private_key = paramiko.ECDSAKey.from_private_key_file(key_path)
+                                except:
+                                    private_key = paramiko.DSSKey.from_private_key_file(key_path)
+                                    
+                except Exception as e:
+                    print(f"Error loading key file: {e}")
+                    print("Please check that your key file exists and has correct permissions (chmod 400)")
+                    raise
+                
+                # For AWS, verify key permissions
+                if key_path.endswith('.pem') and os.name != 'nt':  # Skip permission check on Windows
+                    key_stat = os.stat(key_path)
+                    if key_stat.st_mode & 0o077:  # Check if group or others have permissions
+                        print(f"WARNING: Permissions for {key_path} are too open. AWS requires permissions of 400.")
+                        fix_perms = input("Would you like to fix the permissions now? (y/n): ")
+                        if fix_perms.lower() == 'y':
+                            os.chmod(key_path, 0o400)
+                            print(f"Changed permissions of {key_path} to 400")
+                
+                # Connect with the key and allow for common connection options
+                try:
+                    ssh_client.connect(
+                        node_config["ip"],
+                        username=node_config["username"],
+                        pkey=private_key,
+                        timeout=10,
+                        allow_agent=False,
+                        look_for_keys=False,
+                        banner_timeout=10
+                    )
+                except paramiko.SSHException as sshe:
+                    print(f"SSH connection failed: {sshe}")
+                    print("Attempting connection with alternative options...")
+                    ssh_client.connect(
+                        node_config["ip"],
+                        username=node_config["username"],
+                        pkey=private_key,
+                        timeout=20,
+                        allow_agent=True,
+                        look_for_keys=True,
+                        banner_timeout=20
+                    )
+            else:
+                # Connect using password
+                ssh_client.connect(
+                    node_config["ip"],
+                    username=node_config["username"],
+                    password=node_config["password"],
+                    timeout=10
+                )
+            
+            # Test sudo access - important for Docker commands
+            print(f"Testing sudo access on {node_config['ip']}...")
+            if node_config.get("auth_method") == "keyfile":
+                # For AWS instances with proper setup, sudo shouldn't require password
+                stdin, stdout, stderr = ssh_client.exec_command("sudo -n echo 'sudo test'", get_pty=True)
+                result = stdout.read().decode()
+                error = stderr.read().decode()
+                
+                if "password" in error.lower():
+                    print("WARNING: This instance requires a sudo password even with key authentication.")
+                    print("For AWS instances, you might want to configure passwordless sudo.")
+                    sudo_password = input(f"Enter sudo password for {node_config['username']}@{node_config['ip']} (blank to skip): ")
+                    if sudo_password:
+                        node_config["sudo_password"] = sudo_password
+            
+            print(f"Successfully connected to {node_config['ip']}")
+            return True
+        except Exception as e:
+            print(f"SSH connection error to {node_config['ip']}: {e}")
+            print("\nTroubleshooting tips:")
+            print("1. Ensure the host is reachable (ping the IP address)")
+            print("2. Verify that port 22 is open in the security group/firewall")
+            print("3. Check that the username is correct for the instance")
+            print("4. For key-based auth, ensure the key has correct permissions (chmod 400)")
+            print("5. For AWS instances, ensure you're using the correct key pair for the instance\n")
+            raise
         
     def setup_worker_nodes(self):
         """Configure all worker nodes and join them to the swarm."""
@@ -191,49 +421,102 @@ class SwarmDeployer:
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
             # Connect to worker node
-            ssh.connect(
-                worker["ip"],
-                username=worker["username"],
-                password=worker["password"]
-            )
+            self._connect_ssh(ssh, worker)
+
+            # Check if Docker is running
+            print("Checking if Docker is running...")
+            stdin, stdout, stderr = ssh.exec_command("systemctl status docker")
+            if "active (running)" not in stdout.read().decode():
+                print("Docker is not running. Starting Docker...")
+                if worker.get("auth_method") == "keyfile":
+                    # For AWS instances, Docker should be able to start without sudo password
+                    stdin, stdout, stderr = ssh.exec_command("sudo systemctl start docker")
+                    time.sleep(3)
+                else:
+                    channel = ssh.get_transport().open_session()
+                    channel.get_pty()
+                    channel.exec_command("sudo systemctl start docker")
+                    channel.send(f"{worker['password']}\n")
+                    time.sleep(3)
 
             # Leave any existing swarm
-            channel = ssh.get_transport().open_session()
-            channel.get_pty()
-            channel.exec_command("sudo docker swarm leave --force")
-            channel.send(f"{worker['password']}\n")
-            time.sleep(2)
+            print("Leaving any existing swarm...")
+            if worker.get("auth_method") == "keyfile":
+                # For AWS instances, we can use exec_command with sudo without needing interactive password
+                stdin, stdout, stderr = ssh.exec_command("sudo docker swarm leave --force")
+                stderr_output = stderr.read().decode()
+                if stderr_output and "error" in stderr_output.lower():
+                    print(f"Leave error: {stderr_output}")
+            else:
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                channel.exec_command("sudo docker swarm leave --force")
+                channel.send(f"{worker['password']}\n")
+            time.sleep(3)
 
-            # Join the swarm
-            channel = ssh.get_transport().open_session()
-            channel.get_pty()
+            # Join the swarm - AWS instances need to ensure ports are open in security group
+            print("Checking required ports for Docker Swarm...")
+            ports_to_check = [2377, 7946, 4789]
+            for port in ports_to_check:
+                stdin, stdout, stderr = ssh.exec_command(f"nc -zv {self.manager_ip} {port} 2>&1")
+                result = stdout.read().decode() + stderr.read().decode()
+                if "succeeded" not in result.lower() and "open" not in result.lower():
+                    print(f"WARNING: Port {port} does not appear to be accessible on manager {self.manager_ip}")
+                    print("Make sure your AWS security groups allow these ports between instances")
+            
+            # Join the swarm with longer timeout
+            print(f"Joining the swarm with manager {self.manager_ip}...")
             join_command = f"sudo docker swarm join --token {self.join_token} {self.manager_ip}:2377"
             print(f"Executing join command: {join_command}")
-            channel.exec_command(join_command)
-            channel.send(f"{worker['password']}\n")
-            time.sleep(5)
-
-            join_output = channel.recv(1024).decode()
-            join_error = channel.recv_stderr(1024).decode()
-            # print(f"Join output: {join_output}")
+            
+            if worker.get("auth_method") == "keyfile":
+                stdin, stdout, stderr = ssh.exec_command(join_command, get_pty=True)
+                # Wait longer for AWS instances
+                time.sleep(10)
+                join_output = stdout.read().decode()
+                join_error = stderr.read().decode()
+            else:
+                channel = ssh.get_transport().open_session()
+                channel.get_pty()
+                channel.exec_command(join_command)
+                channel.send(f"{worker['password']}\n")
+                time.sleep(10)
+                join_output = channel.recv(1024).decode()
+                join_error = channel.recv_stderr(1024).decode()
+            
+            print(f"Join output: {join_output}")
             if join_error:
                 print(f"Join error: {join_error}")
 
-            # Verify swarm status
-            channel = ssh.get_transport().open_session()
-            channel.get_pty()
-            channel.exec_command("sudo docker info | grep Swarm")
-            channel.send(f"{worker['password']}\n")
-            time.sleep(2)
-
-            swarm_status = channel.recv(1024).decode()
-            if "active" not in swarm_status.lower():
-                print(f"Worker node failed to join swarm. Docker info output: {swarm_status}")
-                return False
-
-            print(f"Successfully joined worker {worker['ip']} to swarm")
-            ssh.close()
-            return True
+            # Verify swarm status - give it more time to join
+            print("Verifying swarm status...")
+            time.sleep(5)  # Additional wait for swarm status to update
+            
+            max_retries = 3
+            for attempt in range(max_retries):
+                if worker.get("auth_method") == "keyfile":
+                    stdin, stdout, stderr = ssh.exec_command("sudo docker info | grep Swarm")
+                    swarm_status = stdout.read().decode()
+                else:
+                    channel = ssh.get_transport().open_session()
+                    channel.get_pty()
+                    channel.exec_command("sudo docker info | grep Swarm")
+                    channel.send(f"{worker['password']}\n")
+                    time.sleep(2)
+                    swarm_status = channel.recv(1024).decode()
+                
+                print(f"Swarm status (attempt {attempt+1}): {swarm_status}")
+                
+                if "active" in swarm_status.lower():
+                    print(f"Successfully joined worker {worker['ip']} to swarm")
+                    ssh.close()
+                    return True
+                elif attempt < max_retries - 1:
+                    print(f"Worker not active yet, waiting 5 seconds before retry...")
+                    time.sleep(5)
+            
+            print(f"Worker node failed to join swarm after {max_retries} attempts. Last status: {swarm_status}")
+            return False
 
         except Exception as e:
             print(f"Error setting up worker node {worker['ip']}: {e}")
@@ -283,11 +566,7 @@ class SwarmDeployer:
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             
             # Connect to manager node
-            ssh.connect(
-                self.config["manager"]["ip"],
-                username=self.config["manager"]["username"],
-                password=self.config["manager"]["password"]
-            )
+            self._connect_ssh(ssh, self.config["manager"])
             
             # Run build script if configured
             if self.config["stack"]["run_build"]:
@@ -297,14 +576,16 @@ class SwarmDeployer:
                 channel = ssh.get_transport().open_session()
                 channel.get_pty()
                 channel.exec_command(f"chmod +x {build_script}")
-                channel.send(f"{self.config['manager']['password']}\n")
+                if self.config["manager"].get("auth_method") != "keyfile":
+                    channel.send(f"{self.config['manager']['password']}\n")
                 time.sleep(2)
                 
                 # Run build script
                 channel = ssh.get_transport().open_session()
                 channel.get_pty()
                 channel.exec_command(f"./{build_script}")
-                channel.send(f"{self.config['manager']['password']}\n")
+                if self.config["manager"].get("auth_method") != "keyfile":
+                    channel.send(f"{self.config['manager']['password']}\n")
                 time.sleep(10)  # Allow time for build
                 
                 build_output = channel.recv(4096).decode()
@@ -315,7 +596,8 @@ class SwarmDeployer:
             channel = ssh.get_transport().open_session()
             channel.get_pty()
             channel.exec_command(f"sudo docker network create --driver overlay {network_name}")
-            channel.send(f"{self.config['manager']['password']}\n")
+            if self.config["manager"].get("auth_method") != "keyfile":
+                channel.send(f"{self.config['manager']['password']}\n")
             time.sleep(3)
             
             # Deploy stack
@@ -324,7 +606,8 @@ class SwarmDeployer:
             channel = ssh.get_transport().open_session()
             channel.get_pty()
             channel.exec_command(f"sudo docker stack deploy -c {compose_file} {stack_name}")
-            channel.send(f"{self.config['manager']['password']}\n")
+            if self.config["manager"].get("auth_method") != "keyfile":
+                channel.send(f"{self.config['manager']['password']}\n")
             time.sleep(5)
             
             deploy_output = channel.recv(2048).decode()
@@ -360,17 +643,14 @@ class SwarmDeployer:
                 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 
                 # Connect to manager node
-                ssh.connect(
-                    self.config["manager"]["ip"],
-                    username=self.config["manager"]["username"],
-                    password=self.config["manager"]["password"]
-                )
+                self._connect_ssh(ssh, self.config["manager"])
                 
                 # Check node status
                 channel = ssh.get_transport().open_session()
                 channel.get_pty()
                 channel.exec_command("sudo docker node ls")
-                channel.send(f"{self.config['manager']['password']}\n")
+                if self.config["manager"].get("auth_method") != "keyfile":
+                    channel.send(f"{self.config['manager']['password']}\n")
                 time.sleep(2)
                 
                 nodes_output = channel.recv(4096).decode()
@@ -381,7 +661,8 @@ class SwarmDeployer:
                 channel = ssh.get_transport().open_session()
                 channel.get_pty()
                 channel.exec_command(f"sudo docker stack services {self.config['stack']['name']}")
-                channel.send(f"{self.config['manager']['password']}\n")
+                if self.config["manager"].get("auth_method") != "keyfile":
+                    channel.send(f"{self.config['manager']['password']}\n")
                 time.sleep(2)
                 
                 services_output = channel.recv(4096).decode()
@@ -448,18 +729,15 @@ class SwarmDeployer:
                 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 
                 # Connect to manager node
-                ssh.connect(
-                    self.config["manager"]["ip"],
-                    username=self.config["manager"]["username"],
-                    password=self.config["manager"]["password"]
-                )
+                self._connect_ssh(ssh, self.config["manager"])
                 
                 # Remove stack
                 channel = ssh.get_transport().open_session()
                 channel.get_pty()
                 print(f"Removing stack {self.config['stack']['name']}...")
                 channel.exec_command(f"sudo docker stack rm {self.config['stack']['name']}")
-                channel.send(f"{self.config['manager']['password']}\n")
+                if self.config["manager"].get("auth_method") != "keyfile":
+                    channel.send(f"{self.config['manager']['password']}\n")
                 time.sleep(5)
                 
                 # Wait for stack to be removed
@@ -471,7 +749,8 @@ class SwarmDeployer:
                 channel.get_pty()
                 print(f"Removing overlay network {self.config['stack']['network_name']}...")
                 channel.exec_command(f"sudo docker network rm {self.config['stack']['network_name']}")
-                channel.send(f"{self.config['manager']['password']}\n")
+                if self.config["manager"].get("auth_method") != "keyfile":
+                    channel.send(f"{self.config['manager']['password']}\n")
                 time.sleep(3)
                 
                 # Leave swarm
@@ -479,7 +758,8 @@ class SwarmDeployer:
                 channel.get_pty()
                 print("Leaving swarm and removing all swarm data...")
                 channel.exec_command("sudo docker swarm leave --force")
-                channel.send(f"{self.config['manager']['password']}\n")
+                if self.config["manager"].get("auth_method") != "keyfile":
+                    channel.send(f"{self.config['manager']['password']}\n")
                 time.sleep(3)
                 
                 ssh.close()
@@ -502,24 +782,22 @@ class SwarmDeployer:
                 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 
                 # Connect to worker node
-                ssh.connect(
-                    worker["ip"],
-                    username=worker["username"],
-                    password=worker["password"]
-                )
+                self._connect_ssh(ssh, worker)
                 
                 # Leave swarm
                 channel = ssh.get_transport().open_session()
                 channel.get_pty()
                 channel.exec_command("sudo docker swarm leave --force")
-                channel.send(f"{worker['password']}\n")
+                if worker.get("auth_method") != "keyfile":
+                    channel.send(f"{worker['password']}\n")
                 time.sleep(3)
                 
                 # Verify swarm is left
                 channel = ssh.get_transport().open_session()
                 channel.get_pty()
                 channel.exec_command("sudo docker info | grep Swarm")
-                channel.send(f"{worker['password']}\n")
+                if worker.get("auth_method") != "keyfile":
+                    channel.send(f"{worker['password']}\n")
                 time.sleep(2)
                 
                 swarm_status = channel.recv(1024).decode()
