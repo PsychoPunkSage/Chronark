@@ -1,0 +1,30 @@
+{
+    "manager": {
+        "type": "local",
+        "ip": "10.105.8.94",
+        "username": "psychopunk_sage",
+        "password": "ap123",
+        "key_file": null
+    },
+    "workers": [
+        {
+            "ip": "10.5.30.183",
+            "username": "utkalika-ibm",
+            "password": "Test@ravi3@1234",
+            "key_file": null
+        },
+        {
+            "ip": "10.5.30.190",
+            "username": "psychopunk_sage",
+            "password": "pps123",
+            "key_file": null
+        }
+    ],
+    "stack": {
+        "name": "vittmitra",
+        "network_name": "vittmitra",
+        "compose_file": "docker-compose-swarm.yml",
+        "build_script": "build-images.sh",
+        "run_build": false
+    }
+}
