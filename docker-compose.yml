@@ -784,6 +784,38 @@ services:
       - frontend-2
       - frontend-3
 
+  opensnitch-daemon:
+    image: evilsocket/opensnitch:latest
+    container_name: ms-opensnitch
+    privileged: true
+    network_mode: "host"  # Required for network monitoring
+    volumes:
+      - /proc:/proc:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - opensnitch-rules:/etc/opensnitch/rules
+      - opensnitch-log:/var/log/opensnitch
+      - ./src/opensnitch/config.json:/etc/opensnitch/config.json
+    ports:
+      - "9000:9000"  # Service port
+      - "50051:50051"  # gRPC port for UI communication
+    restart: unless-stopped
+
+  opensnitch-ui:
+    image: evilsocket/opensnitch-ui:latest
+    container_name: ms-opensnitch-ui
+    depends_on:
+      - opensnitch-daemon
+    environment:
+      - DISPLAY=${DISPLAY}  # To connect to your X server
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix  # X11 socket for display
+      - opensnitch-ui-config:/root/.config/opensnitch
+    ports:
+      - "8000:8000"  # Web UI port
+    networks:
+      - vittmitra
+
   frontend-1:
     build:
       context: ./src/frontend
@@ -995,6 +1027,12 @@ services:
       - wealth-mgmt
 
 volumes:
+  opensnitch-rules:
+    driver: local
+  opensnitch-log:
+    driver: local
+  opensnitch-ui-config:
+    driver: local
   mongo_data:
     driver: local
   mongo_data_cve:
