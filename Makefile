@@ -31,3 +31,14 @@ cve-2020-7921:
 
 cve-2022-24834:
 	python scripts/Redis/CVE-2022-24834/redis_cve-2022-24834.py
+
+cAd-collectdata:
+	rm -rf monitoring_data/
+	python scripts/cAdvisor/data_collector.py
+	echo ""
+	echo "==================================="
+	echo "| visit ./monitoring_data/ folder |"
+	ehco "==================================="
+
+aws-deploy:
+	python aws-deploy.py
