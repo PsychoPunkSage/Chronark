@@ -774,6 +774,7 @@ services:
     image: haproxy:latest
     container_name: haproxy
     ports:
+      # - 80 # Only expose to internal network, not to host
       - 80:80
     volumes:
       - ./src/frontend/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
@@ -784,38 +785,22 @@ services:
       - frontend-2
       - frontend-3
 
-  opensnitch-daemon:
-    image: evilsocket/opensnitch:latest
-    container_name: ms-opensnitch
-    privileged: true
-    network_mode: "host"  # Required for network monitoring
-    volumes:
-      - /proc:/proc:ro
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - opensnitch-rules:/etc/opensnitch/rules
-      - opensnitch-log:/var/log/opensnitch
-      - ./src/opensnitch/config.json:/etc/opensnitch/config.json
+  modsecurity:
+    image: owasp/modsecurity-crs:nginx
+    container_name: ms-modsecurity
     ports:
-      - "9000:9000"  # Service port
-      - "50051:50051"  # gRPC port for UI communication
-    restart: unless-stopped
-
-  opensnitch-ui:
-    image: evilsocket/opensnitch-ui:latest
-    container_name: ms-opensnitch-ui
-    depends_on:
-      - opensnitch-daemon
+      - "8080:8080"  # Expose ModSecurity on port 80
     environment:
-      - DISPLAY=${DISPLAY}  # To connect to your X server
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix  # X11 socket for display
-      - opensnitch-ui-config:/root/.config/opensnitch
-    ports:
-      - "8000:8000"  # Web UI port
+      - PROXY=1
+      - BACKEND=http://haproxy:80
+      - PARANOIA=1  # Basic protection level
+      - ANOMALY_INBOUND=5
+      - ANOMALY_OUTBOUND=4
     networks:
       - vittmitra
-
+    depends_on:
+      - haproxy
+      
   frontend-1:
     build:
       context: ./src/frontend
