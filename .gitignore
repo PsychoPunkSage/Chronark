@@ -6,6 +6,7 @@ redis-2/
 sentinel-0/
 sentinel-1/
 sentinel-2/
+monitoring_data/
 
 node_modules/
 mongo-data/

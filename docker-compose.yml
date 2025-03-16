@@ -774,7 +774,6 @@ services:
     image: haproxy:latest
     container_name: haproxy
     ports:
-      # - 80 # Only expose to internal network, not to host
       - 80:80
     volumes:
       - ./src/frontend/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
@@ -789,7 +788,7 @@ services:
     image: owasp/modsecurity-crs:nginx
     container_name: ms-modsecurity
     ports:
-      - "8080:8080"  # Expose ModSecurity on port 80
+      - 8080:8080
     environment:
       - PROXY=1
       - BACKEND=http://haproxy:80
