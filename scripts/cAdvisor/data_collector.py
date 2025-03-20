@@ -199,7 +199,7 @@ class MicroservicesMonitor:
                                header=not file_exists)  # Only include header if file is new
             
             print(f"Updated metrics for {container_name} in {csv_filename}")
-    
+
     def generate_plots(self, df, timestamp_str):
         """
         Generate plots from metrics dataframe.
@@ -330,7 +330,6 @@ class MicroservicesMonitor:
         container_data = container_data.sort_values('timestamp')
         
         return container_data
-
 
 # Example usage
 if __name__ == "__main__":
