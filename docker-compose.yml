@@ -784,6 +784,22 @@ services:
       - frontend-2
       - frontend-3
 
+  modsecurity:
+    image: owasp/modsecurity-crs:nginx
+    container_name: ms-modsecurity
+    ports:
+      - 8080:8080
+    environment:
+      - PROXY=1
+      - BACKEND=http://haproxy:80
+      - PARANOIA=1  # Basic protection level
+      - ANOMALY_INBOUND=5
+      - ANOMALY_OUTBOUND=4
+    networks:
+      - vittmitra
+    depends_on:
+      - haproxy
+      
   frontend-1:
     build:
       context: ./src/frontend
@@ -995,6 +1011,12 @@ services:
       - wealth-mgmt
 
 volumes:
+  opensnitch-rules:
+    driver: local
+  opensnitch-log:
+    driver: local
+  opensnitch-ui-config:
+    driver: local
   mongo_data:
     driver: local
   mongo_data_cve:

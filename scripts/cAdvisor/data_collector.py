@@ -141,11 +141,15 @@ class MicroservicesMonitor:
             metrics_df = self.collect_container_metrics()
             
             if not metrics_df.empty:
-                # Save metrics to CSV
                 timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-                csv_filename = f"{self.output_dir}/metrics_{timestamp_str}.csv"
-                metrics_df.to_csv(csv_filename, index=False)
-                print(f"Saved metrics to {csv_filename}")
+                
+                # Save combined metrics to CSV
+                combined_csv_filename = f"{self.output_dir}/metrics_{timestamp_str}.csv"
+                metrics_df.to_csv(combined_csv_filename, index=False)
+                print(f"Saved combined metrics to {combined_csv_filename}")
+                
+                # Save individual container metrics to separate CSV files
+                self.save_per_container_metrics(metrics_df, timestamp_str)
                 
                 # Generate and save plots
                 self.generate_plots(metrics_df, timestamp_str)
@@ -158,6 +162,44 @@ class MicroservicesMonitor:
                 print(f"Waiting {time_to_sleep:.2f} seconds until next collection...")
                 time.sleep(time_to_sleep)
     
+    def save_per_container_metrics(self, df, timestamp_str):
+        """
+        Save metrics segregated by container name.
+        Appends to a single file per container instead of creating new files.
+        
+        Args:
+            df: DataFrame with metrics
+            timestamp_str: Timestamp string for logs
+        """
+        # Create containers directory if it doesn't exist
+        containers_dir = f"{self.output_dir}/containers"
+        if not os.path.exists(containers_dir):
+            os.makedirs(containers_dir)
+        
+        # Group by container_name and save each to a separate file
+        for container_name, container_df in df.groupby('container_name'):
+            # Sanitize container name for filename
+            safe_name = container_name.replace('/', '_').replace(':', '_')
+            
+            # Create container-specific directory if it doesn't exist
+            container_dir = f"{containers_dir}/{safe_name}"
+            if not os.path.exists(container_dir):
+                os.makedirs(container_dir)
+                
+            # Save to CSV - use a fixed filename that we'll append to
+            csv_filename = f"{container_dir}/{safe_name}.csv"
+            
+            # Check if file exists to handle headers correctly
+            file_exists = os.path.isfile(csv_filename)
+            
+            # Append to CSV if exists, otherwise create new with headers
+            container_df.to_csv(csv_filename, 
+                               mode='a',  # Append mode
+                               index=False,
+                               header=not file_exists)  # Only include header if file is new
+            
+            print(f"Updated metrics for {container_name} in {csv_filename}")
+
     def generate_plots(self, df, timestamp_str):
         """
         Generate plots from metrics dataframe.
@@ -202,7 +244,7 @@ class MicroservicesMonitor:
         )
         plt.tight_layout()
         plt.savefig(f"{self.output_dir}/network_usage_{timestamp_str}.png")
-    
+
     def analyze_historical_data(self, pattern="metrics_*.csv"):
         """
         Analyze historical metrics data.
@@ -254,7 +296,40 @@ class MicroservicesMonitor:
         container_stats['filesystem_usage_bytes', 'max'] /= (1024 * 1024)  # MB
         
         return container_stats
-
+    
+    def analyze_container_historical_data(self, container_name):
+        """
+        Analyze historical metrics data for a specific container.
+        
+        Args:
+            container_name: Name of the container to analyze
+            
+        Returns:
+            DataFrame with time series data for the specified container
+        """
+        # Sanitize container name for directory matching
+        safe_name = container_name.replace('/', '_').replace(':', '_')
+        container_dir = f"{self.output_dir}/containers/{safe_name}"
+        
+        if not os.path.exists(container_dir):
+            print(f"No historical data found for container: {container_name}")
+            return pd.DataFrame()
+        
+        # Get the single CSV file for this container
+        csv_filename = f"{container_dir}/{safe_name}.csv"
+        
+        if not os.path.exists(csv_filename):
+            print(f"No CSV file found for container: {container_name}")
+            return pd.DataFrame()
+        
+        # Load the CSV file
+        container_data = pd.read_csv(csv_filename)
+        
+        # Convert timestamp to datetime and sort
+        container_data['timestamp'] = pd.to_datetime(container_data['timestamp'])
+        container_data = container_data.sort_values('timestamp')
+        
+        return container_data
 
 # Example usage
 if __name__ == "__main__":
@@ -268,7 +343,7 @@ if __name__ == "__main__":
     
     # Option 2: Monitor continuously for 10 minutes (600 seconds), checking every minute
     # Uncomment the next line to run continuous monitoring
-    monitor.monitor_continuously(interval=60, duration=600)
+    monitor.monitor_continuously(interval=5, duration=600)
     
     # Option 3: Monitor indefinitely, checking every 5 minutes
     # Uncomment the next line to run indefinite monitoring
@@ -279,3 +354,8 @@ if __name__ == "__main__":
     # historical_stats = monitor.analyze_historical_data()
     # print("\nHistorical Container Statistics:")
     # print(historical_stats)
+    
+    # Analyze data for a specific container
+    # container_data = monitor.analyze_container_historical_data("ms-payments")
+    # print(f"\nHistorical data for ms-payments:")
+    # print(container_data)
