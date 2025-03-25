@@ -1,0 +1,13 @@
+FROM node:14-slim
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install express@4.17.2 body-parser mongodb jaeger-client cors ejs dotenv
+RUN npm install
+
+COPY . .
+
+EXPOSE 5003
+
+CMD ["node", "app.js"]
