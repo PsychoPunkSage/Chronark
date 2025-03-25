@@ -87,6 +87,26 @@ app.get('/', (req, res) => {
 });
 
 // ===================================================================================================================================================================================== //
+// CVE-2022-24999
+app.get('/check-pollution', (req, res) => {
+    const clean = {};
+    res.json({
+        vulnerable: clean.hasOwnProperty('isExploited') || clean.isExploited === true,
+        message: clean.hasOwnProperty('isExploited') || clean.isExploited === true ?
+            "VULNERABLE: Prototype pollution detected!" :
+            "SECURE: No prototype pollution detected",
+        emptyObject: JSON.stringify(clean),
+        properties: Object.getOwnPropertyNames(Object.prototype)
+    });
+});
+
+app.get('/test', (req, res) => {
+    const obj = {};
+    res.send(`Pollution test: ${obj.isExploited === true ? "Vulnerable!" : "Not vulnerable"}`);
+});
+
+
+// ===================================================================================================================================================================================== //
 
 app.get('/testMongo', async (req, res) => {
     // const // span = tracer.startSpan('testMongo', { childOf: req.// span });
