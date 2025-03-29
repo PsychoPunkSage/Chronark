@@ -519,7 +519,7 @@ class SwarmDeployer:
         except Exception as e:
             print(f"Error setting up worker node {worker['ip']}: {e}")
             return False    
-        
+    
     def build_and_deploy_stack(self):
         """Build images and deploy the stack."""
         if self.config["manager"]["type"] == "local":
@@ -530,32 +530,73 @@ class SwarmDeployer:
     def _deploy_on_local_manager(self):
         """Build and deploy stack on local manager."""
         try:
-            # Run build script if configured
+            # Check available disk space before building
+            df_output = subprocess.check_output("df -h /", shell=True).decode()
+            print(f"Current disk usage:\n{df_output}")
+
+            # Extract available space percentage
+            available_line = [line for line in df_output.split('\n') if line.strip() and '/' in line][0]
+            usage_percent = int(available_line.split()[4].replace('%', ''))
+
+            # Run build script if configured and we have enough space
             if self.config["stack"]["run_build"]:
-                build_script = self.config["stack"]["build_script"]
-                print(f"Making build script executable: {build_script}")
-                subprocess.run(f"chmod +x {build_script}", shell=True, check=True)
-                
-                print(f"Running build script: {build_script}")
-                subprocess.run(f"./{build_script}", shell=True, check=True)
+                if usage_percent > 85:
+                    print("WARNING: Disk usage is above 85%. Skipping build to avoid running out of space.")
+                    print("Proceeding with deployment using existing images.")
+
+                    # Ask user if they want to continue
+                    choice = input("Continue with deployment without building? (y/n): ")
+                    if choice.lower() != 'y':
+                        print("Deployment aborted by user.")
+                        return False
+                else:
+                    # Check if images already exist
+                    existing_images = subprocess.check_output("sudo docker images --format '{{.Repository}}'", shell=True).decode()
+
+                    # If multiple images from our script already exist, ask user if rebuild is necessary
+                    registry = self.config.get("registry", "local")
+                    if f"{registry}/contacts" in existing_images and f"{registry}/search" in existing_images:
+                        rebuild = input("Some images already exist. Rebuild all images? (y/n): ")
+
+                        if rebuild.lower() == 'n':
+                            print("Skipping build, using existing images.")
+                        else:
+                            # Run the build script
+                            build_script = self.config["stack"]["build_script"]
+                            print(f"Making build script executable: {build_script}")
+                            subprocess.run(f"chmod +x {build_script}", shell=True, check=True)
+
+                            print(f"Running build script: {build_script}")
+                            subprocess.run(f"./{build_script}", shell=True, check=True)
+                    else:
+                        # No existing images found, need to build
+                        build_script = self.config["stack"]["build_script"]
+                        print(f"Making build script executable: {build_script}")
+                        subprocess.run(f"chmod +x {build_script}", shell=True, check=True)
+
+                        print(f"Running build script: {build_script}")
+                        subprocess.run(f"./{build_script}", shell=True, check=True)
 
             # Create network overlay
             network_name = self.config["stack"]["network_name"]
             print(f"Creating network overlay: {network_name}")
-            subprocess.run(f"sudo docker network create --driver overlay {network_name}", shell=True, check=True)
+            try:
+                subprocess.run(f"sudo docker network create --driver overlay {network_name}", shell=True, check=True)
+            except subprocess.CalledProcessError:
+                print(f"Network {network_name} may already exist, continuing...")
 
             # Deploy stack
             stack_name = self.config["stack"]["name"]
             compose_file = self.config["stack"]["compose_file"]
             print(f"Deploying stack {stack_name} with compose file {compose_file}")
             subprocess.run(f"sudo docker stack deploy -c {compose_file} {stack_name}", shell=True, check=True)
-            
+
             print("Successfully deployed stack")
             return True
         except subprocess.CalledProcessError as e:
             print(f"Error in build and deploy: {e}")
             return False
-
+        
     def _deploy_on_remote_manager(self):
         """Build and deploy stack on remote manager using SSH."""
         try:
@@ -578,54 +619,108 @@ class SwarmDeployer:
             if error:
                 print(f"Error accessing project directory: {error}")
                 return False
-                
+                    
             print(f"Working in directory: {current_dir}")
+            
+            # Check available disk space on remote server
+            print("Checking available disk space on remote server...")
+            stdin, stdout, stderr = ssh.exec_command(f"df -h /")
+            df_output = stdout.read().decode()
+            print(f"Current disk usage on remote server:\n{df_output}")
+            
+            # Parse disk usage
+            usage_line = [line for line in df_output.split('\n') if line.strip() and '/' in line][0]
+            usage_percent = int(usage_line.split()[4].replace('%', ''))
             
             # Run build script if configured
             if self.config["stack"]["run_build"]:
-                build_script = self.config["stack"]["build_script"]
-                
-                # Check if build script exists
-                stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && ls -la {build_script}")
-                if "No such file or directory" in stderr.read().decode():
-                    print(f"Build script {build_script} not found in {project_dir}")
-                    create_script = input("Create a simple build script? (y/n): ")
-                    if create_script.lower() == 'y':
-                        stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && echo '#!/bin/bash\necho \"Simple build script\"' > {build_script} && chmod +x {build_script}")
-                        time.sleep(1)
-                    else:
+                # Warn if disk space is low
+                if usage_percent > 85:
+                    print(f"WARNING: Disk usage on remote server is at {usage_percent}%. Building may cause 'no space left' errors.")
+                    proceed = input("Continue with build? (y/n): ")
+                    if proceed.lower() != 'y':
+                        print("Skipping build due to disk space concerns.")
+                        self.config["stack"]["run_build"] = False
+                        
+                if self.config["stack"]["run_build"]:
+                    build_script = self.config["stack"]["build_script"]
+                    
+                    # Check if build script exists
+                    stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && ls -la {build_script}")
+                    if "No such file or directory" in stderr.read().decode():
+                        print(f"Build script {build_script} not found in {project_dir}")
                         print("Skipping build script execution.")
                         self.config["stack"]["run_build"] = False
+                    
+                    if self.config["stack"]["run_build"]:
+                        # Check if some images already exist
+                        stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && sudo docker images | grep {self.config.get('registry', 'local')}")
+                        existing_images = stdout.read().decode()
+                        
+                        # If images exist, ask if we should build anyway
+                        if existing_images and "REPOSITORY" in existing_images:
+                            force_rebuild = input("Some Docker images already exist on the remote server. Rebuild all? (y/n): ")
+                            if force_rebuild.lower() != 'y':
+                                print("Skipping build, using existing images.")
+                                self.config["stack"]["run_build"] = False
+                        
+                        if self.config["stack"]["run_build"]:
+                            # Check if Docker system has enough space
+                            stdin, stdout, stderr = ssh.exec_command("sudo docker system df")
+                            docker_space = stdout.read().decode()
+                            print(f"Docker space usage:\n{docker_space}")
+                            
+                            # Clean up if needed
+                            if usage_percent > 70:
+                                clean = input("Run docker system prune to free up space before building? (y/n): ")
+                                if clean.lower() == 'y':
+                                    print("Cleaning up Docker system...")
+                                    if self.config["manager"].get("auth_method") == "keyfile":
+                                        stdin, stdout, stderr = ssh.exec_command("sudo docker system prune -f")
+                                        time.sleep(5)
+                                    else:
+                                        channel = ssh.get_transport().open_session()
+                                        channel.get_pty()
+                                        channel.exec_command("sudo docker system prune -f")
+                                        channel.send(f"{self.config['manager']['password']}\n")
+                                        time.sleep(5)
+                            
+                            # Make build script executable
+                            print(f"Making build script executable: {build_script}")
+                            stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && chmod +x {build_script}")
+                            time.sleep(1)
+                            
+                            # Run build script
+                            registry = self.config.get('registry', 'local')
+                            tag = self.config.get('tag', 'latest')
+                            print(f"Running build script: ./{build_script} {registry} {tag}")
+                            
+                            if self.config["manager"].get("auth_method") == "keyfile":
+                                stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && ./{build_script} {registry} {tag}", get_pty=True)
+                            else:
+                                channel = ssh.get_transport().open_session()
+                                channel.get_pty()
+                                channel.exec_command(f"cd {project_dir} && ./{build_script} {registry} {tag}")
+                                if self.config["manager"].get("auth_method") != "keyfile":
+                                    channel.send(f"{self.config['manager']['password']}\n")
+                            
+                            # Allow time for build and provide progress updates
+                            print("Build in progress. This may take some time...")
+                            
+                            # For keyfile auth, we can read output in real-time
+                            if self.config["manager"].get("auth_method") == "keyfile":
+                                while not stdout.channel.exit_status_ready():
+                                    if stdout.channel.recv_ready():
+                                        build_output = stdout.channel.recv(1024).decode()
+                                        if build_output:
+                                            print(build_output, end='')
+                                    time.sleep(1)
+                            else:
+                                # For password auth, we just wait with periodic updates
+                                for i in range(6):
+                                    print(f"Build in progress... ({i+1}/6)")
+                                    time.sleep(10)
                 
-                if self.config["stack"]["run_build"]:
-                    # Make build script executable
-                    print(f"Making build script executable: {build_script}")
-                    stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && chmod +x {build_script}")
-                    time.sleep(1)
-                    
-                    # Run build script
-                    print(f"Running build script: {build_script}")
-                    if self.config["manager"].get("auth_method") == "keyfile":
-                        stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && ./{build_script}", get_pty=True)
-                    else:
-                        channel = ssh.get_transport().open_session()
-                        channel.get_pty()
-                        channel.exec_command(f"cd {project_dir} && ./{build_script}")
-                        if self.config["manager"].get("auth_method") != "keyfile":
-                            channel.send(f"{self.config['manager']['password']}\n")
-                    
-                    # Allow time for build
-                    print("Waiting for build to complete...")
-                    time.sleep(10)
-                    
-                    # Get build output
-                    if self.config["manager"].get("auth_method") == "keyfile":
-                        build_output = stdout.read().decode()
-                    else:
-                        build_output = channel.recv(4096).decode()
-                    
-                    print(f"Build output: {build_output}")
-            
             # Check if compose file exists
             compose_file = self.config["stack"]["compose_file"]
             stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && ls -la {compose_file}")
@@ -641,7 +736,7 @@ class SwarmDeployer:
                 time.sleep(3)
                 network_output = stdout.read().decode()
                 network_error = stderr.read().decode()
-                if network_error:
+                if network_error and "already exists" not in network_error:
                     print(f"Network creation error: {network_error}")
             else:
                 channel = ssh.get_transport().open_session()

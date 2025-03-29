@@ -3,47 +3,93 @@
 # Set your registry (if using one) or use local
 REGISTRY=${1:-"local"}
 TAG=${2:-"latest"}
+FORCE_REBUILD=${3:-"no"}
+
+# Check available disk space
+DISK_USAGE=$(df -h / | grep / | awk '{print $5}' | sed 's/%//')
+if [ "$DISK_USAGE" -gt 85 ] && [ "$FORCE_REBUILD" != "yes" ]; then
+    echo "WARNING: Disk usage is at ${DISK_USAGE}%. Building all images may cause disk space issues."
+    echo "You can free up space with: sudo docker system prune -a"
+    read -p "Continue with build anyway? (y/n): " CONTINUE
+    if [ "$CONTINUE" != "y" ]; then
+        echo "Build aborted."
+        exit 1
+    fi
+fi
+
+# Function to build an image if it doesn't exist or if forced
+build_if_needed() {
+    local IMAGE_NAME="$1"
+    local DOCKERFILE="$2"
+    local CONTEXT="$3"
+    
+    # Check if image exists
+    if [[ "$(sudo docker images -q ${REGISTRY}/${IMAGE_NAME}:${TAG} 2> /dev/null)" == "" ]] || [ "$FORCE_REBUILD" == "yes" ]; then
+        echo "Building ${IMAGE_NAME}..."
+        sudo docker build -t ${REGISTRY}/${IMAGE_NAME}:${TAG} -f ${DOCKERFILE} ${CONTEXT}
+        
+        # Check if build succeeded
+        if [ $? -ne 0 ]; then
+            echo "Failed to build ${IMAGE_NAME}, cleaning up first and retrying..."
+            sudo docker system prune -f
+            sudo docker build -t ${REGISTRY}/${IMAGE_NAME}:${TAG} -f ${DOCKERFILE} ${CONTEXT}
+            
+            # If it fails again, exit
+            if [ $? -ne 0 ]; then
+                echo "Build failed for ${IMAGE_NAME} after cleanup. Exiting."
+                exit 1
+            fi
+        fi
+    else
+        echo "Image ${REGISTRY}/${IMAGE_NAME}:${TAG} already exists, skipping build."
+    fi
+}
+
+# Build each service
+echo "Starting build process with smart disk space management..."
 
 # Build offer-banner
-sudo docker build -t ${REGISTRY}/offer-banner:${TAG} -f ./src/offer_banner/Dockerfile.offer_banner ./src/offer_banner
+build_if_needed "offer-banner" "./src/offer_banner/Dockerfile.offer_banner" "./src/offer_banner"
 
-# Build contacts
-sudo docker build -t ${REGISTRY}/contacts:${TAG} -f ./src/contact/Dockerfile.contact ./src/contact
+# Build contacts 
+build_if_needed "contacts" "./src/contact/Dockerfile.contact" "./src/contact"
 
 # Build search
-sudo docker build -t ${REGISTRY}/search:${TAG} -f ./src/search/Dockerfile.search ./src/search
+build_if_needed "search" "./src/search/Dockerfile.search" "./src/search"
 
 # Build authentication
-sudo docker build -t ${REGISTRY}/authentication:${TAG} -f ./src/authentication/Dockerfile.authentication ./src/authentication
+build_if_needed "authentication" "./src/authentication/Dockerfile.authentication" "./src/authentication"
 
 # Build customer-info
-sudo docker build -t ${REGISTRY}/customer-info:${TAG} -f ./src/customerInfo/Dockerfile.customerInfo ./src/customerInfo
+build_if_needed "customer-info" "./src/customerInfo/Dockerfile.customerInfo" "./src/customerInfo"
 
 # Build customer-activity
-sudo docker build -t ${REGISTRY}/customer-activity:${TAG} -f ./src/customerActivity/Dockerfile.customerActivity ./src/customerActivity
+build_if_needed "customer-activity" "./src/customerActivity/Dockerfile.customerActivity" "./src/customerActivity"
 
 # Build personal-lending
-sudo docker build -t ${REGISTRY}/personal-lending:${TAG} -f ./src/personalLending/Dockerfile.personalLending ./src/personalLending
+build_if_needed "personal-lending" "./src/personalLending/Dockerfile.personalLending" "./src/personalLending"
 
 # Build business-lending
-sudo docker build -t ${REGISTRY}/business-lending:${TAG} -f ./src/businessLending/Dockerfile.businessLending ./src/businessLending
+build_if_needed "business-lending" "./src/businessLending/Dockerfile.businessLending" "./src/businessLending"
 
 # Build mortgage
-sudo docker build -t ${REGISTRY}/mortgage:${TAG} -f ./src/mortgage/Dockerfile.mortgage ./src/mortgage
+build_if_needed "mortgage" "./src/mortgage/Dockerfile.mortgage" "./src/mortgage"
 
 # Build investment
-sudo docker build -t ${REGISTRY}/investment:${TAG} -f ./src/investment-account/Dockerfile.investment ./src/investment-account
+build_if_needed "investment" "./src/investment-account/Dockerfile.investment" "./src/investment-account"
 
 # Build deposit-account
-sudo docker build -t ${REGISTRY}/deposit-account:${TAG} -f ./src/depositAccount/Dockerfile.depositAccount ./src/depositAccount
+build_if_needed "deposit-account" "./src/depositAccount/Dockerfile.depositAccount" "./src/depositAccount"
 
 # Build payments
-sudo docker build -t ${REGISTRY}/payments:${TAG} -f ./src/payments/Dockerfile.payments ./src/payments
+build_if_needed "payments" "./src/payments/Dockerfile.payments" "./src/payments"
 
 # Build wealth-mgmt
-sudo docker build -t ${REGISTRY}/wealth-mgmt:${TAG} -f ./src/wealth_mgmt/Dockerfile.wealth_mgmt ./src/wealth_mgmt
+build_if_needed "wealth-mgmt" "./src/wealth_mgmt/Dockerfile.wealth_mgmt" "./src/wealth_mgmt"
 
 # Build frontend
-sudo docker build -t ${REGISTRY}/frontend1:${TAG} -f ./src/frontend/Dockerfile.frontend1 ./src/frontend
-sudo docker build -t ${REGISTRY}/frontend2:${TAG} -f ./src/frontend/Dockerfile.frontend2 ./src/frontend
-sudo docker build -t ${REGISTRY}/frontend3:${TAG} -f ./src/frontend/Dockerfile.frontend3 ./src/frontend
+build_if_needed "frontend1" "./src/frontend/Dockerfile.frontend1" "./src/frontend"
+build_if_needed "frontend2" "./src/frontend/Dockerfile.frontend2" "./src/frontend"
+build_if_needed "frontend3" "./src/frontend/Dockerfile.frontend3" "./src/frontend"
+
+echo "Build process completed successfully."
