@@ -27,8 +27,7 @@ services:
   haproxy:
     image: haproxy:latest
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     ports:
       - 80:80
     volumes:
@@ -39,8 +38,7 @@ services:
   opa:
     image: openpolicyagent/opa:latest
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     ports:
       - "8181:8181"
     networks:
@@ -98,8 +96,7 @@ services:
   redis-ob-ms:
     image: redis:6.2.12
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     ports:
       - 6379:6379
     networks:
@@ -111,8 +108,7 @@ services:
   redis-search-ms:
     image: redis:6.0-alpine
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     ports:
       - 6380:6379
     networks:
@@ -124,8 +120,7 @@ services:
   redis-auth-ms:
     image: redis:6.0-alpine
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     ports:
       - 6381:6379
     networks:
@@ -138,8 +133,7 @@ services:
     # image: mongo:7.0
     image: mongo:4.2.2
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocontact
       - MONGO_INITDB_ROOT_PASSWORD=contact
@@ -154,8 +148,7 @@ services:
   mongo-auth-info:
     image: mongo:7.0
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoauthentication
       - MONGO_INITDB_ROOT_PASSWORD=authinfo
@@ -169,8 +162,7 @@ services:
   mongo-customer-info:
     image: mongo:7.0
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocusinfo
       - MONGO_INITDB_ROOT_PASSWORD=customerinfo
@@ -184,8 +176,7 @@ services:
   mongo-customer-activity:
     image: mongo:7.0
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocusactivity
       - MONGO_INITDB_ROOT_PASSWORD=customeractivity
@@ -199,8 +190,7 @@ services:
   mongo-personal-lending:
     image: mongo:7.0
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoPersonalLending
       - MONGO_INITDB_ROOT_PASSWORD=personalLending
@@ -214,8 +204,7 @@ services:
   mongo-business-lending:
     image: mongo:7.0
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoBusinessLending
       - MONGO_INITDB_ROOT_PASSWORD=businessLending
@@ -229,8 +218,7 @@ services:
   mongo-mortgage:
     image: mongo:7.0
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongomortgage
       - MONGO_INITDB_ROOT_PASSWORD=mortgage
@@ -244,8 +232,7 @@ services:
   mongo-investment:
     image: mongo:7.0
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoinvestment
       - MONGO_INITDB_ROOT_PASSWORD=investment
@@ -259,8 +246,7 @@ services:
   mongo-credit-card:
     image: mongo:7.0
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocreditcard
       - MONGO_INITDB_ROOT_PASSWORD=creditcard
@@ -274,8 +260,7 @@ services:
   mongo-wealth-mgmt:
     image: mongo:7.0
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongowealthmgmt
       - MONGO_INITDB_ROOT_PASSWORD=wealthmgmt
@@ -289,8 +274,7 @@ services:
   mongo-express:
     image: mongo-express
     deploy:
-      mode: replicated
-      replicas: 1
+      mode: global
     ports:
       - 8081:8081
     networks:
@@ -306,8 +290,7 @@ services:
   memcached-pl:
     image: memcached:latest
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     ports:
       - "11211:11211"
     networks:
@@ -316,8 +299,7 @@ services:
   memcached-bl:
     image: memcached:latest
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     ports:
       - "11212:11211"
     networks:
@@ -326,8 +308,7 @@ services:
   memcached-mortgage:
     image: memcached:latest
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     ports:
       - "11213:11211"
     networks:
@@ -336,8 +317,7 @@ services:
   memcached-investment:
     image: memcached:latest
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
     ports:
       - "11214:11211"
     networks:
@@ -348,8 +328,7 @@ services:
   offer-banner:
     image: ${REGISTRY:-local}/offer-banner:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 2
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -376,8 +355,7 @@ services:
   credit-card:
     image: ${REGISTRY:-local}/credit-card:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 2
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -409,8 +387,7 @@ services:
   contacts:
     image: ${REGISTRY:-local}/contacts:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 2
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -438,8 +415,7 @@ services:
   search:
     image: ${REGISTRY:-local}/search:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 2
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -471,8 +447,7 @@ services:
   authentication:
     image: ${REGISTRY:-local}/authentication:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 2
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -506,8 +481,7 @@ services:
   customer-info:
     image: ${REGISTRY:-local}/customer-info:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 2
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -566,8 +540,7 @@ services:
   personal-lending:
     image: ${REGISTRY:-local}/personal-lending:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -601,8 +574,7 @@ services:
   business-lending:
     image: ${REGISTRY:-local}/business-lending:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -636,8 +608,7 @@ services:
   mortgage:
     image: ${REGISTRY:-local}/mortgage:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -671,8 +642,7 @@ services:
   investment:
     image: ${REGISTRY:-local}/investment:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -706,8 +676,7 @@ services:
   deposit-account:
     image: ${REGISTRY:-local}/deposit-account:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -735,8 +704,7 @@ services:
   payments:
     image: ${REGISTRY:-local}/payments:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -764,8 +732,7 @@ services:
   wealth-mgmt:
     image: ${REGISTRY:-local}/wealth-mgmt:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -794,11 +761,25 @@ services:
       - JAEGER_AGENT_PORT=6831
     command: python app.py
 
+  modsecurity:
+    image: owasp/modsecurity-crs:nginx
+    deploy:
+      mode: global
+    ports:
+      - 8080:8080
+    environment:
+      - PROXY=1
+      - BACKEND=http://haproxy:80
+      - PARANOIA=1  # Basic protection level
+      - ANOMALY_INBOUND=5
+      - ANOMALY_OUTBOUND=4
+    networks:
+      - vittmitra
+
   frontend-1:
     image: ${REGISTRY:-local}/frontend1:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -852,8 +833,7 @@ services:
   frontend-2:
     image: ${REGISTRY:-local}/frontend2:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
@@ -907,8 +887,7 @@ services:
   frontend-3:
     image: ${REGISTRY:-local}/frontend3:${TAG:-latest}
     deploy:
-      mode: replicated
-      replicas: 3
+      mode: global
       update_config:
         parallelism: 1
         delay: 10s
