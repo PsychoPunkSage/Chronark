@@ -384,7 +384,7 @@ services:
   contacts:
     build:
       context: ./src/contact
-      dockerfile: Dockerfile.contact
+      dockerfile: Dockerfile.contact_cve
     container_name: ms-contacts
     volumes:
       - ./src/contact/app.js:/app/app.js
