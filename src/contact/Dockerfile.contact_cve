@@ -1,19 +1,13 @@
-FROM node:16-slim
+FROM node:12
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install express@4.17.2 
-RUN npm install body-parser@1.19.1 
-RUN npm install mongodb@4.4.1 
-RUN npm install jaeger-client@3.19.0 
-RUN npm install cors@2.8.5 
-RUN npm install ejs@3.1.6 
-RUN npm install dotenv@10.0.0
-RUN npm install statuses@1.5.0
+# Copy package.json and lock file
+# COPY package*.json ./
+
+# Install dependencies
+# RUN npm install
 
 COPY . .
 
 EXPOSE 5003
-
-CMD ["node", "app.js"]

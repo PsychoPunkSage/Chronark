@@ -88,23 +88,26 @@ app.get('/', (req, res) => {
 
 // ===================================================================================================================================================================================== //
 // CVE-2022-24999
-app.get('/check-pollution', (req, res) => {
-    const clean = {};
-    res.json({
-        vulnerable: clean.hasOwnProperty('isExploited') || clean.isExploited === true,
-        message: clean.hasOwnProperty('isExploited') || clean.isExploited === true ?
-            "VULNERABLE: Prototype pollution detected!" :
-            "SECURE: No prototype pollution detected",
-        emptyObject: JSON.stringify(clean),
-        properties: Object.getOwnPropertyNames(Object.prototype)
-    });
-});
 
-app.get('/test', (req, res) => {
-    const obj = {};
-    res.send(`Pollution test: ${obj.isExploited === true ? "Vulnerable!" : "Not vulnerable"}`);
-});
+app.post('/dos-test', (req, res) => {
+    // Just echo back the request size to demonstrate we received it
+    // This will crash if payload is too large
+    try {
+        const payloadSize = JSON.stringify(req.body).length;
+        console.log(`Received payload of size: ${payloadSize} bytes`);
 
+        res.json({
+            message: 'Request processed successfully',
+            payloadSize: `${payloadSize} bytes`,
+            payloadSizeMB: `${(payloadSize / (1024 * 1024)).toFixed(2)} MB`
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: 'Server error processing request',
+            message: error.message
+        });
+    }
+});
 
 // ===================================================================================================================================================================================== //
 
