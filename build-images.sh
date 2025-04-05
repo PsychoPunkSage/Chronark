@@ -48,6 +48,9 @@ build_if_needed() {
 # Build each service
 echo "Starting build process with smart disk space management..."
 
+# Build acl
+build_if_needed "opa" "./src/acl/Dockerfile.opa" "./src/acl"
+
 # Build offer-banner
 build_if_needed "offer-banner" "./src/offer_banner/Dockerfile.offer_banner" "./src/offer_banner"
 

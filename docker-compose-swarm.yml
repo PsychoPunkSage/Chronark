@@ -36,7 +36,7 @@ services:
       - vittmitra
 
   opa:
-    image: openpolicyagent/opa:latest
+    image: ${REGISTRY:-local}/opa:${TAG:-latest}
     deploy:
       mode: global
     ports:
