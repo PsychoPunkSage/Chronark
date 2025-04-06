@@ -1,9 +1,16 @@
 FROM node:20-slim
+# FROM node:20.0.0-slim
 
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm install
+RUN npm install --save http2
+
+# Generate certificates during build
+RUN apt-get update && apt-get install -y openssl
+RUN openssl req -x509 -newkey rsa:2048 -nodes -sha256 -subj '/CN=localhost' \
+    -keyout server.key -out server.cert
 
 COPY . .
 

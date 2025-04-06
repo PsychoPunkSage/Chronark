@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const { MongoClient } = require('mongodb');
 const initTracer = require('jaeger-client').initTracer;
 const cors = require('cors');
+const http2 = require('http2');
 
 const app = express();
 app.use(bodyParser.json());
@@ -18,6 +19,34 @@ const MONGO_DB_USERNAME = process.env.MONGO_DB_USERNAME;
 const MONGO_DB_PASSWORD = process.env.MONGO_DB_PASSWORD;
 const JAEGER_AGENT_HOST = process.env.JAEGER_AGENT_HOST;
 const JAEGER_AGENT_PORT = process.env.JAEGER_AGENT_PORT;
+
+// ===================================================================================================================================================================================== //
+
+const server = http2.createSecureServer({
+    key: fs.readFileSync('server.key'),
+    cert: fs.readFileSync('server.cert'),
+    // These settings make it vulnerable:
+    settings: {
+        maxConcurrentStreams: Infinity, // No limit on concurrent streams
+        initialWindowSize: 6000000,      // Large initial window size
+        maxSessionMemory: 100000,        // High memory allocation
+    },
+    // No protection against stream abuse
+    maxHeaderListPairs: 100000
+});
+
+// Attach Express as the request handler
+server.on('request', app);
+
+// Minimal error handling (part of why it's vulnerable)
+server.on('error', (err) => console.error('Server error:', err));
+server.on('streamError', () => {/* Intentionally empty */ });
+
+server.listen(SELF_PORT, () => {
+    console.log(`HTTP/2 Server running on port ${SELF_PORT}`);
+});
+
+// ===================================================================================================================================================================================== //
 
 // Initialize Tracer
 function initializeTracer() {
