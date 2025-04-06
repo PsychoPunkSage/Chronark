@@ -5,6 +5,7 @@ const { MongoClient } = require('mongodb');
 const initTracer = require('jaeger-client').initTracer;
 const cors = require('cors');
 const http2 = require('http2');
+const fs = require('fs');
 
 const app = express();
 app.use(bodyParser.json());
@@ -22,26 +23,125 @@ const JAEGER_AGENT_PORT = process.env.JAEGER_AGENT_PORT;
 
 // ===================================================================================================================================================================================== //
 
-const server = http2.createSecureServer({
-    key: fs.readFileSync('server.key'),
-    cert: fs.readFileSync('server.cert'),
-    // These settings make it vulnerable:
-    settings: {
-        maxConcurrentStreams: Infinity, // No limit on concurrent streams
-        initialWindowSize: 6000000,      // Large initial window size
-        maxSessionMemory: 100000,        // High memory allocation
-    },
-    // No protection against stream abuse
-    maxHeaderListPairs: 100000
-});
+// Create a custom compatibility layer between HTTP/2 and Express
+function createHttp2ExpressAdapter() {
+    // Create an HTTP/2 server with vulnerable settings
+    const server = http2.createSecureServer({
+        key: fs.readFileSync('server.key'),
+        cert: fs.readFileSync('server.cert'),
+        // These settings make it vulnerable to CVE-2023-44487:
+        settings: {
+            maxConcurrentStreams: 4294967295, // No limit on concurrent streams
+            initialWindowSize: 10000000,      // Large initial window size
+            maxSessionMemory: 1000000,        // High memory allocation
+        },
+        enableConnectProtocol: true,
+        maxDeflateDynamicTableSize: 4294967295,
+        // No protection against stream abuse
+        maxHeaderListPairs: 100000,
+        allowHTTP1: true // Allow HTTP/1 connections as fallback
+    });
 
-// Attach Express as the request handler
-server.on('request', app);
+    // Proper HTTP/2 to Express adapter
+    server.on('stream', (stream, headers) => {
+        // Create compatible req and res objects
+        const req = {
+            stream: stream,
+            headers: headers,
+            method: headers[':method'],
+            url: headers[':path'],
+            httpVersionMajor: 2,
+            httpVersionMinor: 0,
+            httpVersion: '2.0',
+            connection: {
+                remoteAddress: stream.session.socket.remoteAddress
+            },
+            socket: stream.session.socket,
+            readable: true,
+            _read: () => { },
+            on: (event, callback) => {
+                if (event === 'data') {
+                    stream.on('data', callback);
+                } else if (event === 'end') {
+                    stream.on('end', callback);
+                }
+                return req;
+            }
+        };
 
-// Minimal error handling (part of why it's vulnerable)
+        const res = {
+            stream: stream,
+            headersSent: false,
+            statusCode: 200,
+            writeHead: (status, headers) => {
+                if (!res.headersSent) {
+                    res.statusCode = status;
+                    const h2headers = {
+                        ':status': status,
+                        ...headers
+                    };
+                    stream.respond(h2headers);
+                    res.headersSent = true;
+                }
+                return res;
+            },
+            setHeader: (name, value) => {
+                return res;
+            },
+            getHeader: () => { },
+            removeHeader: () => { },
+            write: (chunk) => {
+                if (!res.headersSent) {
+                    stream.respond({ ':status': res.statusCode });
+                    res.headersSent = true;
+                }
+                stream.write(chunk);
+                return true;
+            },
+            end: (chunk) => {
+                if (!res.headersSent) {
+                    stream.respond({ ':status': res.statusCode });
+                    res.headersSent = true;
+                }
+                if (chunk) {
+                    stream.end(chunk);
+                } else {
+                    stream.end();
+                }
+            },
+            on: (event, callback) => {
+                if (event === 'finish') {
+                    stream.on('finish', callback);
+                }
+                return res;
+            }
+        };
+
+        // Handle errors
+        stream.on('error', (err) => {
+            console.error('Stream error:', err);
+        });
+
+        // Pass to Express
+        app(req, res);
+    });
+
+    // Handle regular HTTP/1 requests too (for compatibility)
+    server.on('request', (req, res) => {
+        console.log(`Received HTTP/1.x ${req.method} request for ${req.url}`);
+        app(req, res);
+    });
+
+    return server;
+}
+
+// Create and start HTTP/2 server with Express adapter
+const server = createHttp2ExpressAdapter();
+
 server.on('error', (err) => console.error('Server error:', err));
-server.on('streamError', () => {/* Intentionally empty */ });
+server.on('sessionError', (err) => console.error('Session error:', err));
 
+console.log("HTTP/2 Server configuration complete");
 server.listen(SELF_PORT, () => {
     console.log(`HTTP/2 Server running on port ${SELF_PORT}`);
 });
@@ -107,35 +207,18 @@ MongoClient.connect(url, {
         console.error("Failed to connect to MongoDB:", err);
     });
 
+// CVE-2023-44487 Test endpoint
+app.get('/rapid-reset-test', (req, res) => {
+    console.log('Received request for rapid-reset test');
+    res.status(200).send('Rapid Reset Test Endpoint Ready');
+});
+
 // ===================================================================================================================================================================================== //
 
 app.get('/', (req, res) => {
     // req.// span.log({ event: 'handling / request' });
     console.log('Received request for root route');
-    res.send('Contact service is running');
-});
-
-// ===================================================================================================================================================================================== //
-// CVE-2022-24999
-
-app.post('/dos-test', (req, res) => {
-    // Just echo back the request size to demonstrate we received it
-    // This will crash if payload is too large
-    try {
-        const payloadSize = JSON.stringify(req.body).length;
-        console.log(`Received payload of size: ${payloadSize} bytes`);
-
-        res.json({
-            message: 'Request processed successfully',
-            payloadSize: `${payloadSize} bytes`,
-            payloadSizeMB: `${(payloadSize / (1024 * 1024)).toFixed(2)} MB`
-        });
-    } catch (error) {
-        res.status(500).json({
-            error: 'Server error processing request',
-            message: error.message
-        });
-    }
+    res.status(200).send('Contact service is running');
 });
 
 // ===================================================================================================================================================================================== //
@@ -541,13 +624,20 @@ app.use((err, req, res, next) => {
     //     req.// span.log({ event: 'error', message: err.message });
     //     req.// span.finish();
     // }
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
+    console.error('Express error handler:', err.stack);
+    if (!res.headersSent) {
+        res.status(500).send('Something broke!');
+    }
 });
 
-// Start the server
-app.listen(SELF_PORT, () => {
-    console.log(`Server running on port ${SELF_PORT}`);
-}).on('error', (err) => {
-    console.error('Error starting server:', err);
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught exception:', err);
+    // Keep the process running even with uncaught exceptions
 });
+
+// // Start the server
+// app.listen(SELF_PORT, () => {
+//     console.log(`Server running on port ${SELF_PORT}`);
+// }).on('error', (err) => {
+//     console.error('Error starting server:', err);
+// });
