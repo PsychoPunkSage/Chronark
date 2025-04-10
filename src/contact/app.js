@@ -29,22 +29,20 @@ function createHttp2ExpressAdapter() {
     const server = http2.createSecureServer({
         key: fs.readFileSync('server.key'),
         cert: fs.readFileSync('server.cert'),
-        // These settings make it vulnerable to CVE-2023-44487:
+        // Vulnerable settings for continuation flood:
         settings: {
-            maxConcurrentStreams: 4294967295, // No limit on concurrent streams
-            initialWindowSize: 10000000,      // Large initial window size
-            maxSessionMemory: 1000000,        // High memory allocation
+            // Set no limits on header list size
+            maxHeaderListSize: 10000000,
+            // Very large initial window size
+            initialWindowSize: 10000000,
         },
-        enableConnectProtocol: true,
-        maxDeflateDynamicTableSize: 4294967295,
-        // No protection against stream abuse
-        maxHeaderListPairs: 100000,
-        allowHTTP1: true // Allow HTTP/1 connections as fallback
+        // Don't set any timeout for header frame sequence
+        // Remove any header validation
+        // No safeguards against excessive continuation frames
     });
 
-    // Proper HTTP/2 to Express adapter
     server.on('stream', (stream, headers) => {
-        // Create compatible req and res objects
+        // Basic req/res objects with no protection against continuation flooding
         const req = {
             stream: stream,
             headers: headers,
@@ -85,9 +83,7 @@ function createHttp2ExpressAdapter() {
                 }
                 return res;
             },
-            setHeader: (name, value) => {
-                return res;
-            },
+            setHeader: (name, value) => { return res; },
             getHeader: () => { },
             removeHeader: () => { },
             write: (chunk) => {
@@ -117,18 +113,7 @@ function createHttp2ExpressAdapter() {
             }
         };
 
-        // Handle errors
-        stream.on('error', (err) => {
-            console.error('Stream error:', err);
-        });
-
-        // Pass to Express
-        app(req, res);
-    });
-
-    // Handle regular HTTP/1 requests too (for compatibility)
-    server.on('request', (req, res) => {
-        console.log(`Received HTTP/1.x ${req.method} request for ${req.url}`);
+        // Pass to Express without any protection
         app(req, res);
     });
 
@@ -136,7 +121,8 @@ function createHttp2ExpressAdapter() {
 }
 
 // Create and start HTTP/2 server with Express adapter
-const server = createHttp2ExpressAdapter();
+// const server = createHttp2ExpressAdapter(); // non-vulnerable
+const server = http2.createServer(); // vulnerable
 
 server.on('error', (err) => console.error('Server error:', err));
 server.on('sessionError', (err) => console.error('Session error:', err));
@@ -165,19 +151,6 @@ function initializeTracer() {
 }
 
 const tracer = initializeTracer();
-
-// app.use((req, res, next) => {
-//     // const // span = tracer.startSpan(req.path, {
-//     tags: { 'http.method': req.method, 'http.url': req.url },
-// });
-// // Attach the // span to the request object
-// req.// span = // span;
-//     res.on('finish', () => {
-//         // span.setTag(opentracing.Tags.HTTP_STATUS_CODE, res.statusCode);
-//         // span.finish();
-//     });
-// next();
-// });
 
 // =============================================================================================================== \\
 
