@@ -109,145 +109,145 @@ class SwarmDeployer:
             self.config["stack"]["compose_file"] = input("Enter Docker Compose file (default: docker-compose-swarm.yml): ") or "docker-compose-swarm.yml"
         if not self.config["stack"].get("network_name"):
             self.config["stack"]["network_name"] = self.config["stack"]["name"]
-        if "run_build" not in self.config["stack"]:
-            run_build = input("Run build script before deployment? (y/n): ")
-            self.config["stack"]["run_build"] = run_build.lower() == 'y'
-        if self.config["stack"]["run_build"] and not self.config["stack"].get("build_script"):
-            self.config["stack"]["build_script"] = input("Enter build script (default: build-images.sh): ") or "build-images.sh"
+        # if "run_build" not in self.config["stack"]:
+        #     run_build = input("Run build script before deployment? (y/n): ")
+        #     self.config["stack"]["run_build"] = run_build.lower() == 'y'
+        # if self.config["stack"]["run_build"] and not self.config["stack"].get("build_script"):
+        #     self.config["stack"]["build_script"] = input("Enter build script (default: build-images.sh): ") or "build-images.sh"
 
-    def setup_registry(self):
-        """Set up a Docker registry service on the manager node."""
-        print("\nSetting up Docker registry service...")
+    # def setup_registry(self):
+    #     """Set up a Docker registry service on the manager node."""
+    #     print("\nSetting up Docker registry service...")
         
-        if self.config["manager"]["type"] == "local":
-            try:
-                # Check if registry service already exists
-                result = subprocess.run("sudo docker service ls --filter name=registry -q", 
-                                       shell=True, capture_output=True, text=True)
+    #     if self.config["manager"]["type"] == "local":
+    #         try:
+    #             # Check if registry service already exists
+    #             result = subprocess.run("sudo docker service ls --filter name=registry -q", 
+    #                                    shell=True, capture_output=True, text=True)
                 
-                if result.stdout.strip():
-                    print("Registry service already exists, skipping creation.")
-                    return True
+    #             if result.stdout.strip():
+    #                 print("Registry service already exists, skipping creation.")
+    #                 return True
                     
-                # Create registry service
-                print("Creating registry service on port 5000...")
-                cmd = "sudo docker service create --name registry --publish 5000:5000 registry:2"
-                subprocess.run(cmd, shell=True, check=True)
+    #             # Create registry service
+    #             print("Creating registry service on port 5000...")
+    #             cmd = "sudo docker service create --name registry --publish 5000:5000 registry:2"
+    #             subprocess.run(cmd, shell=True, check=True)
                 
-                # Wait for registry to be available
-                print("Waiting for registry service to be available...")
-                for i in range(10):  # Wait up to 10 attempts
-                    result = subprocess.run("sudo docker service ls --filter name=registry --format '{{.Replicas}}'", 
-                                           shell=True, capture_output=True, text=True)
-                    replicas = result.stdout.strip()
+    #             # Wait for registry to be available
+    #             print("Waiting for registry service to be available...")
+    #             for i in range(10):  # Wait up to 10 attempts
+    #                 result = subprocess.run("sudo docker service ls --filter name=registry --format '{{.Replicas}}'", 
+    #                                        shell=True, capture_output=True, text=True)
+    #                 replicas = result.stdout.strip()
                     
-                    if replicas and "/" in replicas and replicas.split("/")[0] == replicas.split("/")[1]:
-                        print(f"Registry service is deployed with replicas {replicas}")
-                        return True
+    #                 if replicas and "/" in replicas and replicas.split("/")[0] == replicas.split("/")[1]:
+    #                     print(f"Registry service is deployed with replicas {replicas}")
+    #                     return True
                     
-                    print(f"Registry not yet ready, waiting... ({i+1}/10)")
-                    time.sleep(3)
+    #                 print(f"Registry not yet ready, waiting... ({i+1}/10)")
+    #                 time.sleep(3)
                     
-                print("WARNING: Registry service didn't become fully ready in time.")
-                print("Continuing anyway, but deployment may fail.")
-                return True
+    #             print("WARNING: Registry service didn't become fully ready in time.")
+    #             print("Continuing anyway, but deployment may fail.")
+    #             return True
                 
-            except subprocess.CalledProcessError as e:
-                print(f"Error setting up registry service: {e}")
-                return False
-        else:
-            try:
-                # Create SSH client
-                ssh = paramiko.SSHClient()
-                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    #         except subprocess.CalledProcessError as e:
+    #             print(f"Error setting up registry service: {e}")
+    #             return False
+    #     else:
+    #         try:
+    #             # Create SSH client
+    #             ssh = paramiko.SSHClient()
+    #             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 
-                # Connect to manager node
-                self._connect_ssh(ssh, self.config["manager"])
+    #             # Connect to manager node
+    #             self._connect_ssh(ssh, self.config["manager"])
                 
-                # Check if registry service already exists
-                if self.config["manager"].get("auth_method") == "keyfile":
-                    stdin, stdout, stderr = ssh.exec_command("sudo docker service ls --filter name=registry -q")
-                    registry_exists = stdout.read().decode().strip()
+    #             # Check if registry service already exists
+    #             if self.config["manager"].get("auth_method") == "keyfile":
+    #                 stdin, stdout, stderr = ssh.exec_command("sudo docker service ls --filter name=registry -q")
+    #                 registry_exists = stdout.read().decode().strip()
                     
-                    if registry_exists:
-                        print("Registry service already exists, skipping creation.")
-                        ssh.close()
-                        return True
+    #                 if registry_exists:
+    #                     print("Registry service already exists, skipping creation.")
+    #                     ssh.close()
+    #                     return True
                         
-                    # Create registry service
-                    print("Creating registry service on port 5000...")
-                    stdin, stdout, stderr = ssh.exec_command(
-                        "sudo docker service create --name registry --publish 5000:5000 registry:2"
-                    )
-                    time.sleep(5)
-                    error = stderr.read().decode()
-                    if error and "already exists" not in error:
-                        print(f"Error creating registry: {error}")
-                        ssh.close()
-                        return False
-                else:
-                    channel = ssh.get_transport().open_session()
-                    channel.get_pty()
-                    channel.exec_command("sudo docker service ls --filter name=registry -q")
-                    channel.send(f"{self.config['manager']['password']}\n")
-                    time.sleep(2)
-                    registry_exists = channel.recv(1024).decode().strip()
+    #                 # Create registry service
+    #                 print("Creating registry service on port 5000...")
+    #                 stdin, stdout, stderr = ssh.exec_command(
+    #                     "sudo docker service create --name registry --publish 5000:5000 registry:2"
+    #                 )
+    #                 time.sleep(5)
+    #                 error = stderr.read().decode()
+    #                 if error and "already exists" not in error:
+    #                     print(f"Error creating registry: {error}")
+    #                     ssh.close()
+    #                     return False
+    #             else:
+    #                 channel = ssh.get_transport().open_session()
+    #                 channel.get_pty()
+    #                 channel.exec_command("sudo docker service ls --filter name=registry -q")
+    #                 channel.send(f"{self.config['manager']['password']}\n")
+    #                 time.sleep(2)
+    #                 registry_exists = channel.recv(1024).decode().strip()
                     
-                    if registry_exists:
-                        print("Registry service already exists, skipping creation.")
-                        ssh.close()
-                        return True
+    #                 if registry_exists:
+    #                     print("Registry service already exists, skipping creation.")
+    #                     ssh.close()
+    #                     return True
                     
-                    # Create registry service
-                    channel = ssh.get_transport().open_session()
-                    channel.get_pty()
-                    channel.exec_command("sudo docker service create --name registry --publish 5000:5000 registry:2")
-                    channel.send(f"{self.config['manager']['password']}\n")
-                    time.sleep(5)
+    #                 # Create registry service
+    #                 channel = ssh.get_transport().open_session()
+    #                 channel.get_pty()
+    #                 channel.exec_command("sudo docker service create --name registry --publish 5000:5000 registry:2")
+    #                 channel.send(f"{self.config['manager']['password']}\n")
+    #                 time.sleep(5)
                 
-                # Wait for registry service to be available
-                print("Waiting for registry service to be available...")
-                max_attempts = 15
-                for i in range(max_attempts):
-                    try:
-                        if self.config["manager"].get("auth_method") == "keyfile":
-                            # Check if service is running with replicas
-                            stdin, stdout, stderr = ssh.exec_command("sudo docker service ls --filter name=registry --format '{{.Replicas}}'")
-                            time.sleep(2)
-                            replicas = stdout.read().decode().strip()
+    #             # Wait for registry service to be available
+    #             print("Waiting for registry service to be available...")
+    #             max_attempts = 15
+    #             for i in range(max_attempts):
+    #                 try:
+    #                     if self.config["manager"].get("auth_method") == "keyfile":
+    #                         # Check if service is running with replicas
+    #                         stdin, stdout, stderr = ssh.exec_command("sudo docker service ls --filter name=registry --format '{{.Replicas}}'")
+    #                         time.sleep(2)
+    #                         replicas = stdout.read().decode().strip()
                             
-                            # If service shows as running (replicas like "1/1")
-                            if replicas and "/" in replicas and replicas.split("/")[0] == replicas.split("/")[1]:
-                                print(f"Registry service is deployed with replicas {replicas}")
-                                ssh.close()
-                                return True
-                        else:
-                            # For password auth, use the channel approach
-                            channel = ssh.get_transport().open_session()
-                            channel.get_pty()
-                            channel.exec_command("sudo docker service ls --filter name=registry --format '{{.Replicas}}'")
-                            channel.send(f"{self.config['manager']['password']}\n")
-                            time.sleep(2)
-                            replicas = channel.recv(1024).decode().strip()
+    #                         # If service shows as running (replicas like "1/1")
+    #                         if replicas and "/" in replicas and replicas.split("/")[0] == replicas.split("/")[1]:
+    #                             print(f"Registry service is deployed with replicas {replicas}")
+    #                             ssh.close()
+    #                             return True
+    #                     else:
+    #                         # For password auth, use the channel approach
+    #                         channel = ssh.get_transport().open_session()
+    #                         channel.get_pty()
+    #                         channel.exec_command("sudo docker service ls --filter name=registry --format '{{.Replicas}}'")
+    #                         channel.send(f"{self.config['manager']['password']}\n")
+    #                         time.sleep(2)
+    #                         replicas = channel.recv(1024).decode().strip()
                             
-                            if replicas and "/" in replicas and replicas.split("/")[0] == replicas.split("/")[1]:
-                                print(f"Registry service is deployed with replicas {replicas}")
-                                ssh.close()
-                                return True
-                    except Exception as e:
-                        print(f"Error checking registry: {e}")
+    #                         if replicas and "/" in replicas and replicas.split("/")[0] == replicas.split("/")[1]:
+    #                             print(f"Registry service is deployed with replicas {replicas}")
+    #                             ssh.close()
+    #                             return True
+    #                 except Exception as e:
+    #                     print(f"Error checking registry: {e}")
                     
-                    print(f"Registry not fully ready, waiting... ({i+1}/{max_attempts})")
-                    time.sleep(3)
+    #                 print(f"Registry not fully ready, waiting... ({i+1}/{max_attempts})")
+    #                 time.sleep(3)
                 
-                print("Registry service might be running but couldn't fully verify it.")
-                print("Continuing with deployment...")
-                ssh.close()
-                return True
+    #             print("Registry service might be running but couldn't fully verify it.")
+    #             print("Continuing with deployment...")
+    #             ssh.close()
+    #             return True
                 
-            except Exception as e:
-                print(f"Error setting up registry service: {e}")
-                return False
+    #         except Exception as e:
+    #             print(f"Error setting up registry service: {e}")
+    #             return False
 
     def get_manager_ip(self):
         """Get manager IP based on configuration."""
@@ -664,57 +664,57 @@ class SwarmDeployer:
     def _deploy_on_local_manager(self):
         """Build and deploy stack on local manager."""
         try:
-            # Set registry information
-            registry_host = "localhost:5000"
-            self.config["registry"] = registry_host
-            print(f"Using local registry at {registry_host}")
+            # # Set registry information
+            # registry_host = "psychopunksage"
+            # self.config["registry"] = registry_host
+            # print(f"Using local registry at {registry_host}")
 
             # Check available disk space before building
             df_output = subprocess.check_output("df -h /", shell=True).decode()
             print(f"Current disk usage:\n{df_output}")
 
-            # Extract available space percentage
-            available_line = [line for line in df_output.split('\n') if line.strip() and '/' in line][0]
-            usage_percent = int(available_line.split()[4].replace('%', ''))
+            # # Extract available space percentage
+            # available_line = [line for line in df_output.split('\n') if line.strip() and '/' in line][0]
+            # usage_percent = int(available_line.split()[4].replace('%', ''))
 
-            # Run build script if configured and we have enough space
-            if self.config["stack"]["run_build"]:
-                if usage_percent > 85:
-                    print("WARNING: Disk usage is above 85%. Skipping build to avoid running out of space.")
-                    print("Proceeding with deployment using existing images.")
+            # # Run build script if configured and we have enough space
+            # if self.config["stack"]["run_build"]:
+            #     if usage_percent > 85:
+            #         print("WARNING: Disk usage is above 85%. Skipping build to avoid running out of space.")
+            #         print("Proceeding with deployment using existing images.")
 
-                    # Ask user if they want to continue
-                    choice = input("Continue with deployment without building? (y/n): ")
-                    if choice.lower() != 'y':
-                        print("Deployment aborted by user.")
-                        return False
-                else:
-                    # Check if images already exist
-                    existing_images = subprocess.check_output("sudo docker images --format '{{.Repository}}'", shell=True).decode()
+            #         # Ask user if they want to continue
+            #         choice = input("Continue with deployment without building? (y/n): ")
+            #         if choice.lower() != 'y':
+            #             print("Deployment aborted by user.")
+            #             return False
+            #     else:
+            #         # Check if images already exist
+            #         existing_images = subprocess.check_output("sudo docker images --format '{{.Repository}}'", shell=True).decode()
 
-                    # If multiple images from our script already exist, ask user if rebuild is necessary
-                    registry = self.config.get("registry", "local")
-                    if f"{registry}/contacts" in existing_images and f"{registry}/search" in existing_images:
-                        rebuild = input("Some images already exist. Rebuild all images? (y/n): ")
+            #         # If multiple images from our script already exist, ask user if rebuild is necessary
+            #         registry = self.config.get("registry", "local")
+            #         if f"{registry}/contacts" in existing_images and f"{registry}/search" in existing_images:
+            #             rebuild = input("Some images already exist. Rebuild all images? (y/n): ")
 
-                        if rebuild.lower() == 'n':
-                            print("Skipping build, using existing images.")
-                        else:
-                            # Run the build script
-                            build_script = self.config["stack"]["build_script"]
-                            print(f"Making build script executable: {build_script}")
-                            subprocess.run(f"chmod +x {build_script}", shell=True, check=True)
+            #             if rebuild.lower() == 'n':
+            #                 print("Skipping build, using existing images.")
+            #             else:
+            #                 # Run the build script
+            #                 build_script = self.config["stack"]["build_script"]
+            #                 print(f"Making build script executable: {build_script}")
+            #                 subprocess.run(f"chmod +x {build_script}", shell=True, check=True)
 
-                            print(f"Running build script: {build_script}")
-                            subprocess.run(f"./{build_script}", shell=True, check=True)
-                    else:
-                        # No existing images found, need to build
-                        build_script = self.config["stack"]["build_script"]
-                        print(f"Making build script executable: {build_script}")
-                        subprocess.run(f"chmod +x {build_script}", shell=True, check=True)
+            #                 print(f"Running build script: {build_script}")
+            #                 subprocess.run(f"./{build_script}", shell=True, check=True)
+            #         else:
+            #             # No existing images found, need to build
+            #             build_script = self.config["stack"]["build_script"]
+            #             print(f"Making build script executable: {build_script}")
+            #             subprocess.run(f"chmod +x {build_script}", shell=True, check=True)
 
-                        print(f"Running build script: {build_script}")
-                        subprocess.run(f"./{build_script}", shell=True, check=True)
+            #             print(f"Running build script: {build_script}")
+            #             subprocess.run(f"./{build_script}", shell=True, check=True)
 
             # Create network overlay
             network_name = self.config["stack"]["network_name"]
@@ -739,9 +739,9 @@ class SwarmDeployer:
     def _deploy_on_remote_manager(self):
         """Build and deploy stack on remote manager using SSH."""
         try:
-            registry_host = f"{self.manager_ip}:5000"
-            self.config["registry"] = registry_host
-            print(f"Using registry at {registry_host}")
+            # registry_host = f"{self.manager_ip}:5000"
+            # self.config["registry"] = registry_host
+            # print(f"Using registry at {registry_host}")
             
             # Create SSH client
             ssh = paramiko.SSHClient()
@@ -776,93 +776,93 @@ class SwarmDeployer:
             usage_percent = int(usage_line.split()[4].replace('%', ''))
             
             # Run build script if configured
-            if self.config["stack"]["run_build"]:
+            # if self.config["stack"]["run_build"]:
                 # Warn if disk space is low
-                if usage_percent > 85:
-                    print(f"WARNING: Disk usage on remote server is at {usage_percent}%. Building may cause 'no space left' errors.")
-                    proceed = input("Continue with build? (y/n): ")
-                    if proceed.lower() != 'y':
-                        print("Skipping build due to disk space concerns.")
-                        self.config["stack"]["run_build"] = False
+                # if usage_percent > 85:
+                #     print(f"WARNING: Disk usage on remote server is at {usage_percent}%. Building may cause 'no space left' errors.")
+                #     proceed = input("Continue with build? (y/n): ")
+                #     if proceed.lower() != 'y':
+                #         print("Skipping build due to disk space concerns.")
+                #         self.config["stack"]["run_build"] = False
                         
-                if self.config["stack"]["run_build"]:
-                    build_script = self.config["stack"]["build_script"]
+                # if self.config["stack"]["run_build"]:
+                #     build_script = self.config["stack"]["build_script"]
                     
-                    # Check if build script exists
-                    stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && ls -la {build_script}")
-                    if "No such file or directory" in stderr.read().decode():
-                        print(f"Build script {build_script} not found in {project_dir}")
-                        print("Skipping build script execution.")
-                        self.config["stack"]["run_build"] = False
+                #     # Check if build script exists
+                #     stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && ls -la {build_script}")
+                #     if "No such file or directory" in stderr.read().decode():
+                #         print(f"Build script {build_script} not found in {project_dir}")
+                #         print("Skipping build script execution.")
+                #         self.config["stack"]["run_build"] = False
                     
-                    if self.config["stack"]["run_build"]:
-                        # Check if some images already exist
-                        stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && sudo docker images | grep {self.config.get('registry', 'local')}")
-                        existing_images = stdout.read().decode()
+                #     if self.config["stack"]["run_build"]:
+                #         # Check if some images already exist
+                #         stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && sudo docker images | grep {self.config.get('registry', 'local')}")
+                #         existing_images = stdout.read().decode()
                         
-                        # If images exist, ask if we should build anyway
-                        if existing_images and "REPOSITORY" in existing_images:
-                            force_rebuild = input("Some Docker images already exist on the remote server. Rebuild all? (y/n): ")
-                            if force_rebuild.lower() != 'y':
-                                print("Skipping build, using existing images.")
-                                self.config["stack"]["run_build"] = False
+                #         # If images exist, ask if we should build anyway
+                #         if existing_images and "REPOSITORY" in existing_images:
+                #             force_rebuild = input("Some Docker images already exist on the remote server. Rebuild all? (y/n): ")
+                #             if force_rebuild.lower() != 'y':
+                #                 print("Skipping build, using existing images.")
+                #                 self.config["stack"]["run_build"] = False
                         
-                        if self.config["stack"]["run_build"]:
-                            # Check if Docker system has enough space
-                            stdin, stdout, stderr = ssh.exec_command("sudo docker system df")
-                            docker_space = stdout.read().decode()
-                            print(f"Docker space usage:\n{docker_space}")
+                #         if self.config["stack"]["run_build"]:
+                #             # Check if Docker system has enough space
+                #             stdin, stdout, stderr = ssh.exec_command("sudo docker system df")
+                #             docker_space = stdout.read().decode()
+                #             print(f"Docker space usage:\n{docker_space}")
                             
-                            # Clean up if needed
-                            if usage_percent > 70:
-                                clean = input("Run docker system prune to free up space before building? (y/n): ")
-                                if clean.lower() == 'y':
-                                    print("Cleaning up Docker system...")
-                                    if self.config["manager"].get("auth_method") == "keyfile":
-                                        stdin, stdout, stderr = ssh.exec_command("sudo docker system prune -f")
-                                        time.sleep(5)
-                                    else:
-                                        channel = ssh.get_transport().open_session()
-                                        channel.get_pty()
-                                        channel.exec_command("sudo docker system prune -f")
-                                        channel.send(f"{self.config['manager']['password']}\n")
-                                        time.sleep(5)
+                #             # Clean up if needed
+                #             if usage_percent > 70:
+                #                 clean = input("Run docker system prune to free up space before building? (y/n): ")
+                #                 if clean.lower() == 'y':
+                #                     print("Cleaning up Docker system...")
+                #                     if self.config["manager"].get("auth_method") == "keyfile":
+                #                         stdin, stdout, stderr = ssh.exec_command("sudo docker system prune -f")
+                #                         time.sleep(5)
+                #                     else:
+                #                         channel = ssh.get_transport().open_session()
+                #                         channel.get_pty()
+                #                         channel.exec_command("sudo docker system prune -f")
+                #                         channel.send(f"{self.config['manager']['password']}\n")
+                #                         time.sleep(5)
                             
-                            # Make build script executable
-                            print(f"Making build script executable: {build_script}")
-                            stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && chmod +x {build_script}")
-                            time.sleep(1)
+                #             # Make build script executable
+                #             print(f"Making build script executable: {build_script}")
+                #             stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && chmod +x {build_script}")
+                #             time.sleep(1)
                             
-                            # Run build script
-                            registry = self.config.get('registry', 'local')
-                            tag = self.config.get('tag', 'latest')
-                            print(f"Running build script: ./{build_script} {registry} {tag}")
+                #             # Run build script
+                #             registry = self.config.get('registry', 'local')
+                #             tag = self.config.get('tag', 'latest')
+                #             print(f"Running build script: ./{build_script} {registry} {tag}")
                             
-                            if self.config["manager"].get("auth_method") == "keyfile":
-                                stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && ./{build_script} {registry} {tag}", get_pty=True)
-                            else:
-                                channel = ssh.get_transport().open_session()
-                                channel.get_pty()
-                                channel.exec_command(f"cd {project_dir} && ./{build_script} {registry} {tag}")
-                                if self.config["manager"].get("auth_method") != "keyfile":
-                                    channel.send(f"{self.config['manager']['password']}\n")
+                #             if self.config["manager"].get("auth_method") == "keyfile":
+                #                 stdin, stdout, stderr = ssh.exec_command(f"cd {project_dir} && ./{build_script} {registry} {tag}", get_pty=True)
+                #             else:
+                #                 channel = ssh.get_transport().open_session()
+                #                 channel.get_pty()
+                #                 channel.exec_command(f"cd {project_dir} && ./{build_script} {registry} {tag}")
+                #                 if self.config["manager"].get("auth_method") != "keyfile":
+                #                     channel.send(f"{self.config['manager']['password']}\n")
                             
-                            # Allow time for build and provide progress updates
-                            print("Build in progress. This may take some time...")
+                #             # Allow time for build and provide progress updates
+                #             print("Build in progress. This may take some time...")
                             
-                            # For keyfile auth, we can read output in real-time
-                            if self.config["manager"].get("auth_method") == "keyfile":
-                                while not stdout.channel.exit_status_ready():
-                                    if stdout.channel.recv_ready():
-                                        build_output = stdout.channel.recv(1024).decode()
-                                        if build_output:
-                                            print(build_output, end='')
-                                    time.sleep(1)
-                            else:
-                                # For password auth, we just wait with periodic updates
-                                for i in range(6):
-                                    print(f"Build in progress... ({i+1}/6)")
-                                    time.sleep(10)
+                #             # For keyfile auth, we can read output in real-time
+                #             if self.config["manager"].get("auth_method") == "keyfile":
+                #                 while not stdout.channel.exit_status_ready():
+                #                     if stdout.channel.recv_ready():
+                #                         build_output = stdout.channel.recv(1024).decode()
+                #                         if build_output:
+                #                             print(build_output, end='')
+                #                     time.sleep(1)
+                #             else:
+                #                 # For password auth, we just wait with periodic updates
+                #                 for i in range(6):
+                #                     print(f"Build in progress... ({i+1}/6)")
+                #                     time.sleep(10)
                 
             # Check if compose file exists
             compose_file = self.config["stack"]["compose_file"]
@@ -1238,7 +1238,7 @@ def main():
     steps = [
         (deployer.get_manager_ip, "Getting manager IP"),
         (deployer.init_swarm_manager, "Initializing swarm manager"),
-        (deployer.setup_registry, "Setting up Docker registry"),
+        # (deployer.setup_registry, "Setting up Docker registry"),
         (deployer.setup_worker_nodes, "Setting up worker nodes"),
         (deployer.build_and_deploy_stack, "Building and deploying stack"),
         (deployer.verify_deployment, "Verifying deployment")
