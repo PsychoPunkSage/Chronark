@@ -115,6 +115,127 @@ class SwarmDeployer:
         if self.config["stack"]["run_build"] and not self.config["stack"].get("build_script"):
             self.config["stack"]["build_script"] = input("Enter build script (default: build-images.sh): ") or "build-images.sh"
 
+    def setup_registry(self):
+        """Set up a Docker registry service on the manager node."""
+        print("\nSetting up Docker registry service...")
+
+        if self.config["manager"]["type"] == "local":
+            try:
+                # Check if registry service already exists
+                result = subprocess.run("sudo docker service ls --filter name=registry -q", shell=True, capture_output=True, text=True)
+
+                if result.stdout.strip():
+                    print("Registry service already exists, skipping creation.")
+                    return True
+                
+                print("Creating registry service on port 5000...")
+                cmd = "sudo docker service create --name registry --publish 5000:5000 registry:2"
+                subprocess.run(cmd, shell=True, check=True)
+
+                # Wait for registry to be available
+                print("Waiting for registry service to be available...")
+                for i in range(30):  # Wait up to 30 seconds
+                    try:
+                        result = subprocess.run("curl -s http://localhost:5000/v2/ > /dev/null", 
+                                               shell=True, check=False)
+                        if result.returncode == 0:
+                            print("Registry service is up and running.")
+                            return True
+                    except:
+                        pass
+                    
+                    print("Registry not yet available, waiting...")
+                    time.sleep(1)
+
+                print("WARNING: Registry service didn't become available in time.")
+                print("Continuing anyway, but deployment may fail.")
+                return False
+                
+            except subprocess.CalledProcessError as e:
+                print(f"Error setting up registry service: {e}")
+                return False
+        else:
+            try:
+                # Create SSH client
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+                # Connect to manager node
+                self._connect_ssh(ssh, self.config["manager"])
+
+                # Check if registry service already exists
+                if self.config["manager"].get("auth_method") == "keyfile":
+                    stdin, stdout, stderr = ssh.exec_command("sudo docker service ls --filter name=registry -q")
+                    registry_exists = stdout.read().decode().strip()
+
+                    if registry_exists:
+                        print("Registry service already exists, skipping creation.")
+                        ssh.close()
+                        return True
+                    
+                    # Create registry service
+                    print("Creating registry service on port 5000...")
+                    stdin, stdout, stderr = ssh.exec_command(
+                        "sudo docker service create --name registry --publish 5000:5000 registry:2"
+                    )
+                    time.sleep(5)
+                    error = stderr.read().decode()
+                    if error and "already exists" not in error:
+                        print(f"Error creating registry: {error}")
+                        ssh.close()
+                        return False
+                else:
+                    channel = ssh.get_transport().open_session()
+                    channel.get_pty()
+                    channel.exec_command("sudo docker service ls --filter name=registry -q")
+                    channel.send(f"{self.config['manager']['password']}\n")
+                    time.sleep(2)
+                    registry_exists = channel.recv(1024).decode().strip()
+
+                    if registry_exists:
+                        print("Registry service already exists, skipping creation.")
+                        ssh.close()
+                        return True
+
+                    # Create registry service
+                    channel = ssh.get_transport().open_session()
+                    channel.get_pty()
+                    channel.exec_command("sudo docker service create --name registry --publish 5000:5000 registry:2")
+                    channel.send(f"{self.config['manager']['password']}\n")
+                    time.sleep(5)
+
+                # Wait for registry to be available
+                print("Waiting for registry service to be available...")
+                for i in range(30):
+                    if self.config["manager"].get("auth_method") == "keyfile":
+                        stdin, stdout, stderr = ssh.exec_command("curl -s http://localhost:5000/v2/ > /dev/null && echo 'success'")
+                        result = stdout.read().decode().strip()
+                        if result == "success":
+                            print("Registry service is up and running.")
+                            ssh.close()
+                            return True
+                    else:
+                        channel = ssh.get_transport().open_session()
+                        channel.get_pty()
+                        channel.exec_command("curl -s http://localhost:5000/v2/ > /dev/null && echo 'success'")
+                        time.sleep(2)
+                        result = channel.recv(1024).decode().strip()
+                        if "success" in result:
+                            print("Registry service is up and running.")
+                            ssh.close()
+                            return True
+
+                    print(f"Registry not yet available, waiting... ({i+1}/30)")
+                    time.sleep(1)
+
+                print("WARNING: Registry service didn't become available in time.")
+                print("Continuing anyway, but deployment may fail.")
+                ssh.close()
+                return False
+            except Exception as e:
+                print(f"Error setting up registry on remote manager: {e}")
+                return False
+
     def get_manager_ip(self):
         """Get manager IP based on configuration."""
         if self.config["manager"]["type"] == "local":
@@ -530,6 +651,11 @@ class SwarmDeployer:
     def _deploy_on_local_manager(self):
         """Build and deploy stack on local manager."""
         try:
+            # Set registry information
+            registry_host = "localhost:5000"
+            self.config["registry"] = registry_host
+            print(f"Using local registry at {registry_host}")
+
             # Check available disk space before building
             df_output = subprocess.check_output("df -h /", shell=True).decode()
             print(f"Current disk usage:\n{df_output}")
@@ -600,6 +726,10 @@ class SwarmDeployer:
     def _deploy_on_remote_manager(self):
         """Build and deploy stack on remote manager using SSH."""
         try:
+            registry_host = f"{self.manager_ip}:5000"
+            self.config["registry"] = registry_host
+            print(f"Using registry at {registry_host}")
+            
             # Create SSH client
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -1095,6 +1225,7 @@ def main():
     steps = [
         (deployer.get_manager_ip, "Getting manager IP"),
         (deployer.init_swarm_manager, "Initializing swarm manager"),
+        (deployer.setup_registry, "Setting up Docker registry"), 
         (deployer.setup_worker_nodes, "Setting up worker nodes"),
         (deployer.build_and_deploy_stack, "Building and deploying stack"),
         (deployer.verify_deployment, "Verifying deployment")
