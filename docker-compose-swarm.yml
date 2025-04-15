@@ -105,7 +105,7 @@ services:
       - vittmitra
 
   redis-ob-ms:
-    image: redis:6.2.12
+    image: psychopunksage/redis-offer-banner:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -118,12 +118,10 @@ services:
       - 6379:6379
     networks:
       - vittmitra
-    volumes:
-      - ./scripts/Redis/CVE-2022-24834/conf:/etc/redis/
     command: ["redis-server", "/etc/redis/redis.conf"]
 
   redis-search-ms:
-    image: redis:6.0-alpine
+    image: psychopunksage/redis-search:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -136,12 +134,10 @@ services:
       - 6380:6379
     networks:
       - vittmitra
-    volumes:
-      - ./src/search/conf/:/etc/redis/
     command: ["redis-server", "/etc/redis/redis.conf"]
 
   redis-auth-ms:
-    image: redis:6.0-alpine
+    image: psychopunksage/redis-auth:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -154,8 +150,6 @@ services:
       - 6381:6379
     networks:
       - vittmitra
-    volumes:
-      - ./src/authentication/conf/:/etc/redis/
     command: ["redis-server", "/etc/redis/redis.conf"]
 
   mongo:
@@ -167,6 +161,7 @@ services:
       placement:
         constraints:
           - node.role == worker
+          - node.hostname == quasar-worker-1
       restart_policy:
         condition: on-failure
     healthcheck:
@@ -194,6 +189,7 @@ services:
       placement:
         constraints:
           - node.role == worker
+          - node.hostname == quasar-worker-1
       restart_policy:
         condition: on-failure
     healthcheck:
@@ -220,6 +216,7 @@ services:
       placement:
         constraints:
           - node.role == worker
+          - node.hostname == quasar-worker-1
       restart_policy:
         condition: on-failure
     healthcheck:
@@ -246,6 +243,7 @@ services:
       placement:
         constraints:
           - node.role == worker
+          - node.hostname == quasar-worker-1
       restart_policy:
         condition: on-failure
     healthcheck:
@@ -278,6 +276,7 @@ services:
       placement:
         constraints:
           - node.role == worker
+          - node.hostname == quasar-worker-1
       restart_policy:
         condition: on-failure
     environment:
@@ -298,6 +297,7 @@ services:
       placement:
         constraints:
           - node.role == worker
+          - node.hostname == quasar-worker-2
       restart_policy:
         condition: on-failure
     healthcheck:
@@ -324,6 +324,7 @@ services:
       placement:
         constraints:
           - node.role == worker
+          - node.hostname == quasar-worker-2
       restart_policy:
         condition: on-failure
     healthcheck:
@@ -350,6 +351,7 @@ services:
       placement:
         constraints:
           - node.role == worker
+          - node.hostname == quasar-worker-2
       restart_policy:
         condition: on-failure
     healthcheck:
@@ -376,6 +378,7 @@ services:
       placement:
         constraints:
           - node.role == worker
+          - node.hostname == quasar-worker-2
       restart_policy:
         condition: on-failure
     healthcheck:
@@ -402,6 +405,7 @@ services:
       placement:
         constraints:
           - node.role == worker
+          - node.hostname == quasar-worker-2
       restart_policy:
         condition: on-failure
     healthcheck:
