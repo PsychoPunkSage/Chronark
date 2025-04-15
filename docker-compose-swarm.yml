@@ -40,13 +40,13 @@ services:
       - vittmitra
 
   opa:
-    image: localhost:5000/opa:latest
+    image: psychopunksage/opa:latest
     deploy:
       mode: replicated
       replicas: 2
       placement:
         constraints:
-          - node.role == manage
+          - node.role == manager
     ports:
       - "8181:8181"
     networks:
@@ -445,7 +445,7 @@ services:
 # HAVE TO WORK ON HEALTH CHECK.... (inside APPLICATION)
 
   offer-banner:
-    image: localhost:5000/offer-banner:latest
+    image: psychopunksage/offer-banner:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -476,7 +476,7 @@ services:
     command: python app.py
 
   credit-card:
-    image: localhost:5000/credit-card:latest
+    image: psychopunksage/credit-card:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -512,7 +512,7 @@ services:
     command: python app.py
 
   contacts:
-    image: localhost:5000/contacts:latest
+    image: psychopunksage/contacts:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -544,7 +544,7 @@ services:
     command: node app.js
 
   search:
-    image: localhost:5000/search:latest
+    image: psychopunksage/search:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -580,7 +580,7 @@ services:
     command: python app.py
 
   authentication:
-    image: localhost:5000/authentication:latest
+    image: psychopunksage/authentication:latest
     deploy:
       mode: replicated
       replicas: 2  # One per worker node
@@ -619,7 +619,7 @@ services:
     command: python app.py
 
   customer-info:
-    image: localhost:5000/customer-info:latest
+    image: psychopunksage/customer-info:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -651,7 +651,7 @@ services:
     command: python app.py
 
   customer-activity:
-    image: localhost:5000/customer-activity:latest
+    image: psychopunksage/customer-activity:latest
     deploy:
       mode: replicated
       replicas: 2
@@ -685,7 +685,7 @@ services:
     command: python app.py
 
   personal-lending:
-    image: localhost:5000/personal-lending:latest
+    image: psychopunksage/personal-lending:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -723,7 +723,7 @@ services:
     command: python app.py
 
   business-lending:
-    image: localhost:5000/business-lending:latest
+    image: psychopunksage/business-lending:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -761,7 +761,7 @@ services:
     command: python app.py
 
   mortgage:
-    image: localhost:5000/mortgage:latest
+    image: psychopunksage/mortgage:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -799,7 +799,7 @@ services:
     command: python app.py
 
   investment:
-    image: localhost:5000/investment:latest
+    image: psychopunksage/investment:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -837,7 +837,7 @@ services:
     command: python app.py
 
   deposit-account:
-    image: localhost:5000/deposit-account:latest
+    image: psychopunksage/deposit-account:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -869,7 +869,7 @@ services:
     command: python app.py
 
   payments:
-    image: localhost:5000/payments:latest
+    image: psychopunksage/payments:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -901,7 +901,7 @@ services:
     command: python app.py
 
   wealth-mgmt:
-    image: localhost:5000/wealth-mgmt:latest
+    image: psychopunksage/wealth-mgmt:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -956,7 +956,7 @@ services:
       - vittmitra
 
   frontend-1:
-    image: localhost:5000/frontend1:latest
+    image: psychopunksage/frontend1:latest
     deploy:
       mode: replicated
       replicas: 2
@@ -1014,7 +1014,7 @@ services:
     command: python app.py
   
   frontend-2:
-    image: localhost:5000/frontend2:latest
+    image: psychopunksage/frontend2:latest
     deploy:
       mode: replicated
       replicas: 2
@@ -1072,7 +1072,7 @@ services:
     command: python app.py
   
   frontend-3:
-    image: localhost:5000/frontend3:latest
+    image: psychopunksage/frontend3:latest
     deploy:
       mode: replicated
       replicas: 2
