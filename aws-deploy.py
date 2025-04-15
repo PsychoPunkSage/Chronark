@@ -1225,7 +1225,7 @@ def main():
     steps = [
         (deployer.get_manager_ip, "Getting manager IP"),
         (deployer.init_swarm_manager, "Initializing swarm manager"),
-        (deployer.setup_registry, "Setting up Docker registry"), 
+        (deployer.setup_registry, "Setting up Docker registry"),
         (deployer.setup_worker_nodes, "Setting up worker nodes"),
         (deployer.build_and_deploy_stack, "Building and deploying stack"),
         (deployer.verify_deployment, "Verifying deployment")
