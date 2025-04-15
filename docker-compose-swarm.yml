@@ -519,11 +519,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/offer_banner/app.py:/app/app.py
-      - ./src/offer_banner/conf/redis.conf:/app/conf/redis.conf
-      - ./src/offer_banner/templates/index.html:/app/templates/index.html
-      - ./src/offer_banner/requirements.txt:/app/requirements.txt
+    # volumes:
+    #   - ./src/offer_banner/app.py:/app/app.py
+    #   - ./src/offer_banner/conf/redis.conf:/app/conf/redis.conf
+    #   - ./src/offer_banner/templates/index.html:/app/templates/index.html
+    #   - ./src/offer_banner/requirements.txt:/app/requirements.txt
     ports:
       - "5002:5002"
     networks:
@@ -552,11 +552,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/creditCard/app.py:/app/app.py
-      - ./src/creditCard/requirements.txt:/app/requirements.txt
-      - ./src/creditCard/static/:/app/static/
-      - ./src/creditCard/templates/:/app/templates/
+    # volumes:
+    #   - ./src/creditCard/app.py:/app/app.py
+    #   - ./src/creditCard/requirements.txt:/app/requirements.txt
+    #   - ./src/creditCard/static/:/app/static/
+    #   - ./src/creditCard/templates/:/app/templates/
     ports:
       - 5013:5013
     networks:
@@ -590,11 +590,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/contact/app.js:/app/app.js
-      - ./src/contact/templates/:/app/templates/
-      - ./src/contact/package.json:/app/package.json
-      - ./src/contact/package-lock.json:/app/package-lock.json
+    # volumes:
+    #   - ./src/contact/app.js:/app/app.js
+    #   - ./src/contact/templates/:/app/templates/
+    #   - ./src/contact/package.json:/app/package.json
+    #   - ./src/contact/package-lock.json:/app/package-lock.json
     ports:
       - 5003:5003
     networks:
@@ -624,12 +624,12 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/search/app.py:/app/app.py
-      - ./src/search/conf/redis.conf:/app/conf/redis.conf
-      - ./src/search/requirements.txt:/app/requirements.txt
-      - ./src/search/templates/:/app/templates/
-      - ./src/search/static/:/app/static/
+    # volumes:
+    #   - ./src/search/app.py:/app/app.py
+    #   - ./src/search/conf/redis.conf:/app/conf/redis.conf
+    #   - ./src/search/requirements.txt:/app/requirements.txt
+    #   - ./src/search/templates/:/app/templates/
+    #   - ./src/search/static/:/app/static/
     ports:
       - 5004:5004
     networks:
@@ -663,12 +663,12 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/authentication/app.py:/app/app.py
-      - ./src/authentication/templates/:/app/templates/
-      - ./src/authentication/helper.py:/app/helper.py
-      - ./src/authentication/conf/redis.conf:/app/conf/redis.conf
-      - ./src/authentication/requirements.txt:/app/requirements.txt
+    # volumes:
+    #   - ./src/authentication/app.py:/app/app.py
+    #   - ./src/authentication/templates/:/app/templates/
+    #   - ./src/authentication/helper.py:/app/helper.py
+    #   - ./src/authentication/conf/redis.conf:/app/conf/redis.conf
+    #   - ./src/authentication/requirements.txt:/app/requirements.txt
     ports:
       - 5005:5005
     networks:
@@ -703,11 +703,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/customerInfo/app.py:/app/app.py
-      - ./src/customerInfo/requirements.txt:/app/requirements.txt
-      - ./src/customerInfo/static/:/app/static/
-      - ./src/customerInfo/templates/:/app/templates/
+    # volumes:
+    #   - ./src/customerInfo/app.py:/app/app.py
+    #   - ./src/customerInfo/requirements.txt:/app/requirements.txt
+    #   - ./src/customerInfo/static/:/app/static/
+    #   - ./src/customerInfo/templates/:/app/templates/
     ports:
       - 5006:5006
     networks:
@@ -737,11 +737,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/customerActivity/app.py:/app/app.py
-      - ./src/customerActivity/requirements.txt:/app/requirements.txt
-      - ./src/customerActivity/static/:/app/static/
-      - ./src/customerActivity/templates/:/app/templates/
+    # volumes:
+    #   - ./src/customerActivity/app.py:/app/app.py
+    #   - ./src/customerActivity/requirements.txt:/app/requirements.txt
+    #   - ./src/customerActivity/static/:/app/static/
+    #   - ./src/customerActivity/templates/:/app/templates/
     ports:
       - 5012:5012
     networks:
@@ -773,11 +773,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/personalLending/app.py:/app/app.py
-      - ./src/personalLending/requirements.txt:/app/requirements.txt
-      - ./src/personalLending/static/:/app/static/
-      - ./src/personalLending/templates/:/app/templates/
+    # volumes:
+    #   - ./src/personalLending/app.py:/app/app.py
+    #   - ./src/personalLending/requirements.txt:/app/requirements.txt
+    #   - ./src/personalLending/static/:/app/static/
+    #   - ./src/personalLending/templates/:/app/templates/
     ports:
       - 5007:5007
     networks:
@@ -813,11 +813,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/businessLending/app.py:/app/app.py
-      - ./src/businessLending/requirements.txt:/app/requirements.txt
-      - ./src/businessLending/static/:/app/static/
-      - ./src/businessLending/templates/:/app/templates/
+    # volumes:
+    #   - ./src/businessLending/app.py:/app/app.py
+    #   - ./src/businessLending/requirements.txt:/app/requirements.txt
+    #   - ./src/businessLending/static/:/app/static/
+    #   - ./src/businessLending/templates/:/app/templates/
     ports:
       - 5010:5010
     networks:
@@ -853,11 +853,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/mortgage/app.py:/app/app.py
-      - ./src/mortgage/requirements.txt:/app/requirements.txt
-      - ./src/mortgage/static/:/app/static/
-      - ./src/mortgage/templates/:/app/templates/
+    # volumes:
+    #   - ./src/mortgage/app.py:/app/app.py
+    #   - ./src/mortgage/requirements.txt:/app/requirements.txt
+    #   - ./src/mortgage/static/:/app/static/
+    #   - ./src/mortgage/templates/:/app/templates/
     ports:
       - 5008:5008
     networks:
@@ -893,11 +893,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/investment-account/app.py:/app/app.py
-      - ./src/investment-account/requirements.txt:/app/requirements.txt
-      - ./src/investment-account/static/:/app/static/
-      - ./src/investment-account/templates/:/app/templates/
+    # volumes:
+    #   - ./src/investment-account/app.py:/app/app.py
+    #   - ./src/investment-account/requirements.txt:/app/requirements.txt
+    #   - ./src/investment-account/static/:/app/static/
+    #   - ./src/investment-account/templates/:/app/templates/
     ports:
       - 5009:5009
     networks:
@@ -933,11 +933,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/depositAccount/app.py:/app/app.py
-      - ./src/depositAccount/requirements.txt:/app/requirements.txt
-      - ./src/depositAccount/static/:/app/static/
-      - ./src/depositAccount/templates/:/app/templates/
+    # volumes:
+    #   - ./src/depositAccount/app.py:/app/app.py
+    #   - ./src/depositAccount/requirements.txt:/app/requirements.txt
+    #   - ./src/depositAccount/static/:/app/static/
+    #   - ./src/depositAccount/templates/:/app/templates/
     ports:
       - 5011:5011
     networks:
@@ -967,11 +967,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/payments/app.py:/app/app.py
-      - ./src/payments/requirements.txt:/app/requirements.txt
-      - ./src/payments/static/:/app/static/
-      - ./src/payments/templates/:/app/templates/
+    # volumes:
+    #   - ./src/payments/app.py:/app/app.py
+    #   - ./src/payments/requirements.txt:/app/requirements.txt
+    #   - ./src/payments/static/:/app/static/
+    #   - ./src/payments/templates/:/app/templates/
     ports:
       - 5014:5014
     networks:
@@ -1001,11 +1001,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/wealth_mgmt/app.py:/app/app.py
-      - ./src/wealth_mgmt/requirements.txt:/app/requirements.txt
-      - ./src/wealth_mgmt/static/:/app/static/
-      - ./src/wealth_mgmt/templates/:/app/templates/
+    # volumes:
+    #   - ./src/wealth_mgmt/app.py:/app/app.py
+    #   - ./src/wealth_mgmt/requirements.txt:/app/requirements.txt
+    #   - ./src/wealth_mgmt/static/:/app/static/
+    #   - ./src/wealth_mgmt/templates/:/app/templates/
     ports:
       - 5015:5015
     networks:
@@ -1058,11 +1058,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/frontend/static/:/app/static/
-      - ./src/frontend/templates/:/app/templates/
-      - ./src/frontend/app.py:/app/app.py
-      - ./src/frontend/tracing.py:/app/tracing.py
+    # volumes:
+    #   - ./src/frontend/static/:/app/static/
+    #   - ./src/frontend/templates/:/app/templates/
+    #   - ./src/frontend/app.py:/app/app.py
+    #   - ./src/frontend/tracing.py:/app/tracing.py
     ports:
       - 4001:4001
     networks:
@@ -1118,11 +1118,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/frontend/static/:/app/static/
-      - ./src/frontend/templates/:/app/templates/
-      - ./src/frontend/app.py:/app/app.py
-      - ./src/frontend/tracing.py:/app/tracing.py
+    # volumes:
+    #   - ./src/frontend/static/:/app/static/
+    #   - ./src/frontend/templates/:/app/templates/
+    #   - ./src/frontend/app.py:/app/app.py
+    #   - ./src/frontend/tracing.py:/app/tracing.py
     ports:
       - 4002:4002
     networks:
@@ -1178,11 +1178,11 @@ services:
         condition: on-failure
         delay: 30s  # Longer delay to ensure databases are up
         max_attempts: 10
-    volumes:
-      - ./src/frontend/static/:/app/static/
-      - ./src/frontend/templates/:/app/templates/
-      - ./src/frontend/app.py:/app/app.py
-      - ./src/frontend/tracing.py:/app/tracing.py
+    # volumes:
+    #   - ./src/frontend/static/:/app/static/
+    #   - ./src/frontend/templates/:/app/templates/
+    #   - ./src/frontend/app.py:/app/app.py
+    #   - ./src/frontend/tracing.py:/app/tracing.py
     ports:
       - 4003:4003
     networks:
