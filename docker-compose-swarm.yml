@@ -192,12 +192,12 @@ services:
           - node.hostname == quasar-worker-1
       restart_policy:
         condition: on-failure
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoauthentication
       - MONGO_INITDB_ROOT_PASSWORD=authinfo
@@ -219,12 +219,12 @@ services:
           - node.hostname == quasar-worker-1
       restart_policy:
         condition: on-failure
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocusinfo
       - MONGO_INITDB_ROOT_PASSWORD=customerinfo
@@ -246,12 +246,12 @@ services:
           - node.hostname == quasar-worker-1
       restart_policy:
         condition: on-failure
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocusactivity
       - MONGO_INITDB_ROOT_PASSWORD=customeractivity
@@ -264,12 +264,12 @@ services:
 
   mongo-personal-lending:
     image: mongo:7.0
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     deploy:
       mode: replicated
       replicas: 1
@@ -300,12 +300,12 @@ services:
           - node.hostname == quasar-worker-2
       restart_policy:
         condition: on-failure
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoBusinessLending
       - MONGO_INITDB_ROOT_PASSWORD=businessLending
@@ -327,12 +327,12 @@ services:
           - node.hostname == quasar-worker-2
       restart_policy:
         condition: on-failure
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongomortgage
       - MONGO_INITDB_ROOT_PASSWORD=mortgage
@@ -354,12 +354,12 @@ services:
           - node.hostname == quasar-worker-2
       restart_policy:
         condition: on-failure
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoinvestment
       - MONGO_INITDB_ROOT_PASSWORD=investment
@@ -381,12 +381,12 @@ services:
           - node.hostname == quasar-worker-2
       restart_policy:
         condition: on-failure
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocreditcard
       - MONGO_INITDB_ROOT_PASSWORD=creditcard
@@ -408,12 +408,12 @@ services:
           - node.hostname == quasar-worker-2
       restart_policy:
         condition: on-failure
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongowealthmgmt
       - MONGO_INITDB_ROOT_PASSWORD=wealthmgmt
