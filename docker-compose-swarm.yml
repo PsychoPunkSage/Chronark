@@ -27,7 +27,11 @@ services:
   haproxy:
     image: haproxy:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
     ports:
       - 80:80
     volumes:
@@ -38,7 +42,11 @@ services:
   opa:
     image: ${REGISTRY:-local}/opa:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == manage
     ports:
       - "8181:8181"
     networks:
@@ -47,7 +55,10 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3  # One per worker node
+      placement:
+        max_replicas_per_node: 1
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
@@ -62,7 +73,7 @@ services:
     image: prom/prometheus:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 1
       placement:
         constraints:
           - node.role == manager
@@ -79,7 +90,7 @@ services:
     image: grafana/grafana:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 1
       placement:
         constraints:
           - node.role == manager
@@ -96,7 +107,13 @@ services:
   redis-ob-ms:
     image: redis:6.2.12
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     ports:
       - 6379:6379
     networks:
@@ -108,7 +125,13 @@ services:
   redis-search-ms:
     image: redis:6.0-alpine
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     ports:
       - 6380:6379
     networks:
@@ -120,7 +143,13 @@ services:
   redis-auth-ms:
     image: redis:6.0-alpine
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     ports:
       - 6381:6379
     networks:
@@ -133,7 +162,13 @@ services:
     # image: mongo:7.0
     image: mongo:4.2.2
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocontact
       - MONGO_INITDB_ROOT_PASSWORD=contact
@@ -148,7 +183,13 @@ services:
   mongo-auth-info:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoauthentication
       - MONGO_INITDB_ROOT_PASSWORD=authinfo
@@ -162,7 +203,13 @@ services:
   mongo-customer-info:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocusinfo
       - MONGO_INITDB_ROOT_PASSWORD=customerinfo
@@ -176,7 +223,13 @@ services:
   mongo-customer-activity:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocusactivity
       - MONGO_INITDB_ROOT_PASSWORD=customeractivity
@@ -190,7 +243,13 @@ services:
   mongo-personal-lending:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoPersonalLending
       - MONGO_INITDB_ROOT_PASSWORD=personalLending
@@ -204,7 +263,13 @@ services:
   mongo-business-lending:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoBusinessLending
       - MONGO_INITDB_ROOT_PASSWORD=businessLending
@@ -218,7 +283,13 @@ services:
   mongo-mortgage:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongomortgage
       - MONGO_INITDB_ROOT_PASSWORD=mortgage
@@ -232,7 +303,13 @@ services:
   mongo-investment:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoinvestment
       - MONGO_INITDB_ROOT_PASSWORD=investment
@@ -246,7 +323,13 @@ services:
   mongo-credit-card:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocreditcard
       - MONGO_INITDB_ROOT_PASSWORD=creditcard
@@ -260,7 +343,13 @@ services:
   mongo-wealth-mgmt:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongowealthmgmt
       - MONGO_INITDB_ROOT_PASSWORD=wealthmgmt
@@ -274,7 +363,13 @@ services:
   mongo-express:
     image: mongo-express
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     ports:
       - 8081:8081
     networks:
@@ -290,7 +385,13 @@ services:
   memcached-pl:
     image: memcached:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     ports:
       - "11211:11211"
     networks:
@@ -299,7 +400,13 @@ services:
   memcached-bl:
     image: memcached:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure 
     ports:
       - "11212:11211"
     networks:
@@ -308,7 +415,13 @@ services:
   memcached-mortgage:
     image: memcached:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure 
     ports:
       - "11213:11211"
     networks:
@@ -317,7 +430,13 @@ services:
   memcached-investment:
     image: memcached:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure 
     ports:
       - "11214:11211"
     networks:
@@ -328,7 +447,11 @@ services:
   offer-banner:
     image: ${REGISTRY:-local}/offer-banner:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -355,7 +478,11 @@ services:
   credit-card:
     image: ${REGISTRY:-local}/credit-card:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -387,7 +514,11 @@ services:
   contacts:
     image: ${REGISTRY:-local}/contacts:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -415,7 +546,11 @@ services:
   search:
     image: ${REGISTRY:-local}/search:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -447,7 +582,12 @@ services:
   authentication:
     image: ${REGISTRY:-local}/authentication:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2  # One per worker node
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -481,7 +621,11 @@ services:
   customer-info:
     image: ${REGISTRY:-local}/customer-info:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -511,6 +655,9 @@ services:
     deploy:
       mode: replicated
       replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -540,7 +687,11 @@ services:
   personal-lending:
     image: ${REGISTRY:-local}/personal-lending:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -574,7 +725,11 @@ services:
   business-lending:
     image: ${REGISTRY:-local}/business-lending:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -608,7 +763,11 @@ services:
   mortgage:
     image: ${REGISTRY:-local}/mortgage:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -642,7 +801,11 @@ services:
   investment:
     image: ${REGISTRY:-local}/investment:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -676,7 +839,11 @@ services:
   deposit-account:
     image: ${REGISTRY:-local}/deposit-account:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -704,7 +871,11 @@ services:
   payments:
     image: ${REGISTRY:-local}/payments:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -732,7 +903,11 @@ services:
   wealth-mgmt:
     image: ${REGISTRY:-local}/wealth-mgmt:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -764,7 +939,11 @@ services:
   modsecurity:
     image: owasp/modsecurity-crs:nginx
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
     ports:
       - 8080:8080
     environment:
@@ -779,7 +958,11 @@ services:
   frontend-1:
     image: ${REGISTRY:-local}/frontend1:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == manager
       update_config:
         parallelism: 1
         delay: 10s
@@ -833,7 +1016,11 @@ services:
   frontend-2:
     image: ${REGISTRY:-local}/frontend2:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
@@ -887,7 +1074,11 @@ services:
   frontend-3:
     image: ${REGISTRY:-local}/frontend3:${TAG:-latest}
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
