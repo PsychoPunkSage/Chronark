@@ -24,6 +24,11 @@ build_and_push() {
 
 echo "Starting build process with smart disk space management..."
 
+# echo "Building Redis images..."
+build_and_push "redis-offer-banner" "./src/redis/Dockerfile.redis-offer-banner" "./src/redis"
+build_and_push "redis-search" "./src/redis/Dockerfile.redis-search" "./src/redis"
+build_and_push "redis-auth" "./src/redis/Dockerfile.redis-auth" "./src/redis"
+
 # Build acl
 build_and_push "opa" "./src/acl/Dockerfile.opa" "./src/acl"
 
