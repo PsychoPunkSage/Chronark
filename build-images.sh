@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set your registry (if using one) or use local
-REGISTRY=${1:-"local"}
+REGISTRY="localhost:5000"
 TAG=${2:-"latest"}
 FORCE_REBUILD=${3:-"no"}
 
@@ -40,8 +40,13 @@ build_if_needed() {
                 exit 1
             fi
         fi
+
+        # Push to registry
+        echo "Pushing ${IMAGE_NAME} to registry..."
+        sudo docker push ${REGISTRY}/${IMAGE_NAME}:${TAG}
     else
         echo "Image ${REGISTRY}/${IMAGE_NAME}:${TAG} already exists, skipping build."
+        sudo docker push ${REGISTRY}/${IMAGE_NAME}:${TAG}
     fi
 }
 
