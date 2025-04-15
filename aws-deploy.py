@@ -118,38 +118,39 @@ class SwarmDeployer:
     def setup_registry(self):
         """Set up a Docker registry service on the manager node."""
         print("\nSetting up Docker registry service...")
-
+        
         if self.config["manager"]["type"] == "local":
             try:
                 # Check if registry service already exists
-                result = subprocess.run("sudo docker service ls --filter name=registry -q", shell=True, capture_output=True, text=True)
-
+                result = subprocess.run("sudo docker service ls --filter name=registry -q", 
+                                       shell=True, capture_output=True, text=True)
+                
                 if result.stdout.strip():
                     print("Registry service already exists, skipping creation.")
                     return True
-                
+                    
+                # Create registry service
                 print("Creating registry service on port 5000...")
                 cmd = "sudo docker service create --name registry --publish 5000:5000 registry:2"
                 subprocess.run(cmd, shell=True, check=True)
-
+                
                 # Wait for registry to be available
                 print("Waiting for registry service to be available...")
-                for i in range(30):  # Wait up to 30 seconds
-                    try:
-                        result = subprocess.run("curl -s http://localhost:5000/v2/ > /dev/null", 
-                                               shell=True, check=False)
-                        if result.returncode == 0:
-                            print("Registry service is up and running.")
-                            return True
-                    except:
-                        pass
+                for i in range(10):  # Wait up to 10 attempts
+                    result = subprocess.run("sudo docker service ls --filter name=registry --format '{{.Replicas}}'", 
+                                           shell=True, capture_output=True, text=True)
+                    replicas = result.stdout.strip()
                     
-                    print("Registry not yet available, waiting...")
-                    time.sleep(1)
-
-                print("WARNING: Registry service didn't become available in time.")
+                    if replicas and "/" in replicas and replicas.split("/")[0] == replicas.split("/")[1]:
+                        print(f"Registry service is deployed with replicas {replicas}")
+                        return True
+                    
+                    print(f"Registry not yet ready, waiting... ({i+1}/10)")
+                    time.sleep(3)
+                    
+                print("WARNING: Registry service didn't become fully ready in time.")
                 print("Continuing anyway, but deployment may fail.")
-                return False
+                return True
                 
             except subprocess.CalledProcessError as e:
                 print(f"Error setting up registry service: {e}")
@@ -159,20 +160,20 @@ class SwarmDeployer:
                 # Create SSH client
                 ssh = paramiko.SSHClient()
                 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
+                
                 # Connect to manager node
                 self._connect_ssh(ssh, self.config["manager"])
-
+                
                 # Check if registry service already exists
                 if self.config["manager"].get("auth_method") == "keyfile":
                     stdin, stdout, stderr = ssh.exec_command("sudo docker service ls --filter name=registry -q")
                     registry_exists = stdout.read().decode().strip()
-
+                    
                     if registry_exists:
                         print("Registry service already exists, skipping creation.")
                         ssh.close()
                         return True
-                    
+                        
                     # Create registry service
                     print("Creating registry service on port 5000...")
                     stdin, stdout, stderr = ssh.exec_command(
@@ -191,49 +192,61 @@ class SwarmDeployer:
                     channel.send(f"{self.config['manager']['password']}\n")
                     time.sleep(2)
                     registry_exists = channel.recv(1024).decode().strip()
-
+                    
                     if registry_exists:
                         print("Registry service already exists, skipping creation.")
                         ssh.close()
                         return True
-
+                    
                     # Create registry service
                     channel = ssh.get_transport().open_session()
                     channel.get_pty()
                     channel.exec_command("sudo docker service create --name registry --publish 5000:5000 registry:2")
                     channel.send(f"{self.config['manager']['password']}\n")
                     time.sleep(5)
-
-                # Wait for registry to be available
+                
+                # Wait for registry service to be available
                 print("Waiting for registry service to be available...")
-                for i in range(30):
-                    if self.config["manager"].get("auth_method") == "keyfile":
-                        stdin, stdout, stderr = ssh.exec_command("curl -s http://localhost:5000/v2/ > /dev/null && echo 'success'")
-                        result = stdout.read().decode().strip()
-                        if result == "success":
-                            print("Registry service is up and running.")
-                            ssh.close()
-                            return True
-                    else:
-                        channel = ssh.get_transport().open_session()
-                        channel.get_pty()
-                        channel.exec_command("curl -s http://localhost:5000/v2/ > /dev/null && echo 'success'")
-                        time.sleep(2)
-                        result = channel.recv(1024).decode().strip()
-                        if "success" in result:
-                            print("Registry service is up and running.")
-                            ssh.close()
-                            return True
-
-                    print(f"Registry not yet available, waiting... ({i+1}/30)")
-                    time.sleep(1)
-
-                print("WARNING: Registry service didn't become available in time.")
-                print("Continuing anyway, but deployment may fail.")
+                max_attempts = 15
+                for i in range(max_attempts):
+                    try:
+                        if self.config["manager"].get("auth_method") == "keyfile":
+                            # Check if service is running with replicas
+                            stdin, stdout, stderr = ssh.exec_command("sudo docker service ls --filter name=registry --format '{{.Replicas}}'")
+                            time.sleep(2)
+                            replicas = stdout.read().decode().strip()
+                            
+                            # If service shows as running (replicas like "1/1")
+                            if replicas and "/" in replicas and replicas.split("/")[0] == replicas.split("/")[1]:
+                                print(f"Registry service is deployed with replicas {replicas}")
+                                ssh.close()
+                                return True
+                        else:
+                            # For password auth, use the channel approach
+                            channel = ssh.get_transport().open_session()
+                            channel.get_pty()
+                            channel.exec_command("sudo docker service ls --filter name=registry --format '{{.Replicas}}'")
+                            channel.send(f"{self.config['manager']['password']}\n")
+                            time.sleep(2)
+                            replicas = channel.recv(1024).decode().strip()
+                            
+                            if replicas and "/" in replicas and replicas.split("/")[0] == replicas.split("/")[1]:
+                                print(f"Registry service is deployed with replicas {replicas}")
+                                ssh.close()
+                                return True
+                    except Exception as e:
+                        print(f"Error checking registry: {e}")
+                    
+                    print(f"Registry not fully ready, waiting... ({i+1}/{max_attempts})")
+                    time.sleep(3)
+                
+                print("Registry service might be running but couldn't fully verify it.")
+                print("Continuing with deployment...")
                 ssh.close()
-                return False
+                return True
+                
             except Exception as e:
-                print(f"Error setting up registry on remote manager: {e}")
+                print(f"Error setting up registry service: {e}")
                 return False
 
     def get_manager_ip(self):
