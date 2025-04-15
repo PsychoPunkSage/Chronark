@@ -169,6 +169,12 @@ services:
           - node.role == worker
       restart_policy:
         condition: on-failure
+      healthcheck:
+        test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+        start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocontact
       - MONGO_INITDB_ROOT_PASSWORD=contact
@@ -190,6 +196,12 @@ services:
           - node.role == worker
       restart_policy:
         condition: on-failure
+      healthcheck:
+        test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+        start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoauthentication
       - MONGO_INITDB_ROOT_PASSWORD=authinfo
@@ -210,6 +222,12 @@ services:
           - node.role == worker
       restart_policy:
         condition: on-failure
+      healthcheck:
+        test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+        start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocusinfo
       - MONGO_INITDB_ROOT_PASSWORD=customerinfo
@@ -230,6 +248,12 @@ services:
           - node.role == worker
       restart_policy:
         condition: on-failure
+      healthcheck:
+        test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+        start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocusactivity
       - MONGO_INITDB_ROOT_PASSWORD=customeractivity
@@ -250,6 +274,12 @@ services:
           - node.role == worker
       restart_policy:
         condition: on-failure
+      healthcheck:
+        test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+        start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoPersonalLending
       - MONGO_INITDB_ROOT_PASSWORD=personalLending
@@ -270,6 +300,12 @@ services:
           - node.role == worker
       restart_policy:
         condition: on-failure
+      healthcheck:
+        test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+        start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoBusinessLending
       - MONGO_INITDB_ROOT_PASSWORD=businessLending
@@ -290,6 +326,12 @@ services:
           - node.role == worker
       restart_policy:
         condition: on-failure
+      healthcheck:
+        test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+        start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongomortgage
       - MONGO_INITDB_ROOT_PASSWORD=mortgage
@@ -310,6 +352,12 @@ services:
           - node.role == worker
       restart_policy:
         condition: on-failure
+      healthcheck:
+        test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+        start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoinvestment
       - MONGO_INITDB_ROOT_PASSWORD=investment
@@ -330,6 +378,12 @@ services:
           - node.role == worker
       restart_policy:
         condition: on-failure
+      healthcheck:
+        test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+        start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocreditcard
       - MONGO_INITDB_ROOT_PASSWORD=creditcard
@@ -350,6 +404,12 @@ services:
           - node.role == worker
       restart_policy:
         condition: on-failure
+      healthcheck:
+        test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+        start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongowealthmgmt
       - MONGO_INITDB_ROOT_PASSWORD=wealthmgmt
@@ -457,6 +517,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/offer_banner/app.py:/app/app.py
       - ./src/offer_banner/conf/redis.conf:/app/conf/redis.conf
@@ -488,6 +550,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/creditCard/app.py:/app/app.py
       - ./src/creditCard/requirements.txt:/app/requirements.txt
@@ -524,6 +588,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/contact/app.js:/app/app.js
       - ./src/contact/templates/:/app/templates/
@@ -556,6 +622,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/search/app.py:/app/app.py
       - ./src/search/conf/redis.conf:/app/conf/redis.conf
@@ -593,6 +661,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/authentication/app.py:/app/app.py
       - ./src/authentication/templates/:/app/templates/
@@ -631,6 +701,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/customerInfo/app.py:/app/app.py
       - ./src/customerInfo/requirements.txt:/app/requirements.txt
@@ -663,6 +735,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/customerActivity/app.py:/app/app.py
       - ./src/customerActivity/requirements.txt:/app/requirements.txt
@@ -697,6 +771,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/personalLending/app.py:/app/app.py
       - ./src/personalLending/requirements.txt:/app/requirements.txt
@@ -735,6 +811,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/businessLending/app.py:/app/app.py
       - ./src/businessLending/requirements.txt:/app/requirements.txt
@@ -773,6 +851,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/mortgage/app.py:/app/app.py
       - ./src/mortgage/requirements.txt:/app/requirements.txt
@@ -811,6 +891,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/investment-account/app.py:/app/app.py
       - ./src/investment-account/requirements.txt:/app/requirements.txt
@@ -849,6 +931,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/depositAccount/app.py:/app/app.py
       - ./src/depositAccount/requirements.txt:/app/requirements.txt
@@ -881,6 +965,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/payments/app.py:/app/app.py
       - ./src/payments/requirements.txt:/app/requirements.txt
@@ -913,6 +999,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/wealth_mgmt/app.py:/app/app.py
       - ./src/wealth_mgmt/requirements.txt:/app/requirements.txt
@@ -968,6 +1056,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/frontend/static/:/app/static/
       - ./src/frontend/templates/:/app/templates/
@@ -1026,6 +1116,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/frontend/static/:/app/static/
       - ./src/frontend/templates/:/app/templates/
@@ -1084,6 +1176,8 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
     volumes:
       - ./src/frontend/static/:/app/static/
       - ./src/frontend/templates/:/app/templates/
