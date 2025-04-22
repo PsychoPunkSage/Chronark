@@ -28,7 +28,7 @@ services:
     image: haproxy:latest
     deploy:
       mode: replicated
-      replicas: 2
+      replicas: 1
       placement:
         constraints:
           - node.role == worker
@@ -63,9 +63,11 @@ services:
     image: gcr.io/cadvisor/cadvisor:v0.47.0
     deploy:
       mode: replicated
-      replicas: 3  # One per worker node
+      replicas: 1  # One per worker node
       placement:
-        max_replicas_per_node: 1
+        # max_replicas_per_node: 1
+        constraints:
+          - node.role == worker
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
@@ -1039,7 +1041,7 @@ services:
     image: owasp/modsecurity-crs:nginx
     deploy:
       mode: replicated
-      replicas: 2
+      replicas: 1
       placement:
         constraints:
           - node.role == worker
