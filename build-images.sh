@@ -29,6 +29,9 @@ build_and_push "redis-offer-banner" "./src/redis/Dockerfile.redis-offer-banner" 
 build_and_push "redis-search" "./src/redis/Dockerfile.redis-search" "./src/redis"
 build_and_push "redis-auth" "./src/redis/Dockerfile.redis-auth" "./src/redis"
 
+# Build haproxy
+build_and_push "haproxy" "./src/redis/Dockerfile.haproxy" "./src/redis"
+
 # Build acl
 build_and_push "opa" "./src/acl/Dockerfile.opa" "./src/acl"
 

@@ -25,7 +25,7 @@ services:
       - vittmitra
 
   haproxy:
-    image: haproxy:latest
+    image: psychopunksage/haproxy:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -36,8 +36,8 @@ services:
         condition: on-failure 
     ports:
       - 80:80
-    volumes:
-      - ./src/frontend/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    # volumes:
+    #   - ./src/frontend/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
     networks:
       - vittmitra
 
