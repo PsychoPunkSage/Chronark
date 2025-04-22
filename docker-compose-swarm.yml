@@ -3,7 +3,7 @@ services:
     image: jaegertracing/all-in-one:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 1
       placement:
         constraints:
           - node.role == manager
@@ -46,9 +46,9 @@ services:
     deploy:
       mode: replicated
       replicas: 3
-      # placement:
-        # constraints:
-        #   - node.role == manager
+      placement:
+        constraints:
+          - node.role == manager
       update_config:
         parallelism: 1
         delay: 10s
@@ -62,12 +62,12 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.0
     deploy:
-      mode: replicated
-      replicas: 2  # One per worker node
-      placement:
-        max_replicas_per_node: 1
-        constraints:
-          - node.role == worker
+      mode: global
+      # replicas: 2  # One per worker node
+      # placement:
+      #   max_replicas_per_node: 1
+      #   constraints:
+      #     - node.role == worker
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
@@ -117,7 +117,7 @@ services:
     image: psychopunksage/redis-offer-banner:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
@@ -133,7 +133,7 @@ services:
     image: psychopunksage/redis-search:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
@@ -149,7 +149,7 @@ services:
     image: psychopunksage/redis-auth:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
@@ -459,7 +459,7 @@ services:
     image: memcached:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
@@ -474,7 +474,7 @@ services:
     image: memcached:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
@@ -489,7 +489,7 @@ services:
     image: memcached:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
@@ -504,7 +504,7 @@ services:
     image: memcached:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
@@ -663,10 +663,10 @@ services:
     deploy:
       mode: replicated
       replicas: 3  # One per worker node
-      # placement:
+      placement:
         # max_replicas_per_node: 1
-        # constraints:
-        #   - node.role == worker
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
