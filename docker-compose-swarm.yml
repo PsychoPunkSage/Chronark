@@ -1139,7 +1139,7 @@ services:
     networks:
       - vittmitra
     environment:
-      - SELF_PORT=4001
+      - SELF_PORT=4002
       - OFFER_BANNER_SERVICE_HOST=offer-banner
       - OFFER_BANNER_SERVICE_PORT=5002
       - CONTACT_SERVICE_HOST=contacts
@@ -1199,7 +1199,7 @@ services:
     networks:
       - vittmitra
     environment:
-      - SELF_PORT=4001
+      - SELF_PORT=4003
       - OFFER_BANNER_SERVICE_HOST=offer-banner
       - OFFER_BANNER_SERVICE_PORT=5002
       - CONTACT_SERVICE_HOST=contacts

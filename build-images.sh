@@ -24,60 +24,63 @@ build_and_push() {
 
 echo "Starting build process with smart disk space management..."
 
-# echo "Building Redis images..."
-build_and_push "redis-offer-banner" "./src/redis/Dockerfile.redis-offer-banner" "./src/redis"
-build_and_push "redis-search" "./src/redis/Dockerfile.redis-search" "./src/redis"
-build_and_push "redis-auth" "./src/redis/Dockerfile.redis-auth" "./src/redis"
+# # echo "Building Redis images..."
+# build_and_push "redis-offer-banner" "./src/redis/Dockerfile.redis-offer-banner" "./src/redis"
+# build_and_push "redis-search" "./src/redis/Dockerfile.redis-search" "./src/redis"
+# build_and_push "redis-auth" "./src/redis/Dockerfile.redis-auth" "./src/redis"
 
 # Build haproxy
 build_and_push "haproxy" "./src/redis/Dockerfile.haproxy" "./src/redis"
 
-# Build acl
-build_and_push "opa" "./src/acl/Dockerfile.opa" "./src/acl"
+# # Build acl
+# build_and_push "opa" "./src/acl/Dockerfile.opa" "./src/acl"
 
-# Build offer-banner
-build_and_push "offer-banner" "./src/offer_banner/Dockerfile.offer_banner" "./src/offer_banner"
+# # Build offer-banner
+# build_and_push "offer-banner" "./src/offer_banner/Dockerfile.offer_banner" "./src/offer_banner"
 
-# Build contacts 
-build_and_push "contacts" "./src/contact/Dockerfile.contact" "./src/contact"
+# # Build contacts 
+# build_and_push "contacts" "./src/contact/Dockerfile.contact" "./src/contact"
 
-# Build search
-build_and_push "search" "./src/search/Dockerfile.search" "./src/search"
+# # Build search
+# build_and_push "search" "./src/search/Dockerfile.search" "./src/search"
 
-# Build authentication
-build_and_push "authentication" "./src/authentication/Dockerfile.authentication" "./src/authentication"
+# # Build authentication
+# build_and_push "authentication" "./src/authentication/Dockerfile.authentication" "./src/authentication"
 
-# Build customer-info
-build_and_push "customer-info" "./src/customerInfo/Dockerfile.customerInfo" "./src/customerInfo"
+# # Build customer-info
+# build_and_push "customer-info" "./src/customerInfo/Dockerfile.customerInfo" "./src/customerInfo"
 
-# Build customer-activity
-build_and_push "customer-activity" "./src/customerActivity/Dockerfile.customerActivity" "./src/customerActivity"
+# # Build customer-activity
+# build_and_push "customer-activity" "./src/customerActivity/Dockerfile.customerActivity" "./src/customerActivity"
 
-# Build personal-lending
-build_and_push "personal-lending" "./src/personalLending/Dockerfile.personalLending" "./src/personalLending"
+# # Build personal-lending
+# build_and_push "personal-lending" "./src/personalLending/Dockerfile.personalLending" "./src/personalLending"
 
-# Build business-lending
-build_and_push "business-lending" "./src/businessLending/Dockerfile.businessLending" "./src/businessLending"
+# # Build business-lending
+# build_and_push "business-lending" "./src/businessLending/Dockerfile.businessLending" "./src/businessLending"
 
-# Build mortgage
-build_and_push "mortgage" "./src/mortgage/Dockerfile.mortgage" "./src/mortgage"
+# # Build mortgage
+# build_and_push "mortgage" "./src/mortgage/Dockerfile.mortgage" "./src/mortgage"
 
-# Build investment
-build_and_push "investment" "./src/investment-account/Dockerfile.investment" "./src/investment-account"
+# # Build credit-card
+# build_and_push "credit-card" "./src/creditCard/Dockerfile.creditCard" "./src/creditCard"
 
-# Build deposit-account
-build_and_push "deposit-account" "./src/depositAccount/Dockerfile.depositAccount" "./src/depositAccount"
+# # Build investment
+# build_and_push "investment" "./src/investment-account/Dockerfile.investment" "./src/investment-account"
 
-# Build payments
-build_and_push "payments" "./src/payments/Dockerfile.payments" "./src/payments"
+# # Build deposit-account
+# build_and_push "deposit-account" "./src/depositAccount/Dockerfile.depositAccount" "./src/depositAccount"
 
-# Build wealth-mgmt
-build_and_push "wealth-mgmt" "./src/wealth_mgmt/Dockerfile.wealth_mgmt" "./src/wealth_mgmt"
+# # Build payments
+# build_and_push "payments" "./src/payments/Dockerfile.payments" "./src/payments"
 
-# Build frontend
-build_and_push "frontend1" "./src/frontend/Dockerfile.frontend1" "./src/frontend"
-build_and_push "frontend2" "./src/frontend/Dockerfile.frontend2" "./src/frontend"
-build_and_push "frontend3" "./src/frontend/Dockerfile.frontend3" "./src/frontend"
+# # Build wealth-mgmt
+# build_and_push "wealth-mgmt" "./src/wealth_mgmt/Dockerfile.wealth_mgmt" "./src/wealth_mgmt"
+
+# # Build frontend
+# build_and_push "frontend1" "./src/frontend/Dockerfile.frontend1" "./src/frontend"
+# build_and_push "frontend2" "./src/frontend/Dockerfile.frontend2" "./src/frontend"
+# build_and_push "frontend3" "./src/frontend/Dockerfile.frontend3" "./src/frontend"
 
 echo "Build process completed successfully."
 
