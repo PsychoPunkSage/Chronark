@@ -773,7 +773,7 @@ services:
     image: psychopunksage/personal-lending:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
@@ -813,7 +813,7 @@ services:
     image: psychopunksage/business-lending:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
@@ -853,7 +853,7 @@ services:
     image: psychopunksage/mortgage:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
@@ -893,7 +893,7 @@ services:
     image: psychopunksage/investment:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
@@ -933,7 +933,7 @@ services:
     image: psychopunksage/deposit-account:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
