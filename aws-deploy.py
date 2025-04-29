@@ -6,6 +6,7 @@ import socket
 import paramiko
 import subprocess
 from getpass import getpass
+from datetime import datetime
 
 class SwarmDeployer:
     def __init__(self, config_file):
@@ -1220,6 +1221,9 @@ def main():
     # Create deployer instance
     deployer = SwarmDeployer(config_file)
 
+    # Add timing tracking
+    start_time = datetime.now()
+
     # Ask user what operation to perform
     print("\nSelect operation:")
     print("1. Deploy Docker Swarm")
@@ -1254,6 +1258,12 @@ def main():
                 return
     
     print("\n=== Deployment Complete ===")
+
+    end_time = datetime.now()
+    execution_time = end_time - start_time
+    print(f"\n=== Total Deployment Time: {execution_time} ({execution_time.total_seconds()}) ===")
+    print(f"Started at: {start_time}")
+    print(f"Finished at: {end_time}")
 
 
 if __name__ == "__main__":
