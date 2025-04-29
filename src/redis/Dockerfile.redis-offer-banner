@@ -1,0 +1,10 @@
+FROM redis:6.2.12
+
+# Create directory for configuration
+RUN mkdir -p /etc/redis
+
+# Copy the configuration file
+COPY ./conf/offer-banner-redis.conf /etc/redis/redis.conf
+
+# Set permissions (if needed)
+RUN chmod 644 /etc/redis/redis.conf
