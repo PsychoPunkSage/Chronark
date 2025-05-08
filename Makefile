@@ -42,3 +42,6 @@ cAd-collectdata:
 
 aws-deploy:
 	python aws-deploy.py
+
+aws-deploy1:
+	python aws-deploy1.py

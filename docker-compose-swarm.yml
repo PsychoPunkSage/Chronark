@@ -3,7 +3,7 @@ services:
     image: jaegertracing/all-in-one:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 1
       placement:
         constraints:
           - node.role == manager
@@ -25,20 +25,35 @@ services:
       - vittmitra
 
   haproxy:
-    image: haproxy:latest
+    image: psychopunksage/haproxy:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure 
     ports:
       - 80:80
-    volumes:
-      - ./src/frontend/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    # volumes:
+    #   - ./src/frontend/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
     networks:
       - vittmitra
 
   opa:
-    image: ${REGISTRY:-local}/opa:${TAG:-latest}
+    image: psychopunksage/opa:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == manager
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
     ports:
       - "8181:8181"
     networks:
@@ -48,6 +63,11 @@ services:
     image: gcr.io/cadvisor/cadvisor:v0.47.0
     deploy:
       mode: global
+      # replicas: 2  # One per worker node
+      # placement:
+      #   max_replicas_per_node: 1
+      #   constraints:
+      #     - node.role == worker
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
@@ -62,7 +82,7 @@ services:
     image: prom/prometheus:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 1
       placement:
         constraints:
           - node.role == manager
@@ -79,7 +99,7 @@ services:
     image: grafana/grafana:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 1
       placement:
         constraints:
           - node.role == manager
@@ -94,46 +114,71 @@ services:
       - vittmitra
 
   redis-ob-ms:
-    image: redis:6.2.12
+    image: psychopunksage/redis-offer-banner:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     ports:
       - 6379:6379
     networks:
       - vittmitra
-    volumes:
-      - ./scripts/Redis/CVE-2022-24834/conf:/etc/redis/
     command: ["redis-server", "/etc/redis/redis.conf"]
 
   redis-search-ms:
-    image: redis:6.0-alpine
+    image: psychopunksage/redis-search:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     ports:
       - 6380:6379
     networks:
       - vittmitra
-    volumes:
-      - ./src/search/conf/:/etc/redis/
     command: ["redis-server", "/etc/redis/redis.conf"]
 
   redis-auth-ms:
-    image: redis:6.0-alpine
+    image: psychopunksage/redis-auth:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     ports:
       - 6381:6379
     networks:
       - vittmitra
-    volumes:
-      - ./src/authentication/conf/:/etc/redis/
     command: ["redis-server", "/etc/redis/redis.conf"]
 
   mongo:
     # image: mongo:7.0
     image: mongo:4.2.2
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname == quasar-worker-1
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocontact
       - MONGO_INITDB_ROOT_PASSWORD=contact
@@ -148,7 +193,20 @@ services:
   mongo-auth-info:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname == quasar-worker-1
+      restart_policy:
+        condition: on-failure
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoauthentication
       - MONGO_INITDB_ROOT_PASSWORD=authinfo
@@ -162,7 +220,20 @@ services:
   mongo-customer-info:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname == quasar-worker-1
+      restart_policy:
+        condition: on-failure
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocusinfo
       - MONGO_INITDB_ROOT_PASSWORD=customerinfo
@@ -176,7 +247,20 @@ services:
   mongo-customer-activity:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname == quasar-worker-1
+      restart_policy:
+        condition: on-failure
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocusactivity
       - MONGO_INITDB_ROOT_PASSWORD=customeractivity
@@ -189,8 +273,21 @@ services:
 
   mongo-personal-lending:
     image: mongo:7.0
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname == quasar-worker-1
+      restart_policy:
+        condition: on-failure
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoPersonalLending
       - MONGO_INITDB_ROOT_PASSWORD=personalLending
@@ -204,7 +301,20 @@ services:
   mongo-business-lending:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname == quasar-worker-2
+      restart_policy:
+        condition: on-failure
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoBusinessLending
       - MONGO_INITDB_ROOT_PASSWORD=businessLending
@@ -218,7 +328,20 @@ services:
   mongo-mortgage:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname == quasar-worker-2
+      restart_policy:
+        condition: on-failure
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongomortgage
       - MONGO_INITDB_ROOT_PASSWORD=mortgage
@@ -232,7 +355,20 @@ services:
   mongo-investment:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname == quasar-worker-2
+      restart_policy:
+        condition: on-failure
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoinvestment
       - MONGO_INITDB_ROOT_PASSWORD=investment
@@ -246,7 +382,20 @@ services:
   mongo-credit-card:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname == quasar-worker-2
+      restart_policy:
+        condition: on-failure
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongocreditcard
       - MONGO_INITDB_ROOT_PASSWORD=creditcard
@@ -260,7 +409,20 @@ services:
   mongo-wealth-mgmt:
     image: mongo:7.0
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+          - node.hostname == quasar-worker-2
+      restart_policy:
+        condition: on-failure
+    # healthcheck:
+    #   test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 30s
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongowealthmgmt
       - MONGO_INITDB_ROOT_PASSWORD=wealthmgmt
@@ -274,7 +436,13 @@ services:
   mongo-express:
     image: mongo-express
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     ports:
       - 8081:8081
     networks:
@@ -290,7 +458,13 @@ services:
   memcached-pl:
     image: memcached:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
     ports:
       - "11211:11211"
     networks:
@@ -299,7 +473,13 @@ services:
   memcached-bl:
     image: memcached:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure 
     ports:
       - "11212:11211"
     networks:
@@ -308,7 +488,13 @@ services:
   memcached-mortgage:
     image: memcached:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure 
     ports:
       - "11213:11211"
     networks:
@@ -317,28 +503,38 @@ services:
   memcached-investment:
     image: memcached:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure 
     ports:
       - "11214:11211"
     networks:
       - vittmitra
 
-# HAVE TO WORK ON HEALTH CHECK.... (inside APPLICATION)
-
   offer-banner:
-    image: ${REGISTRY:-local}/offer-banner:${TAG:-latest}
+    image: psychopunksage/offer-banner:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/offer_banner/app.py:/app/app.py
-      - ./src/offer_banner/conf/redis.conf:/app/conf/redis.conf
-      - ./src/offer_banner/templates/index.html:/app/templates/index.html
-      - ./src/offer_banner/requirements.txt:/app/requirements.txt
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/offer_banner/app.py:/app/app.py
+    #   - ./src/offer_banner/conf/redis.conf:/app/conf/redis.conf
+    #   - ./src/offer_banner/templates/index.html:/app/templates/index.html
+    #   - ./src/offer_banner/requirements.txt:/app/requirements.txt
     ports:
       - "5002:5002"
     networks:
@@ -353,19 +549,25 @@ services:
     command: python app.py
 
   credit-card:
-    image: ${REGISTRY:-local}/credit-card:${TAG:-latest}
+    image: psychopunksage/credit-card:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/creditCard/app.py:/app/app.py
-      - ./src/creditCard/requirements.txt:/app/requirements.txt
-      - ./src/creditCard/static/:/app/static/
-      - ./src/creditCard/templates/:/app/templates/
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/creditCard/app.py:/app/app.py
+    #   - ./src/creditCard/requirements.txt:/app/requirements.txt
+    #   - ./src/creditCard/static/:/app/static/
+    #   - ./src/creditCard/templates/:/app/templates/
     ports:
       - 5013:5013
     networks:
@@ -385,19 +587,25 @@ services:
     command: python app.py
 
   contacts:
-    image: ${REGISTRY:-local}/contacts:${TAG:-latest}
+    image: psychopunksage/contacts:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/contact/app.js:/app/app.js
-      - ./src/contact/templates/:/app/templates/
-      - ./src/contact/package.json:/app/package.json
-      - ./src/contact/package-lock.json:/app/package-lock.json
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/contact/app.js:/app/app.js
+    #   - ./src/contact/templates/:/app/templates/
+    #   - ./src/contact/package.json:/app/package.json
+    #   - ./src/contact/package-lock.json:/app/package-lock.json
     ports:
       - 5003:5003
     networks:
@@ -413,20 +621,26 @@ services:
     command: node app.js
 
   search:
-    image: ${REGISTRY:-local}/search:${TAG:-latest}
+    image: psychopunksage/search:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/search/app.py:/app/app.py
-      - ./src/search/conf/redis.conf:/app/conf/redis.conf
-      - ./src/search/requirements.txt:/app/requirements.txt
-      - ./src/search/templates/:/app/templates/
-      - ./src/search/static/:/app/static/
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/search/app.py:/app/app.py
+    #   - ./src/search/conf/redis.conf:/app/conf/redis.conf
+    #   - ./src/search/requirements.txt:/app/requirements.txt
+    #   - ./src/search/templates/:/app/templates/
+    #   - ./src/search/static/:/app/static/
     ports:
       - 5004:5004
     networks:
@@ -437,7 +651,7 @@ services:
       - MONGO_DB_PORT=27017
       - MONGO_DB_USERNAME=mongocontact
       - MONGO_DB_PASSWORD=contact
-      - SEARCH_REDIS_HOST=redis-search
+      - SEARCH_REDIS_HOST=redis-search-ms
       - SEARCH_REDIS_PORT=6380
       - SEARCH_REDIS_PASSWORD=search_complexpass
       - JAEGER_AGENT_HOST=jaeger
@@ -445,27 +659,34 @@ services:
     command: python app.py
 
   authentication:
-    image: ${REGISTRY:-local}/authentication:${TAG:-latest}
+    image: psychopunksage/authentication:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3  # One per worker node
+      placement:
+        # max_replicas_per_node: 1
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/authentication/app.py:/app/app.py
-      - ./src/authentication/templates/:/app/templates/
-      - ./src/authentication/helper.py:/app/helper.py
-      - ./src/authentication/conf/redis.conf:/app/conf/redis.conf
-      - ./src/authentication/requirements.txt:/app/requirements.txt
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/authentication/app.py:/app/app.py
+    #   - ./src/authentication/templates/:/app/templates/
+    #   - ./src/authentication/helper.py:/app/helper.py
+    #   - ./src/authentication/conf/redis.conf:/app/conf/redis.conf
+    #   - ./src/authentication/requirements.txt:/app/requirements.txt
     ports:
       - 5005:5005
     networks:
       - vittmitra
     environment:
       - SELF_PORT=5005
-      - REDIS_HOST=redis-auth
+      - REDIS_HOST=redis-auth-ms
       - REDIS_PORT=6381
       - REDIS_PASSWORD=authentication_complexpass
       - MONGO_DB_HOST=mongo-auth-info
@@ -479,19 +700,25 @@ services:
     command: python app.py
 
   customer-info:
-    image: ${REGISTRY:-local}/customer-info:${TAG:-latest}
+    image: psychopunksage/customer-info:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/customerInfo/app.py:/app/app.py
-      - ./src/customerInfo/requirements.txt:/app/requirements.txt
-      - ./src/customerInfo/static/:/app/static/
-      - ./src/customerInfo/templates/:/app/templates/
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/customerInfo/app.py:/app/app.py
+    #   - ./src/customerInfo/requirements.txt:/app/requirements.txt
+    #   - ./src/customerInfo/static/:/app/static/
+    #   - ./src/customerInfo/templates/:/app/templates/
     ports:
       - 5006:5006
     networks:
@@ -507,20 +734,25 @@ services:
     command: python app.py
 
   customer-activity:
-    image: ${REGISTRY:-local}/customer-activity:${TAG:-latest}
+    image: psychopunksage/customer-activity:latest
     deploy:
       mode: replicated
-      replicas: 2
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/customerActivity/app.py:/app/app.py
-      - ./src/customerActivity/requirements.txt:/app/requirements.txt
-      - ./src/customerActivity/static/:/app/static/
-      - ./src/customerActivity/templates/:/app/templates/
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/customerActivity/app.py:/app/app.py
+    #   - ./src/customerActivity/requirements.txt:/app/requirements.txt
+    #   - ./src/customerActivity/static/:/app/static/
+    #   - ./src/customerActivity/templates/:/app/templates/
     ports:
       - 5012:5012
     networks:
@@ -538,19 +770,25 @@ services:
     command: python app.py
 
   personal-lending:
-    image: ${REGISTRY:-local}/personal-lending:${TAG:-latest}
+    image: psychopunksage/personal-lending:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/personalLending/app.py:/app/app.py
-      - ./src/personalLending/requirements.txt:/app/requirements.txt
-      - ./src/personalLending/static/:/app/static/
-      - ./src/personalLending/templates/:/app/templates/
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/personalLending/app.py:/app/app.py
+    #   - ./src/personalLending/requirements.txt:/app/requirements.txt
+    #   - ./src/personalLending/static/:/app/static/
+    #   - ./src/personalLending/templates/:/app/templates/
     ports:
       - 5007:5007
     networks:
@@ -572,19 +810,25 @@ services:
     command: python app.py
 
   business-lending:
-    image: ${REGISTRY:-local}/business-lending:${TAG:-latest}
+    image: psychopunksage/business-lending:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/businessLending/app.py:/app/app.py
-      - ./src/businessLending/requirements.txt:/app/requirements.txt
-      - ./src/businessLending/static/:/app/static/
-      - ./src/businessLending/templates/:/app/templates/
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/businessLending/app.py:/app/app.py
+    #   - ./src/businessLending/requirements.txt:/app/requirements.txt
+    #   - ./src/businessLending/static/:/app/static/
+    #   - ./src/businessLending/templates/:/app/templates/
     ports:
       - 5010:5010
     networks:
@@ -606,19 +850,25 @@ services:
     command: python app.py
 
   mortgage:
-    image: ${REGISTRY:-local}/mortgage:${TAG:-latest}
+    image: psychopunksage/mortgage:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/mortgage/app.py:/app/app.py
-      - ./src/mortgage/requirements.txt:/app/requirements.txt
-      - ./src/mortgage/static/:/app/static/
-      - ./src/mortgage/templates/:/app/templates/
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/mortgage/app.py:/app/app.py
+    #   - ./src/mortgage/requirements.txt:/app/requirements.txt
+    #   - ./src/mortgage/static/:/app/static/
+    #   - ./src/mortgage/templates/:/app/templates/
     ports:
       - 5008:5008
     networks:
@@ -640,19 +890,25 @@ services:
     command: python app.py
 
   investment:
-    image: ${REGISTRY:-local}/investment:${TAG:-latest}
+    image: psychopunksage/investment:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/investment-account/app.py:/app/app.py
-      - ./src/investment-account/requirements.txt:/app/requirements.txt
-      - ./src/investment-account/static/:/app/static/
-      - ./src/investment-account/templates/:/app/templates/
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/investment-account/app.py:/app/app.py
+    #   - ./src/investment-account/requirements.txt:/app/requirements.txt
+    #   - ./src/investment-account/static/:/app/static/
+    #   - ./src/investment-account/templates/:/app/templates/
     ports:
       - 5009:5009
     networks:
@@ -674,19 +930,25 @@ services:
     command: python app.py
 
   deposit-account:
-    image: ${REGISTRY:-local}/deposit-account:${TAG:-latest}
+    image: psychopunksage/deposit-account:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/depositAccount/app.py:/app/app.py
-      - ./src/depositAccount/requirements.txt:/app/requirements.txt
-      - ./src/depositAccount/static/:/app/static/
-      - ./src/depositAccount/templates/:/app/templates/
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/depositAccount/app.py:/app/app.py
+    #   - ./src/depositAccount/requirements.txt:/app/requirements.txt
+    #   - ./src/depositAccount/static/:/app/static/
+    #   - ./src/depositAccount/templates/:/app/templates/
     ports:
       - 5011:5011
     networks:
@@ -702,19 +964,25 @@ services:
     command: python app.py
 
   payments:
-    image: ${REGISTRY:-local}/payments:${TAG:-latest}
+    image: psychopunksage/payments:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/payments/app.py:/app/app.py
-      - ./src/payments/requirements.txt:/app/requirements.txt
-      - ./src/payments/static/:/app/static/
-      - ./src/payments/templates/:/app/templates/
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/payments/app.py:/app/app.py
+    #   - ./src/payments/requirements.txt:/app/requirements.txt
+    #   - ./src/payments/static/:/app/static/
+    #   - ./src/payments/templates/:/app/templates/
     ports:
       - 5014:5014
     networks:
@@ -730,19 +998,25 @@ services:
     command: python app.py
 
   wealth-mgmt:
-    image: ${REGISTRY:-local}/wealth-mgmt:${TAG:-latest}
+    image: psychopunksage/wealth-mgmt:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/wealth_mgmt/app.py:/app/app.py
-      - ./src/wealth_mgmt/requirements.txt:/app/requirements.txt
-      - ./src/wealth_mgmt/static/:/app/static/
-      - ./src/wealth_mgmt/templates/:/app/templates/
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/wealth_mgmt/app.py:/app/app.py
+    #   - ./src/wealth_mgmt/requirements.txt:/app/requirements.txt
+    #   - ./src/wealth_mgmt/static/:/app/static/
+    #   - ./src/wealth_mgmt/templates/:/app/templates/
     ports:
       - 5015:5015
     networks:
@@ -764,7 +1038,11 @@ services:
   modsecurity:
     image: owasp/modsecurity-crs:nginx
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
     ports:
       - 8080:8080
     environment:
@@ -777,19 +1055,25 @@ services:
       - vittmitra
 
   frontend-1:
-    image: ${REGISTRY:-local}/frontend1:${TAG:-latest}
+    image: psychopunksage/frontend1:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == manager
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/frontend/static/:/app/static/
-      - ./src/frontend/templates/:/app/templates/
-      - ./src/frontend/app.py:/app/app.py
-      - ./src/frontend/tracing.py:/app/tracing.py
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/frontend/static/:/app/static/
+    #   - ./src/frontend/templates/:/app/templates/
+    #   - ./src/frontend/app.py:/app/app.py
+    #   - ./src/frontend/tracing.py:/app/tracing.py
     ports:
       - 4001:4001
     networks:
@@ -831,25 +1115,31 @@ services:
     command: python app.py
   
   frontend-2:
-    image: ${REGISTRY:-local}/frontend2:${TAG:-latest}
+    image: psychopunksage/frontend2:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/frontend/static/:/app/static/
-      - ./src/frontend/templates/:/app/templates/
-      - ./src/frontend/app.py:/app/app.py
-      - ./src/frontend/tracing.py:/app/tracing.py
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/frontend/static/:/app/static/
+    #   - ./src/frontend/templates/:/app/templates/
+    #   - ./src/frontend/app.py:/app/app.py
+    #   - ./src/frontend/tracing.py:/app/tracing.py
     ports:
       - 4002:4002
     networks:
       - vittmitra
     environment:
-      - SELF_PORT=4001
+      - SELF_PORT=4002
       - OFFER_BANNER_SERVICE_HOST=offer-banner
       - OFFER_BANNER_SERVICE_PORT=5002
       - CONTACT_SERVICE_HOST=contacts
@@ -885,25 +1175,31 @@ services:
     command: python app.py
   
   frontend-3:
-    image: ${REGISTRY:-local}/frontend3:${TAG:-latest}
+    image: psychopunksage/frontend3:latest
     deploy:
-      mode: global
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
       update_config:
         parallelism: 1
         delay: 10s
       restart_policy:
         condition: on-failure
-    volumes:
-      - ./src/frontend/static/:/app/static/
-      - ./src/frontend/templates/:/app/templates/
-      - ./src/frontend/app.py:/app/app.py
-      - ./src/frontend/tracing.py:/app/tracing.py
+        delay: 30s  # Longer delay to ensure databases are up
+        max_attempts: 10
+    # volumes:
+    #   - ./src/frontend/static/:/app/static/
+    #   - ./src/frontend/templates/:/app/templates/
+    #   - ./src/frontend/app.py:/app/app.py
+    #   - ./src/frontend/tracing.py:/app/tracing.py
     ports:
       - 4003:4003
     networks:
       - vittmitra
     environment:
-      - SELF_PORT=4001
+      - SELF_PORT=4003
       - OFFER_BANNER_SERVICE_HOST=offer-banner
       - OFFER_BANNER_SERVICE_PORT=5002
       - CONTACT_SERVICE_HOST=contacts
