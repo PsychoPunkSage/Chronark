@@ -32,12 +32,6 @@ cve-2020-7921:
 cve-2022-24834:
 	python scripts/Redis/CVE-2022-24834/redis_cve-2022-24834.py
 
-cve-2024-27983:
-	@echo "cd ./scripts/nodejs/CVE-2024-27983/"
-	@echo "go run test.go -address :5003"
-	@echo "=========RESULT========="
-	@echo "sudo docker ps -a | grep contact"
-
 cAd-collectdata:
 	rm -rf monitoring_data/
 	python scripts/cAdvisor/data_collector.py
