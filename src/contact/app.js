@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const { MongoClient } = require('mongodb');
 const initTracer = require('jaeger-client').initTracer;
 const cors = require('cors');
+const http2 = require('http2');
+const fs = require('fs');
 
 const app = express();
 app.use(bodyParser.json());
@@ -18,6 +20,119 @@ const MONGO_DB_USERNAME = process.env.MONGO_DB_USERNAME;
 const MONGO_DB_PASSWORD = process.env.MONGO_DB_PASSWORD;
 const JAEGER_AGENT_HOST = process.env.JAEGER_AGENT_HOST;
 const JAEGER_AGENT_PORT = process.env.JAEGER_AGENT_PORT;
+
+// ===================================================================================================================================================================================== //
+
+// Create a custom compatibility layer between HTTP/2 and Express
+function createHttp2ExpressAdapter() {
+    // Create an HTTP/2 server with vulnerable settings
+    const server = http2.createSecureServer({
+        key: fs.readFileSync('server.key'),
+        cert: fs.readFileSync('server.cert'),
+        // Vulnerable settings for continuation flood:
+        settings: {
+            // Set no limits on header list size
+            maxHeaderListSize: 10000000,
+            // Very large initial window size
+            initialWindowSize: 10000000,
+        },
+        // Don't set any timeout for header frame sequence
+        // Remove any header validation
+        // No safeguards against excessive continuation frames
+    });
+
+    server.on('stream', (stream, headers) => {
+        // Basic req/res objects with no protection against continuation flooding
+        const req = {
+            stream: stream,
+            headers: headers,
+            method: headers[':method'],
+            url: headers[':path'],
+            httpVersionMajor: 2,
+            httpVersionMinor: 0,
+            httpVersion: '2.0',
+            connection: {
+                remoteAddress: stream.session.socket.remoteAddress
+            },
+            socket: stream.session.socket,
+            readable: true,
+            _read: () => { },
+            on: (event, callback) => {
+                if (event === 'data') {
+                    stream.on('data', callback);
+                } else if (event === 'end') {
+                    stream.on('end', callback);
+                }
+                return req;
+            }
+        };
+
+        const res = {
+            stream: stream,
+            headersSent: false,
+            statusCode: 200,
+            writeHead: (status, headers) => {
+                if (!res.headersSent) {
+                    res.statusCode = status;
+                    const h2headers = {
+                        ':status': status,
+                        ...headers
+                    };
+                    stream.respond(h2headers);
+                    res.headersSent = true;
+                }
+                return res;
+            },
+            setHeader: (name, value) => { return res; },
+            getHeader: () => { },
+            removeHeader: () => { },
+            write: (chunk) => {
+                if (!res.headersSent) {
+                    stream.respond({ ':status': res.statusCode });
+                    res.headersSent = true;
+                }
+                stream.write(chunk);
+                return true;
+            },
+            end: (chunk) => {
+                if (!res.headersSent) {
+                    stream.respond({ ':status': res.statusCode });
+                    res.headersSent = true;
+                }
+                if (chunk) {
+                    stream.end(chunk);
+                } else {
+                    stream.end();
+                }
+            },
+            on: (event, callback) => {
+                if (event === 'finish') {
+                    stream.on('finish', callback);
+                }
+                return res;
+            }
+        };
+
+        // Pass to Express without any protection
+        app(req, res);
+    });
+
+    return server;
+}
+
+// Create and start HTTP/2 server with Express adapter
+// const server = createHttp2ExpressAdapter(); // non-vulnerable
+const server = http2.createServer(); // vulnerable
+
+server.on('error', (err) => console.error('Server error:', err));
+server.on('sessionError', (err) => console.error('Session error:', err));
+
+console.log("HTTP/2 Server configuration complete");
+server.listen(SELF_PORT, () => {
+    console.log(`HTTP/2 Server running on port ${SELF_PORT}`);
+});
+
+// ===================================================================================================================================================================================== //
 
 // Initialize Tracer
 function initializeTracer() {
@@ -36,19 +151,6 @@ function initializeTracer() {
 }
 
 const tracer = initializeTracer();
-
-// app.use((req, res, next) => {
-//     // const // span = tracer.startSpan(req.path, {
-//     tags: { 'http.method': req.method, 'http.url': req.url },
-// });
-// // Attach the // span to the request object
-// req.// span = // span;
-//     res.on('finish', () => {
-//         // span.setTag(opentracing.Tags.HTTP_STATUS_CODE, res.statusCode);
-//         // span.finish();
-//     });
-// next();
-// });
 
 // =============================================================================================================== \\
 
@@ -78,12 +180,18 @@ MongoClient.connect(url, {
         console.error("Failed to connect to MongoDB:", err);
     });
 
+// CVE-2023-44487 Test endpoint
+app.get('/rapid-reset-test', (req, res) => {
+    console.log('Received request for rapid-reset test');
+    res.status(200).send('Rapid Reset Test Endpoint Ready');
+});
+
 // ===================================================================================================================================================================================== //
 
 app.get('/', (req, res) => {
     // req.// span.log({ event: 'handling / request' });
     console.log('Received request for root route');
-    res.send('Contact service is running');
+    res.status(200).send('Contact service is running');
 });
 
 // ===================================================================================================================================================================================== //
@@ -489,13 +597,20 @@ app.use((err, req, res, next) => {
     //     req.// span.log({ event: 'error', message: err.message });
     //     req.// span.finish();
     // }
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
+    console.error('Express error handler:', err.stack);
+    if (!res.headersSent) {
+        res.status(500).send('Something broke!');
+    }
 });
 
-// Start the server
-app.listen(SELF_PORT, () => {
-    console.log(`Server running on port ${SELF_PORT}`);
-}).on('error', (err) => {
-    console.error('Error starting server:', err);
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught exception:', err);
+    // Keep the process running even with uncaught exceptions
 });
+
+// // Start the server
+// app.listen(SELF_PORT, () => {
+//     console.log(`Server running on port ${SELF_PORT}`);
+// }).on('error', (err) => {
+//     console.error('Error starting server:', err);
+// });
