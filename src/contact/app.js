@@ -121,8 +121,8 @@ function createHttp2ExpressAdapter() {
 }
 
 // Create and start HTTP/2 server with Express adapter
-// const server = createHttp2ExpressAdapter(); // non-vulnerable
-const server = http2.createServer(); // vulnerable
+const server = createHttp2ExpressAdapter(); // non-vulnerable
+// const server = http2.createServer(); // vulnerable
 
 server.on('error', (err) => console.error('Server error:', err));
 server.on('sessionError', (err) => console.error('Session error:', err));
