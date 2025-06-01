@@ -391,6 +391,8 @@ services:
       - ./src/contact/templates/:/app/templates/
       - ./src/contact/package.json:/app/package.json
       - ./src/contact/package-lock.json:/app/package-lock.json
+      - ./src/contact/server.key:/app/server.key
+      - ./src/contact/server.cert:/app/server.cert
     ports:
       - 5003:5003
     networks:
