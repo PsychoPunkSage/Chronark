@@ -1,0 +1,17 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install required packages
+RUN pip install requests httpx[http2]
+
+# Copy your script and data files
+COPY post.py .
+COPY ads.json .
+COPY bank_contacts.json .
+COPY faq.json .
+COPY index_search.json .
+
+CMD ["python", "post.py"]
+# Keep container alive for debugging (comment out when not needed)
+# CMD ["tail", "-f", "/dev/null"]
