@@ -20,7 +20,7 @@ ADS_SERVICE_URL = 'http://' + OFFER_BANNER_SERVICE_HOST + ':' + OFFER_BANNER_SER
 # Contact url
 CONTACT_SERVICE_HOST = os.environ.get('CONTACT_SERVICE_HOST')
 CONTACT_SERVICE_PORT = os.environ.get('CONTACT_SERVICE_PORT')
-CONTACT_SERVICE_URL = 'http://' + CONTACT_SERVICE_HOST + ':' + CONTACT_SERVICE_PORT
+CONTACT_SERVICE_URL = 'https://' + CONTACT_SERVICE_HOST + ':' + CONTACT_SERVICE_PORT
 
 # Credit Card Service
 CREDIT_CARD_SERVICE_HOST = os.environ.get('CREDIT_CARD_SERVICE_HOST')
@@ -819,8 +819,11 @@ def logout():
 @app.route('/contact', methods=['GET'])
 @tracing.trace()
 def contact():
+    print("INSIDER CONTACT frontend")
     with tracer.start_active_span('contact') as scope:
         is_logged_in = 'token' in session
+        print("FETHCING BANNER")
+        print(f"Contact Service Url: {CONTACT_SERVICE_URL}")
         banner = fetch_banners(2)
 
         try:
@@ -828,6 +831,8 @@ def contact():
                 response = requests.get(f'{CONTACT_SERVICE_URL}/getContacts')
             response.raise_for_status()  # Raises an HTTPError for bad responses
             contacts = response.json()
+            print(f"Contacts fetched: {len(contacts)}")
+            print(f"Contacts: {contacts}")
         except requests.RequestException as e:
             print(f"Error fetching contacts: {e}")
             contacts = []
@@ -841,6 +846,8 @@ def contact():
                 response = requests.get(f'{CONTACT_SERVICE_URL}/getFaqs')
             response.raise_for_status()
             faqs = response.json()
+            print(f"FAQs fetched: {len(faqs)}")
+            print(f"FAQs: {faqs}")
         except requests.RequestException as e:
             print(f"Error fetching FAQs: {e}")
             faqs = []
