@@ -21,17 +21,76 @@ down:
 # Pen Test #
 ############
 
+# TARGET_IP ?= 35.200.163.35
+TARGET_IP ?= 35.200.204.177
+# TARGET_IP ?= 34.93.68.169
+
 load-load:
-#  usage :> make load-load L=10
+#  usage: make load-load L=10 IP=192.168.1.100
+#  or:    make load-load L=10  # uses TARGET_IP
 	@if [ -z "$(L)" ]; then \
-		echo "Error: L is not set. Please provide a number using 'make load-load L=<number>'."; \
+		echo "Error: L is not set. Please provide a number using 'make load-test L=<number>'."; \
+		echo "Usage: make load-test L=<number> [IP=<manager_ip>]"; \
+		echo "Example: make load-test L=5 IP=192.168.1.100"; \
 		exit 1; \
 	fi
-	scripts/load_test/load.sh --load $(L)
+	
+	@if [ -n "$(IP)" ]; then \
+		scripts/load_test/load.sh --ip $(IP) --load $(L); \
+	else \
+		scripts/load_test/load.sh --ip $(TARGET_IP) --load $(L); \
+	fi
+
+load-connectivity:
+#  usage: make load-connectivity IP=192.168.1.100
+	@if [ -n "$(IP)" ]; then \
+		scripts/load_test/load.sh --ip $(IP) --test; \
+	else \
+		scripts/load_test/load.sh --ip $(TARGET_IP) --test; \
+	fi
 
 load-cleanup:
-#  usage :> make load-cleanup L=10
-	scripts/load_test/load.sh --refresh 11 $$(($(L) + 11))
+#  usage: make load-cleanup L=10 IP=192.168.1.100
+#  usage: make load-cleanup L=10 # uses TARGET_IP
+	@if [ -z "$(L)" ]; then \
+		echo "Error: L must be set."; \
+		echo "Usage: make load-cleanup L=<load> [IP=<manager_ip>]"; \
+		echo "Example: make load-cleanup L=11 IP=192.168.1.100"; \
+		exit 1; \
+	fi
+	@if [ -n "$(IP)" ]; then \
+		scripts/load_test/load.sh --ip $(IP) --refresh $(L); \
+	else \
+		scripts/load_test/load.sh --ip $(TARGET_IP) --refresh $(L); \
+	fi
+
+load-login:
+#  usage: make load-login USER=user11 PASS=user11 IP=192.168.1.100
+	@if [ -z "$(USER)" ] || [ -z "$(PASS)" ]; then \
+		echo "Error: USER and PASS must be set."; \
+		echo "Usage: make load-login USER=<username> PASS=<password> [IP=<manager_ip>]"; \
+		echo "Example: make load-login USER=user11 PASS=user11 IP=192.168.1.100"; \
+		exit 1; \
+	fi
+	@if [ -n "$(IP)" ]; then \
+		scripts/load_test/load.sh --ip $(IP) --login $(USER) $(PASS); \
+	else \
+		scripts/load_test/load.sh --ip $(MANAGER_IP) --login $(USER) $(PASS); \
+	fi
+
+load-logout:
+#  usage: make load-logout USER=user11 IP=192.168.1.100
+	@if [ -z "$(USER)" ]; then \
+		echo "Error: USER must be set."; \
+		echo "Usage: make load-logout USER=<username> [IP=<manager_ip>]"; \
+		echo "Example: make load-logout USER=user11 IP=192.168.1.100"; \
+		exit 1; \
+	fi
+	@if [ -n "$(IP)" ]; then \
+		scripts/load_test/load.sh --ip $(IP) --logout $(USER); \
+	else \
+		scripts/load_test/load.sh --ip $(MANAGER_IP) --logout $(USER); \
+	fi
 
 #######
 # CVE #
