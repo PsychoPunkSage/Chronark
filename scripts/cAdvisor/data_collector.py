@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 import time
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from datetime import datetime
 import os
 
@@ -59,7 +59,7 @@ class MicroservicesMonitor:
     
     def collect_container_metrics(self):
         """
-        Collect metrics for all Docker containers.
+        Collect metrics for all Docker containers with proper unit conversions.
         
         Returns:
             DataFrame with container metrics
@@ -73,12 +73,25 @@ class MicroservicesMonitor:
         timestamp = datetime.now().isoformat()
         
         for container_id, container_data in containers.items():
-            # Skip containers without stats
-            if 'stats' not in container_data or not container_data['stats']:
+            # Skip containers without enough stats for rate calculation
+            if 'stats' not in container_data or len(container_data['stats']) < 2:
                 continue
             
-            # Get the latest stats
+            # Get the latest two stats for rate calculation
             latest_stats = container_data['stats'][-1]
+            prev_stats = container_data['stats'][-2]
+            
+            # Calculate time delta between stats
+            try:
+                latest_time = datetime.strptime(latest_stats.get('timestamp', ''), '%Y-%m-%dT%H:%M:%S.%fZ')
+                prev_time = datetime.strptime(prev_stats.get('timestamp', ''), '%Y-%m-%dT%H:%M:%S.%fZ')
+                time_delta_seconds = (latest_time - prev_time).total_seconds()
+                # Use a minimum time delta to avoid division by zero
+                if time_delta_seconds <= 0:
+                    time_delta_seconds = 1
+            except (ValueError, TypeError):
+                # If timestamp parsing fails, use a default delta
+                time_delta_seconds = 1
             
             # Get container name from aliases
             container_name = "unknown"
@@ -87,33 +100,84 @@ class MicroservicesMonitor:
             
             # Extract CPU usage
             cpu_data = latest_stats.get('cpu', {})
-            cpu_usage = cpu_data.get('usage', {})
-            total_cpu_usage = cpu_usage.get('total', 0)
+            prev_cpu_data = prev_stats.get('cpu', {})
             
-            # Extract memory usage
+            # Get CPU usage values
+            cpu_usage = cpu_data.get('usage', {})
+            prev_cpu_usage = prev_cpu_data.get('usage', {})
+            
+            # Calculate total CPU usage in cores (matching cAdvisor UI)
+            total_cpu_usage_ns = cpu_usage.get('total', 0)
+            prev_total_cpu_usage_ns = prev_cpu_usage.get('total', 0)
+            cpu_usage_delta_ns = total_cpu_usage_ns - prev_total_cpu_usage_ns
+            cpu_cores = round(cpu_usage_delta_ns / (time_delta_seconds * 1e9), 5)  # Convert to cores
+            
+            # User and system CPU usage for breakdown (matching cAdvisor UI)
+            user_usage_ns = cpu_usage.get('user', 0)
+            prev_user_usage_ns = prev_cpu_usage.get('user', 0)
+            user_delta_ns = user_usage_ns - prev_user_usage_ns
+            user_cores = round(user_delta_ns / (time_delta_seconds * 1e9), 5)
+            
+            system_usage_ns = cpu_usage.get('system', 0)
+            prev_system_usage_ns = prev_cpu_usage.get('system', 0)
+            system_delta_ns = system_usage_ns - prev_system_usage_ns
+            system_cores = round(system_delta_ns / (time_delta_seconds * 1e9), 5)
+            
+            # Extract memory usage and convert to MB (matching cAdvisor UI)
             memory_data = latest_stats.get('memory', {})
             memory_usage = memory_data.get('usage', 0)
+            memory_usage_mb = round(memory_usage / (1024 * 1024), 5)  # Convert to MB
+            
             memory_working_set = memory_data.get('working_set', 0)
+            memory_working_set_mb = round(memory_working_set / (1024 * 1024), 5)  # Convert to MB
             
-            # Extract network usage
+            # Get memory limit and calculate percentage
+            memory_limit = memory_data.get('limit', 0)
+            memory_limit_mb = round(memory_limit / (1024 * 1024), 5) if memory_limit > 0 else 0
+            memory_percent = round((memory_working_set / memory_limit * 100), 5) if memory_limit > 0 else 0
+            
+            # Extract network usage and calculate throughput (matching cAdvisor UI)
             network_data = latest_stats.get('network', {})
-            rx_bytes = network_data.get('rx_bytes', 0)
-            tx_bytes = network_data.get('tx_bytes', 0)
+            prev_network_data = prev_stats.get('network', {})
             
-            # Extract filesystem stats
+            rx_bytes = network_data.get('rx_bytes', 0)
+            prev_rx_bytes = prev_network_data.get('rx_bytes', 0)
+            rx_bytes_per_second = round((rx_bytes - prev_rx_bytes) / time_delta_seconds, 5)
+            
+            tx_bytes = network_data.get('tx_bytes', 0)
+            prev_tx_bytes = prev_network_data.get('tx_bytes', 0)
+            tx_bytes_per_second = round((tx_bytes - prev_tx_bytes) / time_delta_seconds, 5)
+            
+            # Extract filesystem stats and convert to MB
             filesystem_data = latest_stats.get('filesystem', [])
             total_usage = sum(fs.get('usage', 0) for fs in filesystem_data)
+            total_usage_mb = round(total_usage / (1024 * 1024), 5)  # Convert to MB
             
+            # Store all metrics (both raw and converted)
             metrics.append({
                 'timestamp': timestamp,
                 'container_id': container_id,
                 'container_name': container_name,
-                'cpu_usage': total_cpu_usage,
+                
+                # Raw metrics (original)
+                'cpu_usage': total_cpu_usage_ns,
                 'memory_usage_bytes': memory_usage,
                 'memory_working_set_bytes': memory_working_set,
                 'network_rx_bytes': rx_bytes,
                 'network_tx_bytes': tx_bytes,
-                'filesystem_usage_bytes': total_usage
+                'filesystem_usage_bytes': total_usage,
+                
+                # Converted metrics (matching cAdvisor UI)
+                'cpu_cores': cpu_cores,
+                'cpu_user_cores': user_cores,
+                'cpu_system_cores': system_cores,
+                'memory_usage_mb': memory_usage_mb,
+                'memory_working_set_mb': memory_working_set_mb,
+                'memory_limit_mb': memory_limit_mb,
+                'memory_percent': memory_percent,
+                'network_rx_bytes_per_second': rx_bytes_per_second,
+                'network_tx_bytes_per_second': tx_bytes_per_second,
+                'filesystem_usage_mb': total_usage_mb
             })
         
         return pd.DataFrame(metrics)
@@ -144,15 +208,15 @@ class MicroservicesMonitor:
                 timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
                 
                 # Save combined metrics to CSV
-                combined_csv_filename = f"{self.output_dir}/metrics_{timestamp_str}.csv"
+                combined_csv_filename = f"{self.output_dir}/metrics.csv"
                 metrics_df.to_csv(combined_csv_filename, index=False)
-                print(f"Saved combined metrics to {combined_csv_filename}")
+                # print(f"Saved combined metrics to {combined_csv_filename}")
                 
                 # Save individual container metrics to separate CSV files
                 self.save_per_container_metrics(metrics_df, timestamp_str)
                 
                 # Generate and save plots
-                self.generate_plots(metrics_df, timestamp_str)
+                # self.generate_plots(metrics_df, timestamp_str)
             
             iteration += 1
             
@@ -198,56 +262,11 @@ class MicroservicesMonitor:
                                index=False,
                                header=not file_exists)  # Only include header if file is new
             
-            print(f"Updated metrics for {container_name} in {csv_filename}")
-
-    def generate_plots(self, df, timestamp_str):
-        """
-        Generate plots from metrics dataframe.
-        
-        Args:
-            df: DataFrame with metrics
-            timestamp_str: Timestamp string for filenames
-        """
-        # CPU usage plot
-        plt.figure(figsize=(12, 6))
-        cpu_plot = df.sort_values('cpu_usage', ascending=False).plot.bar(
-            x='container_name', 
-            y='cpu_usage', 
-            title='CPU Usage by Container',
-            rot=45
-        )
-        plt.tight_layout()
-        plt.savefig(f"{self.output_dir}/cpu_usage_{timestamp_str}.png")
-        
-        # Memory usage plot
-        plt.figure(figsize=(12, 6))
-        # Convert to MB for readability
-        df['memory_mb'] = df['memory_working_set_bytes'] / (1024 * 1024)
-        memory_plot = df.sort_values('memory_mb', ascending=False).plot.bar(
-            x='container_name', 
-            y='memory_mb', 
-            title='Memory Usage (MB) by Container',
-            rot=45
-        )
-        plt.tight_layout()
-        plt.savefig(f"{self.output_dir}/memory_usage_{timestamp_str}.png")
-        
-        # Network usage plot
-        plt.figure(figsize=(12, 6))
-        # Convert to MB for readability
-        df['network_rx_mb'] = df['network_rx_bytes'] / (1024 * 1024)
-        df['network_tx_mb'] = df['network_tx_bytes'] / (1024 * 1024)
-        network_data = df.sort_values('network_rx_mb', ascending=False)[['container_name', 'network_rx_mb', 'network_tx_mb']]
-        network_data.set_index('container_name').plot.bar(
-            title='Network Usage (MB) by Container',
-            rot=45
-        )
-        plt.tight_layout()
-        plt.savefig(f"{self.output_dir}/network_usage_{timestamp_str}.png")
+            # print(f"Updated metrics for {container_name} in {csv_filename}")
 
     def analyze_historical_data(self, pattern="metrics_*.csv"):
         """
-        Analyze historical metrics data.
+        Analyze historical metrics data with converted units.
         
         Args:
             pattern: File pattern to match CSV files
@@ -270,30 +289,34 @@ class MicroservicesMonitor:
         # Convert timestamp to datetime
         all_data['timestamp'] = pd.to_datetime(all_data['timestamp'])
         
+        # Define aggregation dict based on available columns
+        agg_dict = {}
+        
+        # Add raw metrics (always available)
+        agg_dict['cpu_usage'] = ['mean', 'max', 'std']
+        agg_dict['memory_usage_bytes'] = ['mean', 'max', 'std']
+        agg_dict['network_rx_bytes'] = ['mean', 'max', 'sum']
+        agg_dict['network_tx_bytes'] = ['mean', 'max', 'sum']
+        agg_dict['filesystem_usage_bytes'] = ['mean', 'max']
+        
+        # Add converted metrics (if available)
+        if 'cpu_cores' in all_data.columns:
+            agg_dict['cpu_cores'] = ['mean', 'max', 'std']
+        
+        if 'memory_usage_mb' in all_data.columns:
+            agg_dict['memory_usage_mb'] = ['mean', 'max', 'std']
+            agg_dict['memory_working_set_mb'] = ['mean', 'max', 'std']
+            agg_dict['memory_percent'] = ['mean', 'max', 'std']
+        
+        if 'network_rx_bytes_per_second' in all_data.columns:
+            agg_dict['network_rx_bytes_per_second'] = ['mean', 'max', 'std']
+            agg_dict['network_tx_bytes_per_second'] = ['mean', 'max', 'std']
+        
+        if 'filesystem_usage_mb' in all_data.columns:
+            agg_dict['filesystem_usage_mb'] = ['mean', 'max', 'std']
+        
         # Group by container name and calculate statistics
-        container_stats = all_data.groupby('container_name').agg({
-            'cpu_usage': ['mean', 'max', 'std'],
-            'memory_usage_bytes': ['mean', 'max', 'std'],
-            'network_rx_bytes': ['mean', 'max', 'sum'],
-            'network_tx_bytes': ['mean', 'max', 'sum'],
-            'filesystem_usage_bytes': ['mean', 'max']
-        })
-        
-        # Convert bytes to more readable units
-        container_stats['memory_usage_bytes', 'mean'] /= (1024 * 1024)  # MB
-        container_stats['memory_usage_bytes', 'max'] /= (1024 * 1024)  # MB
-        container_stats['memory_usage_bytes', 'std'] /= (1024 * 1024)  # MB
-        
-        container_stats['network_rx_bytes', 'mean'] /= (1024 * 1024)  # MB
-        container_stats['network_rx_bytes', 'max'] /= (1024 * 1024)  # MB
-        container_stats['network_rx_bytes', 'sum'] /= (1024 * 1024)  # MB
-        
-        container_stats['network_tx_bytes', 'mean'] /= (1024 * 1024)  # MB
-        container_stats['network_tx_bytes', 'max'] /= (1024 * 1024)  # MB
-        container_stats['network_tx_bytes', 'sum'] /= (1024 * 1024)  # MB
-        
-        container_stats['filesystem_usage_bytes', 'mean'] /= (1024 * 1024)  # MB
-        container_stats['filesystem_usage_bytes', 'max'] /= (1024 * 1024)  # MB
+        container_stats = all_data.groupby('container_name').agg(agg_dict)
         
         return container_stats
     
@@ -312,14 +335,14 @@ class MicroservicesMonitor:
         container_dir = f"{self.output_dir}/containers/{safe_name}"
         
         if not os.path.exists(container_dir):
-            print(f"No historical data found for container: {container_name}")
+            # print(f"No historical data found for container: {container_name}")
             return pd.DataFrame()
         
         # Get the single CSV file for this container
         csv_filename = f"{container_dir}/{safe_name}.csv"
         
         if not os.path.exists(csv_filename):
-            print(f"No CSV file found for container: {container_name}")
+            # print(f"No CSV file found for container: {container_name}")
             return pd.DataFrame()
         
         # Load the CSV file
@@ -337,13 +360,13 @@ if __name__ == "__main__":
     monitor = MicroservicesMonitor()
     
     # Option 1: Collect metrics once
-    print("Collecting current metrics...")
+    # print("Collecting current metrics...")
     current_metrics = monitor.collect_container_metrics()
-    print(current_metrics)
+    # print(current_metrics)
     
     # Option 2: Monitor continuously for 10 minutes (600 seconds), checking every minute
     # Uncomment the next line to run continuous monitoring
-    monitor.monitor_continuously(interval=5, duration=600)
+    monitor.monitor_continuously(interval=0.5, duration=600)
     
     # Option 3: Monitor indefinitely, checking every 5 minutes
     # Uncomment the next line to run indefinite monitoring

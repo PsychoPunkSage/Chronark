@@ -7,7 +7,7 @@ roles = {
     "user": {"activity": ["GET"]}
 }
 
-allow {
+allow if {
     role := input.roles[_]
     permissions := roles[role]
     methods := permissions[input.path]
