@@ -76,7 +76,24 @@ services:
       - vittmitra
     depends_on:
       - prometheus
-    
+
+  data-uploader:
+    build:
+      context: ./src/api
+      dockerfile: Dockerfile.api
+    container_name: data-uploader
+    networks:
+      - vittmitra
+    environment:
+      # Use internal Docker service names
+      - OFFER_URL=http://ms-offer-banner:5002/updateAd
+      - CONTACTS_URL=https://ms-contacts:5003/updateContacts
+      - FAQ_URL=https://ms-contacts:5003/updateFaqs
+      - INDEX_URL=http://ms-search:5004/updateIndex
+    depends_on:
+      - offer-banner
+      - contacts
+      - search 
   # redis-ob-ms:
   #   build:
   #     context: scripts/Redis/CVE-2023-45145
