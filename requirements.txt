@@ -1,5 +1,6 @@
+pandas==2.2.3
+pandas==2.2.3
 boto3==1.36.12
 paramiko==3.4.1
-matplotlib==3.10.1
-pandas==2.2.3
 requests==2.32.2
+matplotlib==3.10.1
