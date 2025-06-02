@@ -194,7 +194,7 @@ services:
     image: mongo:7.0
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 10
       placement:
         constraints:
           - node.role == worker
@@ -662,7 +662,7 @@ services:
     image: psychopunksage/authentication:latest
     deploy:
       mode: replicated
-      replicas: 3  # One per worker node
+      replicas: 10  # One per worker node
       placement:
         # max_replicas_per_node: 1
         constraints:
@@ -703,7 +703,7 @@ services:
     image: psychopunksage/customer-info:latest
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 10
       placement:
         constraints:
           - node.role == worker
