@@ -27,11 +27,11 @@ services:
   haproxy:
     image: psychopunksage/haproxy:latest
     deploy:
-      mode: replicated
-      replicas: 3
-      placement:
-        constraints:
-          - node.role == worker
+      mode: global
+      # replicas: 3
+      # placement:
+      #   constraints:
+      #     - node.role == worker
       restart_policy:
         condition: on-failure 
     ports:
