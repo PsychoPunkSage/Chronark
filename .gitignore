@@ -1,5 +1,6 @@
 .env
 .btp/
+.chronark/
 redis-0/
 redis-1/
 redis-2/
