@@ -43,24 +43,24 @@ class OrganizedSwarmMonitor:
 
         # Microservices we're interested in (from your service list)
         self.target_services = {
-            "authentication",
-            "business-lending",
-            "contacts",
-            "credit-card",
-            "customer-activity",
-            "customer-info",
-            "deposit-account",
-            "frontend-1",
-            "frontend-2",
-            "frontend-3",
-            "investment",
-            "mortgage",
-            "offer-banner",
-            "payments",
-            "personal-lending",
-            "search",
-            "wealth-mgmt",
-            "opa",
+            "authentication"
+            # "business-lending",
+            # "contacts",
+            # "credit-card",
+            # "customer-activity",
+            # "customer-info",
+            # "deposit-account",
+            # "frontend-1",
+            # "frontend-2",
+            # "frontend-3",
+            # "investment",
+            # "mortgage",
+            # "offer-banner",
+            # "payments",
+            # "personal-lending",
+            # "search",
+            # "wealth-mgmt",
+            # "opa",
         }
 
         print(f"Monitoring {len(self.target_services)} microservices")
