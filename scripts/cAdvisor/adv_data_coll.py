@@ -312,11 +312,7 @@ class FastAuthMonitor:
                 time_range = pd.to_datetime(combined_df["timestamp"])
                 duration = (time_range.max() - time_range.min()).total_seconds()
                 print(f"Monitoring duration: {duration:.1f} seconds")
-                print(
-                    f"Data collection rate: {
-                        len(combined_df) / duration:.2f
-                    } records/second"
-                )
+                print(f"Data collection rate: {len(combined_df) / duration:.2f} records/second")
 
         return node_file_info
 
