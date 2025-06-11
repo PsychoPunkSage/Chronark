@@ -23,14 +23,14 @@ class FastAuthMonitor:
         self.timeout = 1.5  # Very short timeout
         self.max_workers = len(cadvisor_nodes)  # One thread per node
 
-        # Create output directory
+        # Create single output directory
         os.makedirs("DATA/authentication", exist_ok=True)
 
         print("⚡ Fast Authentication Monitor")
         print(f"   Nodes: {len(cadvisor_nodes)}")
         print(f"   Timeout: {self.timeout}s per node")
         print(f"   Workers: {self.max_workers}")
-        print("   Output: DATA/authentication/fast_auth_metrics.csv")
+        print("   Output: DATA/authentication/node_<IP>.csv")
 
     def get_auth_containers_fast(self, node_ip):
         """Get auth containers with very short timeout."""
@@ -194,10 +194,8 @@ class FastAuthMonitor:
             auth_df, successful, failed = self.collect_auth_metrics_parallel()
 
             if not auth_df.empty:
-                # Save to CSV (append mode)
-                csv_file = "DATA/authentication/fast_auth_metrics.csv"
-                file_exists = os.path.isfile(csv_file)
-                auth_df.to_csv(csv_file, mode="a", index=False, header=not file_exists)
+                # Save to separate CSV files per node
+                self.save_node_data(auth_df)
 
                 # Calculate real-time stats
                 total_containers = len(auth_df)
@@ -236,41 +234,91 @@ class FastAuthMonitor:
             elif total_iteration_time > interval:
                 print(f" ⚠️ Slow iteration: {total_iteration_time:.3f}s > {interval}s")
 
-    def get_summary_stats(self):
-        """Print summary of collected data."""
-        csv_file = "DATA/authentication/fast_auth_metrics.csv"
-
-        if not os.path.exists(csv_file):
-            print("No data collected yet.")
+    def save_node_data(self, auth_df):
+        """Save authentication data with separate files per node IP - no subfolders."""
+        if auth_df.empty:
             return
 
-        try:
-            df = pd.read_csv(csv_file)
+        # Group data by node IP
+        for node_ip, node_data in auth_df.groupby("node_ip"):
+            # Create filename directly in authentication folder
+            safe_ip = node_ip.replace(".", "_")
+            csv_file = f"DATA/authentication/node_{safe_ip}.csv"
 
-            print("\n📊 AUTHENTICATION MONITORING SUMMARY")
-            print("=" * 50)
-            print(f"Total records: {len(df)}")
-            print(f"Unique containers: {df['container_id'].nunique()}")
-            print(
-                f"Monitoring period: {df['timestamp'].min()} to {df['timestamp'].max()}"
-            )
-            print(f"Average CPU usage: {df['cpu_cores'].mean():.6f} cores")
-            print(f"Average memory usage: {df['memory_mb'].mean():.2f} MB")
-            print(f"Peak memory usage: {df['memory_mb'].max():.2f} MB")
-            print(f"Data file size: {os.path.getsize(csv_file) / 1024:.1f} KB")
+            # Check if file exists for header management
+            file_exists = os.path.isfile(csv_file)
 
-            # Per-node statistics
-            print("\nPer-node container distribution:")
-            node_counts = (
-                df.groupby("node_ip")["container_id"]
-                .nunique()
-                .sort_values(ascending=False)
-            )
-            for node, count in node_counts.items():
-                print(f"  {node}: {count} containers")
+            # Append to node-specific CSV file
+            node_data.to_csv(csv_file, mode="a", index=False, header=not file_exists)
 
-        except Exception as e:
-            print(f"Error reading summary: {e}")
+    def get_combined_summary_stats(self):
+        """Get summary stats from all node files."""
+        all_dataframes = []
+        node_file_info = []
+
+        print("\n📊 AUTHENTICATION MONITORING SUMMARY (Per Node)")
+        print("=" * 70)
+
+        for node_ip in self.cadvisor_nodes:
+            safe_ip = node_ip.replace(".", "_")
+            csv_file = f"DATA/authentication/node_{safe_ip}.csv"
+
+            if os.path.exists(csv_file):
+                try:
+                    df = pd.read_csv(csv_file)
+                    all_dataframes.append(df)
+
+                    file_size = os.path.getsize(csv_file) / 1024  # KB
+                    node_file_info.append(
+                        {
+                            "node_ip": node_ip,
+                            "records": len(df),
+                            "containers": df["container_id"].nunique(),
+                            "avg_cpu": df["cpu_cores"].mean(),
+                            "avg_memory": df["memory_mb"].mean(),
+                            "peak_memory": df["memory_mb"].max(),
+                            "file_size_kb": file_size,
+                        }
+                    )
+
+                    print(f"Node {node_ip}:")
+                    print(f"  📁 File: {csv_file}")
+                    print(f"  📊 Records: {len(df)}")
+                    print(f"  🐳 Containers: {df['container_id'].nunique()}")
+                    print(f"  💻 Avg CPU: {df['cpu_cores'].mean():.6f} cores")
+                    print(f"  💾 Avg Memory: {df['memory_mb'].mean():.2f} MB")
+                    print(f"  📈 Peak Memory: {df['memory_mb'].max():.2f} MB")
+                    print(f"  💽 File Size: {file_size:.1f} KB")
+                    print()
+
+                except Exception as e:
+                    print(f"Node {node_ip}: Error reading file - {e}")
+            else:
+                print(f"Node {node_ip}: No data file found")
+
+        # Combined statistics
+        if all_dataframes:
+            combined_df = pd.concat(all_dataframes, ignore_index=True)
+
+            print("📈 COMBINED STATISTICS:")
+            print("=" * 40)
+            print(f"Total records across all nodes: {len(combined_df)}")
+            print(f"Total unique containers: {combined_df['container_id'].nunique()}")
+            print(f"Overall avg CPU usage: {combined_df['cpu_cores'].mean():.6f} cores")
+            print(f"Overall avg memory usage: {combined_df['memory_mb'].mean():.2f} MB")
+            print(f"Highest memory usage: {combined_df['memory_mb'].max():.2f} MB")
+
+            if len(combined_df) > 1:
+                time_range = pd.to_datetime(combined_df["timestamp"])
+                duration = (time_range.max() - time_range.min()).total_seconds()
+                print(f"Monitoring duration: {duration:.1f} seconds")
+                print(
+                    f"Data collection rate: {
+                        len(combined_df) / duration:.2f
+                    } records/second"
+                )
+
+        return node_file_info
 
 
 # Usage example and main execution
@@ -299,6 +347,14 @@ if __name__ == "__main__":
 
     finally:
         # Show summary of collected data
-        monitor.get_summary_stats()
-        print("\n💾 Data saved to: DATA/authentication/fast_auth_metrics.csv")
+        node_info = monitor.get_combined_summary_stats()
+
+        print("\n💾 Data Files Created:")
+        for node_ip in SWARM_NODES:
+            safe_ip = node_ip.replace(".", "_")
+            csv_file = f"DATA/authentication/node_{safe_ip}.csv"
+            if os.path.exists(csv_file):
+                size = os.path.getsize(csv_file) / 1024
+                print(f"   📄 {csv_file} ({size:.1f} KB)")
+
         print("✅ Fast monitoring session completed!")
