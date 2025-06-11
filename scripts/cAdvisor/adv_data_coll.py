@@ -167,21 +167,18 @@ class OrganizedSwarmMonitor:
             total_cpu_usage_ns = cpu_usage.get("total", 0)
             prev_total_cpu_usage_ns = prev_cpu_usage.get("total", 0)
             cpu_usage_delta_ns = total_cpu_usage_ns - prev_total_cpu_usage_ns
-            cpu_cores = round(cpu_usage_delta_ns /
-                              (time_delta_seconds * 1e9), 6)
+            cpu_cores = round(cpu_usage_delta_ns / (time_delta_seconds * 1e9), 6)
 
             # Memory metrics
             memory_data = latest_stats.get("memory", {})
             memory_usage_bytes = memory_data.get("usage", 0)
             memory_usage_mb = round(memory_usage_bytes / (1024 * 1024), 3)
             memory_working_set_bytes = memory_data.get("working_set", 0)
-            memory_working_set_mb = round(
-                memory_working_set_bytes / (1024 * 1024), 3)
+            memory_working_set_mb = round(memory_working_set_bytes / (1024 * 1024), 3)
 
             memory_limit = memory_data.get("limit", 0)
             memory_limit_mb = (
-                round(memory_limit / (1024 * 1024),
-                      3) if memory_limit > 0 else 0
+                round(memory_limit / (1024 * 1024), 3) if memory_limit > 0 else 0
             )
             memory_percent = (
                 round((memory_working_set_bytes / memory_limit * 100), 3)
@@ -195,13 +192,11 @@ class OrganizedSwarmMonitor:
 
             rx_bytes = network_data.get("rx_bytes", 0)
             prev_rx_bytes = prev_network_data.get("rx_bytes", 0)
-            rx_bytes_per_sec = round(
-                (rx_bytes - prev_rx_bytes) / time_delta_seconds, 3)
+            rx_bytes_per_sec = round((rx_bytes - prev_rx_bytes) / time_delta_seconds, 3)
 
             tx_bytes = network_data.get("tx_bytes", 0)
             prev_tx_bytes = prev_network_data.get("tx_bytes", 0)
-            tx_bytes_per_sec = round(
-                (tx_bytes - prev_tx_bytes) / time_delta_seconds, 3)
+            tx_bytes_per_sec = round((tx_bytes - prev_tx_bytes) / time_delta_seconds, 3)
 
             # Filesystem metrics
             filesystem_data = latest_stats.get("filesystem", [])
@@ -269,8 +264,7 @@ class OrganizedSwarmMonitor:
                 # Create filename for this container instance
                 safe_container_key = self.sanitize_name(container_key)
                 csv_filename = (
-                    service_dir /
-                    f"{service_name}_instance_{safe_container_key}.csv"
+                    service_dir / f"{service_name}_instance_{safe_container_key}.csv"
                 )
 
                 # Convert to DataFrame
@@ -280,8 +274,7 @@ class OrganizedSwarmMonitor:
                 file_exists = csv_filename.exists()
 
                 # Append to CSV
-                df.to_csv(csv_filename, mode="a",
-                          index=False, header=not file_exists)
+                df.to_csv(csv_filename, mode="a", index=False, header=not file_exists)
 
     def collect_all_metrics(self):
         """Collect metrics from all nodes and containers."""
@@ -337,8 +330,7 @@ class OrganizedSwarmMonitor:
 
             iteration_start = time.time()
             print(
-                f"\n[{elapsed:8.1f}s] Iteration {
-                    iteration:4d} - Collecting metrics..."
+                f"\n[{elapsed:8.1f}s] Iteration {iteration:4d} - Collecting metrics..."
             )
 
             # Collect metrics from all containers
@@ -352,15 +344,13 @@ class OrganizedSwarmMonitor:
                 df = pd.DataFrame(all_metrics)
                 service_counts = df.groupby("service_name").size()
 
-                print(f"          Total containers monitored: {
-                      len(all_metrics)}")
+                print(f"          Total containers monitored: {len(all_metrics)}")
                 print(f"          Services active: {len(service_counts)}")
 
                 # Show top 5 services by container count
                 top_services = service_counts.head(5)
                 for service, count in top_services.items():
-                    avg_cpu = df[df["service_name"] ==
-                                 service]["cpu_cores"].mean()
+                    avg_cpu = df[df["service_name"] == service]["cpu_cores"].mean()
                     avg_mem = df[df["service_name"] == service][
                         "memory_working_set_mb"
                     ].mean()
@@ -407,8 +397,7 @@ class OrganizedSwarmMonitor:
                     )
 
         print(f"{'=' * 50}")
-        print(f"Total: {total_files} files | {
-              total_size / 1024 / 1024:.2f} MB")
+        print(f"Total: {total_files} files | {total_size / 1024 / 1024:.2f} MB")
         print(f"Data location: {self.base_dir.absolute()}")
 
 
@@ -426,8 +415,8 @@ if __name__ == "__main__":
     #     "34.47.210.45",
     # ]
     SWARM_NODES = [
-        "10.160.0.8",   # quasar-worker-0
-        "10.160.0.9",   # quasar-worker-1
+        "10.160.0.8",  # quasar-worker-0
+        "10.160.0.9",  # quasar-worker-1
         "10.160.0.10",  # quasar-worker-2
         "10.160.0.21",  # quasar-worker-3
         "10.160.0.12",  # quasar-worker-4
@@ -436,12 +425,12 @@ if __name__ == "__main__":
         "10.160.0.22",  # quasar-worker-7
     ]
 
-  # Create monitor
-  monitor = OrganizedSwarmMonitor(
-       cadvisor_nodes=SWARM_NODES, port=9091, base_dir="DATA"
-       )
+    # Create monitor
+    monitor = OrganizedSwarmMonitor(
+        cadvisor_nodes=SWARM_NODES, port=9091, base_dir="DATA"
+    )
 
-   try:
+    try:
         # Monitor for 10 minutes during load test
         monitor.monitor_continuously(interval=0.5, duration=600)
     except KeyboardInterrupt:
