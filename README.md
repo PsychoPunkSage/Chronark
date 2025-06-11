@@ -327,10 +327,6 @@ Performance benchmarks across major cloud providers:
 | GCP      | 255.05s        | 92%           | 103.06 MB    | 15ms           |
 | Azure    | 220.93s        | 94%           | 95.45 MB     | 14ms           |
 
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
 ### Development Setup
 
 ```bash
