@@ -36,16 +36,16 @@ services:
     #image: google/cadvisor:latest
     container_name: cadvisor
     volumes:
-    - /:/rootfs:ro
-    - /var/run:/var/run:rw
-    - /sys:/sys:ro
-    - /var/lib/docker/:/var/lib/docker:ro
-    - /sys/fs/cgroup:/sys/fs/cgroup:ro
-    - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     deploy:
       mode: global
     ports:
-    - 9091:8080 # Change the host port to 9091 and keep the container port as 8080
+      - 9091:8080 # Change the host port to 9091 and keep the container port as 8080
     # labels:
     # - com.mycompany.role=cadvisor
     restart: always
@@ -93,7 +93,7 @@ services:
     depends_on:
       - offer-banner
       - contacts
-      - search 
+      - search
   # redis-ob-ms:
   #   build:
   #     context: scripts/Redis/CVE-2023-45145
@@ -157,7 +157,7 @@ services:
   #   volumes:
   #     # - ./src/contact/conf/:/etc/mongo
   #     - mongo_data:/data/db
-  
+
   mongo:
     # image: mongo:7.0
     image: mongo:4.2.2
@@ -186,7 +186,7 @@ services:
       - vittmitra
     volumes:
       - mongo_auth:/data/db
-  
+
   mongo-customer-info:
     image: mongo:7.0
     container_name: db-mongo-customer-info
@@ -199,7 +199,7 @@ services:
       - vittmitra
     volumes:
       - mongodb_cus_info:/data/db
-  
+
   mongo-customer-activity:
     image: mongo:7.0
     container_name: db-mongo-customer-activity
@@ -264,7 +264,7 @@ services:
       - vittmitra
     volumes:
       - mongodb_investment:/data/db
-  
+
   mongo-credit-card:
     image: mongo:7.0
     container_name: db-mongo-credit-card
@@ -277,7 +277,7 @@ services:
       - vittmitra
     volumes:
       - mongodb_credit_card:/data/db
- 
+
   mongo-wealth-mgmt:
     image: mongo:7.0
     container_name: db-mongo-wealth-mgmt
@@ -313,7 +313,7 @@ services:
       - "11211:11211"
     networks:
       - vittmitra
-  
+
   memcached-bl:
     image: memcached:latest
     container_name: db-memcached-business-lending
@@ -756,7 +756,7 @@ services:
       - jaeger
       - customer-info
       - customer-activity
-  
+
   wealth-mgmt:
     build:
       context: ./src/wealth_mgmt
@@ -811,14 +811,14 @@ services:
     environment:
       - PROXY=1
       - BACKEND=http://haproxy:80
-      - PARANOIA=1  # Basic protection level
+      - PARANOIA=1 # Basic protection level
       - ANOMALY_INBOUND=5
       - ANOMALY_OUTBOUND=4
     networks:
       - vittmitra
     depends_on:
       - haproxy
-      
+
   frontend-1:
     build:
       context: ./src/frontend
