@@ -1,3 +1,4 @@
+six==1.16.0
 Flask==3.0.3
 redis==5.0.4
 pymongo==4.7.2
