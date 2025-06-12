@@ -1,131 +1,66 @@
-import re
-import threading
+"""
+Fast Authentication Monitor - Optimized for Real-Time Monitoring
+Collects authentication container metrics every 1 second with minimal delays.
+"""
+
+import os
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from pathlib import Path
 
 import pandas as pd
 import requests
 
 
-class OrganizedSwarmMonitor:
-    """
-    Monitor microservices across Docker Swarm with organized data storage.
+class FastAuthMonitor:
+    """Ultra-fast authentication monitor with aggressive timeouts and parallel collection."""
 
-    Data Structure:
-    DATA/
-    ├── authentication/
-    │   ├── auth_instance_node1_container123.csv
-    │   ├── auth_instance_node2_container456.csv
-    │   └── ...
-    ├── customer-info/
-    │   ├── customer-info_instance_node1_container789.csv
-    │   └── ...
-    ├── payments/
-    └── ...
-    """
-
-    def __init__(self, cadvisor_nodes, port=9091, base_dir="DATA"):
-        """
-        Initialize the organized swarm monitor.
-
-        Args:
-            cadvisor_nodes: List of node IPs where cAdvisor is running
-            port: cAdvisor port (default: 9091)
-            base_dir: Base directory for data storage (default: "DATA")
-        """
+    def __init__(self, cadvisor_nodes, port=9091):
         self.cadvisor_nodes = cadvisor_nodes
         self.port = port
-        self.base_dir = Path(base_dir)
 
-        # Create base DATA directory
-        self.base_dir.mkdir(exist_ok=True)
+        # Aggressive timeout settings for speed
+        self.timeout = 1.5  # Very short timeout
+        self.max_workers = len(cadvisor_nodes)  # One thread per node
 
-        # Microservices we're interested in (from your service list)
-        self.target_services = {
-            "authentication"
-            # "business-lending",
-            # "contacts",
-            # "credit-card",
-            # "customer-activity",
-            # "customer-info",
-            # "deposit-account",
-            # "frontend-1",
-            # "frontend-2",
-            # "frontend-3",
-            # "investment",
-            # "mortgage",
-            # "offer-banner",
-            # "payments",
-            # "personal-lending",
-            # "search",
-            # "wealth-mgmt",
-            # "opa",
-        }
+        # Create single output directory
+        os.makedirs("DATA/authentication", exist_ok=True)
 
-        print(f"Monitoring {len(self.target_services)} microservices")
-        print(f"Data will be stored in: {self.base_dir.absolute()}")
+        print("⚡ Fast Authentication Monitor")
+        print(f"   Nodes: {len(cadvisor_nodes)}")
+        print(f"   Timeout: {self.timeout}s per node")
+        print(f"   Workers: {self.max_workers}")
+        print("   Output: DATA/authentication/node_<IP>.csv")
 
-    def sanitize_name(self, name):
-        """Sanitize container/service name for use in filenames."""
-        # Remove problematic characters and replace with underscores
-        return re.sub(r"[^\w\-_.]", "_", name)
-
-    def extract_service_name(self, container_name):
-        """
-        Extract service name from container name.
-        Examples:
-        - 'my-app_authentication.1.abc123' -> 'authentication'
-        - 'my-app_customer-info.2.def456' -> 'customer-info'
-        """
-        # Remove my-app_ prefix and instance suffix
-        if container_name.startswith("my-app_"):
-            service_part = container_name[7:]  # Remove 'my-app_'
-            # Split by '.' and take the first part
-            service_name = service_part.split(".")[0]
-            return service_name
-        return container_name
-
-    def get_containers_from_node(self, node_ip):
-        """Get containers from a specific node."""
+    def get_auth_containers_fast(self, node_ip):
+        """Get auth containers with very short timeout."""
         url = f"http://{node_ip}:{self.port}/api/v1.3/docker"
         try:
-            response = requests.get(url, timeout=10)
+            # Super short timeout for speed
+            response = requests.get(url, timeout=self.timeout)
             response.raise_for_status()
             containers = response.json()
-            print(f"✓ {node_ip}: {len(containers)} containers")
-            return node_ip, containers
-        except Exception as e:
-            print(f"✗ {node_ip}: {e}")
-            return node_ip, {}
 
-    def get_all_containers(self):
-        """Get containers from all nodes in parallel."""
-        all_containers = {}
+            # Filter for authentication containers only
+            auth_containers = {}
+            for container_id, container_data in containers.items():
+                if "aliases" in container_data and container_data["aliases"]:
+                    container_name = container_data["aliases"][0]
+                    # Look for authentication in container name
+                    if "authentication" in container_name.lower():
+                        auth_containers[container_id] = container_data
 
-        def fetch_node(node_ip):
-            node_ip, containers = self.get_containers_from_node(node_ip)
-            all_containers[node_ip] = containers
+            return node_ip, auth_containers, True
 
-        # Fetch from all nodes in parallel
-        threads = []
-        for node in self.cadvisor_nodes:
-            t = threading.Thread(target=fetch_node, args=(node,))
-            t.start()
-            threads.append(t)
+        except Exception:
+            # Return failure but don't print error to keep output clean
+            return node_ip, {}, False
 
-        # Wait for completion
-        for t in threads:
-            t.join()
-
-        return all_containers
-
-    def extract_container_metrics(
+    def extract_auth_metrics_fast(
         self, container_id, container_data, timestamp, node_ip
     ):
-        """Extract metrics from a single container."""
+        """Fast metric extraction for auth containers."""
         try:
-            # Need at least 2 stats for rate calculation
             if "stats" not in container_data or len(container_data["stats"]) < 2:
                 return None
 
@@ -133,18 +68,13 @@ class OrganizedSwarmMonitor:
             prev_stats = container_data["stats"][-2]
 
             # Get container name
-            container_name = "unknown"
-            if "aliases" in container_data and container_data["aliases"]:
-                container_name = container_data["aliases"][0]
+            container_name = (
+                container_data["aliases"][0]
+                if container_data.get("aliases")
+                else "unknown"
+            )
 
-            # Extract service name
-            service_name = self.extract_service_name(container_name)
-
-            # Only monitor our target services
-            if service_name not in self.target_services:
-                return None
-
-            # Calculate time delta
+            # Quick time delta calculation
             try:
                 latest_time = datetime.strptime(
                     latest_stats.get("timestamp", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -152,268 +82,244 @@ class OrganizedSwarmMonitor:
                 prev_time = datetime.strptime(
                     prev_stats.get("timestamp", ""), "%Y-%m-%dT%H:%M:%S.%fZ"
                 )
-                time_delta_seconds = (latest_time - prev_time).total_seconds()
-                if time_delta_seconds <= 0:
-                    time_delta_seconds = 1
+                time_delta = (latest_time - prev_time).total_seconds()
+                if time_delta <= 0:
+                    time_delta = 1
             except:
-                time_delta_seconds = 1
+                time_delta = 1
 
-            # CPU metrics
-            cpu_data = latest_stats.get("cpu", {})
-            prev_cpu_data = prev_stats.get("cpu", {})
-            cpu_usage = cpu_data.get("usage", {})
-            prev_cpu_usage = prev_cpu_data.get("usage", {})
+            # Essential metrics only for speed
+            cpu_data = latest_stats.get("cpu", {}).get("usage", {})
+            prev_cpu_data = prev_stats.get("cpu", {}).get("usage", {})
+            cpu_delta = cpu_data.get("total", 0) - prev_cpu_data.get("total", 0)
+            cpu_cores = round(cpu_delta / (time_delta * 1e9), 6)
 
-            total_cpu_usage_ns = cpu_usage.get("total", 0)
-            prev_total_cpu_usage_ns = prev_cpu_usage.get("total", 0)
-            cpu_usage_delta_ns = total_cpu_usage_ns - prev_total_cpu_usage_ns
-            cpu_cores = round(cpu_usage_delta_ns / (time_delta_seconds * 1e9), 6)
-
-            # Memory metrics
-            memory_data = latest_stats.get("memory", {})
-            memory_usage_bytes = memory_data.get("usage", 0)
-            memory_usage_mb = round(memory_usage_bytes / (1024 * 1024), 3)
-            memory_working_set_bytes = memory_data.get("working_set", 0)
-            memory_working_set_mb = round(memory_working_set_bytes / (1024 * 1024), 3)
-
-            memory_limit = memory_data.get("limit", 0)
-            memory_limit_mb = (
-                round(memory_limit / (1024 * 1024), 3) if memory_limit > 0 else 0
-            )
-            memory_percent = (
-                round((memory_working_set_bytes / memory_limit * 100), 3)
-                if memory_limit > 0
-                else 0
+            # Memory in MB
+            memory_mb = round(
+                latest_stats.get("memory", {}).get("working_set", 0) / (1024 * 1024), 2
             )
 
             # Network metrics
             network_data = latest_stats.get("network", {})
             prev_network_data = prev_stats.get("network", {})
-
-            rx_bytes = network_data.get("rx_bytes", 0)
-            prev_rx_bytes = prev_network_data.get("rx_bytes", 0)
-            rx_bytes_per_sec = round((rx_bytes - prev_rx_bytes) / time_delta_seconds, 3)
-
-            tx_bytes = network_data.get("tx_bytes", 0)
-            prev_tx_bytes = prev_network_data.get("tx_bytes", 0)
-            tx_bytes_per_sec = round((tx_bytes - prev_tx_bytes) / time_delta_seconds, 3)
-
-            # Filesystem metrics
-            filesystem_data = latest_stats.get("filesystem", [])
-            total_fs_usage = sum(fs.get("usage", 0) for fs in filesystem_data)
-            fs_usage_mb = round(total_fs_usage / (1024 * 1024), 3)
+            rx_rate = round(
+                (network_data.get("rx_bytes", 0) - prev_network_data.get("rx_bytes", 0))
+                / time_delta,
+                2,
+            )
+            tx_rate = round(
+                (network_data.get("tx_bytes", 0) - prev_network_data.get("tx_bytes", 0))
+                / time_delta,
+                2,
+            )
 
             return {
                 "timestamp": timestamp,
                 "node_ip": node_ip,
-                "container_id": container_id[:12],  # Short container ID
+                "container_id": container_id[:12],
                 "container_name": container_name,
-                "service_name": service_name,
                 "cpu_cores": cpu_cores,
-                "memory_usage_mb": memory_usage_mb,
-                "memory_working_set_mb": memory_working_set_mb,
-                "memory_limit_mb": memory_limit_mb,
-                "memory_percent": memory_percent,
-                "network_rx_bytes_per_sec": rx_bytes_per_sec,
-                "network_tx_bytes_per_sec": tx_bytes_per_sec,
-                "filesystem_usage_mb": fs_usage_mb,
-                "raw_memory_bytes": memory_usage_bytes,
-                "raw_network_rx_bytes": rx_bytes,
-                "raw_network_tx_bytes": tx_bytes,
+                "memory_mb": memory_mb,
+                "rx_bytes_per_sec": rx_rate,
+                "tx_bytes_per_sec": tx_rate,
             }
 
-        except Exception as e:
-            print(f"Error extracting metrics for {container_id}: {e}")
+        except Exception:
             return None
 
-    def save_container_data(self, metrics_list):
-        """
-        Save container data organized by service and instance.
-
-        Args:
-            metrics_list: List of container metrics dictionaries
-        """
-        if not metrics_list:
-            return
-
-        # Group by service and then by container
-        service_containers = {}
-        for metric in metrics_list:
-            service_name = metric["service_name"]
-            container_id = metric["container_id"]
-            node_ip = metric["node_ip"]
-
-            if service_name not in service_containers:
-                service_containers[service_name] = {}
-
-            # Create unique key for this container instance
-            container_key = f"{container_id}_{node_ip}"
-
-            if container_key not in service_containers[service_name]:
-                service_containers[service_name][container_key] = []
-
-            service_containers[service_name][container_key].append(metric)
-
-        # Save each container's data to separate CSV files
-        for service_name, containers in service_containers.items():
-            # Create service directory
-            service_dir = self.base_dir / service_name
-            service_dir.mkdir(exist_ok=True)
-
-            for container_key, container_metrics in containers.items():
-                # Create filename for this container instance
-                safe_container_key = self.sanitize_name(container_key)
-                csv_filename = (
-                    service_dir / f"{service_name}_instance_{safe_container_key}.csv"
-                )
-
-                # Convert to DataFrame
-                df = pd.DataFrame(container_metrics)
-
-                # Check if file exists to handle headers
-                file_exists = csv_filename.exists()
-
-                # Append to CSV
-                df.to_csv(csv_filename, mode="a", index=False, header=not file_exists)
-
-    def collect_all_metrics(self):
-        """Collect metrics from all nodes and containers."""
-        all_node_containers = self.get_all_containers()
-
-        if not all_node_containers:
-            print("No containers found across swarm")
-            return []
-
-        all_metrics = []
+    def collect_auth_metrics_parallel(self):
+        """Collect auth metrics using parallel execution for maximum speed."""
         timestamp = datetime.now().isoformat()
+        all_metrics = []
+        successful_nodes = 0
+        failed_nodes = 0
 
-        for node_ip, containers in all_node_containers.items():
-            if not containers:
-                continue
+        # Use ThreadPoolExecutor for parallel collection from all nodes
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            # Submit all requests simultaneously
+            future_to_node = {
+                executor.submit(self.get_auth_containers_fast, node): node
+                for node in self.cadvisor_nodes
+            }
 
-            for container_id, container_data in containers.items():
-                metrics = self.extract_container_metrics(
-                    container_id, container_data, timestamp, node_ip
-                )
-                if metrics:
-                    all_metrics.append(metrics)
+            # Collect results as they complete (don't wait for slow nodes)
+            for future in as_completed(future_to_node, timeout=self.timeout + 0.5):
+                node_ip = future_to_node[future]
+                try:
+                    node_ip, auth_containers, success = future.result()
 
-        return all_metrics
+                    if success and auth_containers:
+                        successful_nodes += 1
+                        print(f"✓ {node_ip}: {len(auth_containers)} auth", end=" ")
 
-    def monitor_continuously(self, interval=0.5, duration=None):
-        """
-        Monitor all microservices continuously.
+                        # Extract metrics from auth containers
+                        for container_id, container_data in auth_containers.items():
+                            metrics = self.extract_auth_metrics_fast(
+                                container_id, container_data, timestamp, node_ip
+                            )
+                            if metrics:
+                                all_metrics.append(metrics)
+                    else:
+                        failed_nodes += 1
+                        print(f"✗ {node_ip}", end=" ")
 
-        Args:
-            interval: Collection interval in seconds
-            duration: Total duration in seconds (None for indefinite)
-        """
+                except Exception:
+                    failed_nodes += 1
+                    print(f"✗ {node_ip}", end=" ")
+
+        return pd.DataFrame(all_metrics), successful_nodes, failed_nodes
+
+    def monitor_auth_fast(self, interval=1.0, duration=600):
+        """Fast authentication monitoring with guaranteed timing intervals."""
         start_time = time.time()
         iteration = 0
 
-        print(f"\n{'=' * 70}")
-        print("Starting Swarm Monitoring")
-        print(f"Nodes: {len(self.cadvisor_nodes)}")
-        print(f"Target Services: {len(self.target_services)}")
-        print(f"Interval: {interval}s")
-        print(f"Duration: {duration}s" if duration else "Duration: Indefinite")
-        print(f"Data Directory: {self.base_dir.absolute()}")
-        print(f"{'=' * 70}")
+        print("\n⚡ Starting FAST Authentication Monitoring")
+        print(f"   Target interval: {interval}s")
+        print(f"   Duration: {duration}s")
+        print(f"   Total iterations: {int(duration / interval)}")
+        print("-" * 70)
 
         while True:
-            current_time = time.time()
-            elapsed = current_time - start_time
+            iteration_start_time = time.time()
+            elapsed = iteration_start_time - start_time
 
-            if duration is not None and elapsed > duration:
-                print(f"\n✓ Monitoring completed after {elapsed:.1f} seconds")
+            if elapsed > duration:
+                print(f"\n✅ Monitoring completed after {elapsed:.1f} seconds")
                 break
 
-            iteration_start = time.time()
-            print(
-                f"\n[{elapsed:8.1f}s] Iteration {iteration:4d} - Collecting metrics..."
-            )
+            # Collect metrics in parallel from all nodes
+            print(f"[{elapsed:6.1f}s] Iter {iteration:3d}: ", end="")
 
-            # Collect metrics from all containers
-            all_metrics = self.collect_all_metrics()
+            auth_df, successful, failed = self.collect_auth_metrics_parallel()
 
-            if all_metrics:
-                # Save organized data
-                self.save_container_data(all_metrics)
+            if not auth_df.empty:
+                # Save to separate CSV files per node
+                self.save_node_data(auth_df)
 
-                # Generate summary statistics
-                df = pd.DataFrame(all_metrics)
-                service_counts = df.groupby("service_name").size()
+                # Calculate real-time stats
+                total_containers = len(auth_df)
+                avg_cpu = auth_df["cpu_cores"].mean()
+                avg_memory = auth_df["memory_mb"].mean()
+                total_rx = auth_df["rx_bytes_per_sec"].sum()
+                total_tx = auth_df["tx_bytes_per_sec"].sum()
 
-                print(f"          Total containers monitored: {len(all_metrics)}")
-                print(f"          Services active: {len(service_counts)}")
+                # Collection timing
+                collection_time = time.time() - iteration_start_time
 
-                # Show top 5 services by container count
-                top_services = service_counts.head(5)
-                for service, count in top_services.items():
-                    avg_cpu = df[df["service_name"] == service]["cpu_cores"].mean()
-                    avg_mem = df[df["service_name"] == service][
-                        "memory_working_set_mb"
-                    ].mean()
-                    print(
-                        f"          {service:20s}: {count:2d} containers | "
-                        f"CPU: {avg_cpu:6.4f} | MEM: {avg_mem:6.1f} MB"
-                    )
+                print(
+                    f"| Auth: {total_containers:2d} containers | "
+                    f"CPU: {avg_cpu:7.5f} | MEM: {avg_memory:6.1f}MB | "
+                    f"Net: {total_rx:6.0f}↓{total_tx:6.0f}↑ | "
+                    f"Nodes: {successful}/{len(self.cadvisor_nodes)} | "
+                    f"Time: {collection_time:.3f}s"
+                )
             else:
-                print("          No target service containers found")
+                collection_time = time.time() - iteration_start_time
+                print(
+                    f"| No auth containers found | "
+                    f"Nodes: {successful}/{len(self.cadvisor_nodes)} | "
+                    f"Time: {collection_time:.3f}s"
+                )
 
             iteration += 1
 
-            # Calculate sleep time
-            collection_time = time.time() - iteration_start
-            sleep_time = max(0, interval - collection_time)
+            # Calculate precise sleep time to maintain exact interval
+            total_iteration_time = time.time() - iteration_start_time
+            sleep_time = max(0, interval - total_iteration_time)
 
+            # Only sleep if we have time left in the interval
             if sleep_time > 0:
                 time.sleep(sleep_time)
+            elif total_iteration_time > interval:
+                print(f" ⚠️ Slow iteration: {total_iteration_time:.3f}s > {interval}s")
 
-    def get_data_summary(self):
-        """Print a summary of collected data."""
-        print(f"\n{'=' * 50}")
-        print("DATA COLLECTION SUMMARY")
-        print(f"{'=' * 50}")
-
-        if not self.base_dir.exists():
-            print("No data directory found.")
+    def save_node_data(self, auth_df):
+        """Save authentication data with separate files per node IP - no subfolders."""
+        if auth_df.empty:
             return
 
-        total_files = 0
-        total_size = 0
+        # Group data by node IP
+        for node_ip, node_data in auth_df.groupby("node_ip"):
+            # Create filename directly in authentication folder
+            safe_ip = node_ip.replace(".", "_")
+            csv_file = f"DATA/authentication/node_{safe_ip}.csv"
 
-        for service_dir in self.base_dir.iterdir():
-            if service_dir.is_dir():
-                csv_files = list(service_dir.glob("*.csv"))
-                if csv_files:
-                    service_size = sum(f.stat().st_size for f in csv_files)
-                    total_files += len(csv_files)
-                    total_size += service_size
+            # Check if file exists for header management
+            file_exists = os.path.isfile(csv_file)
 
-                    print(
-                        f"{service_dir.name:20s}: {len(csv_files):3d} files | "
-                        f"{service_size / 1024 / 1024:6.2f} MB"
+            # Append to node-specific CSV file
+            node_data.to_csv(csv_file, mode="a", index=False, header=not file_exists)
+
+    def get_combined_summary_stats(self):
+        """Get summary stats from all node files."""
+        all_dataframes = []
+        node_file_info = []
+
+        print("\n📊 AUTHENTICATION MONITORING SUMMARY (Per Node)")
+        print("=" * 70)
+
+        for node_ip in self.cadvisor_nodes:
+            safe_ip = node_ip.replace(".", "_")
+            csv_file = f"DATA/authentication/node_{safe_ip}.csv"
+
+            if os.path.exists(csv_file):
+                try:
+                    df = pd.read_csv(csv_file)
+                    all_dataframes.append(df)
+
+                    file_size = os.path.getsize(csv_file) / 1024  # KB
+                    node_file_info.append(
+                        {
+                            "node_ip": node_ip,
+                            "records": len(df),
+                            "containers": df["container_id"].nunique(),
+                            "avg_cpu": df["cpu_cores"].mean(),
+                            "avg_memory": df["memory_mb"].mean(),
+                            "peak_memory": df["memory_mb"].max(),
+                            "file_size_kb": file_size,
+                        }
                     )
 
-        print(f"{'=' * 50}")
-        print(f"Total: {total_files} files | {total_size / 1024 / 1024:.2f} MB")
-        print(f"Data location: {self.base_dir.absolute()}")
+                    print(f"Node {node_ip}:")
+                    print(f"  📁 File: {csv_file}")
+                    print(f"  📊 Records: {len(df)}")
+                    print(f"  🐳 Containers: {df['container_id'].nunique()}")
+                    print(f"  💻 Avg CPU: {df['cpu_cores'].mean():.6f} cores")
+                    print(f"  💾 Avg Memory: {df['memory_mb'].mean():.2f} MB")
+                    print(f"  📈 Peak Memory: {df['memory_mb'].max():.2f} MB")
+                    print(f"  💽 File Size: {file_size:.1f} KB")
+                    print()
+
+                except Exception as e:
+                    print(f"Node {node_ip}: Error reading file - {e}")
+            else:
+                print(f"Node {node_ip}: No data file found")
+
+        # Combined statistics
+        if all_dataframes:
+            combined_df = pd.concat(all_dataframes, ignore_index=True)
+
+            print("📈 COMBINED STATISTICS:")
+            print("=" * 40)
+            print(f"Total records across all nodes: {len(combined_df)}")
+            print(f"Total unique containers: {combined_df['container_id'].nunique()}")
+            print(f"Overall avg CPU usage: {combined_df['cpu_cores'].mean():.6f} cores")
+            print(f"Overall avg memory usage: {combined_df['memory_mb'].mean():.2f} MB")
+            print(f"Highest memory usage: {combined_df['memory_mb'].max():.2f} MB")
+
+            if len(combined_df) > 1:
+                time_range = pd.to_datetime(combined_df["timestamp"])
+                duration = (time_range.max() - time_range.min()).total_seconds()
+                print(f"Monitoring duration: {duration:.1f} seconds")
+                print(f"Data collection rate: {len(combined_df) / duration:.2f} records/second")
+
+        return node_file_info
 
 
-# Usage Example
+# Usage example and main execution
 if __name__ == "__main__":
-    # Replace with your actual node IPs
-    # SWARM_NODES = [
-    #     "35.200.204.177",  # Your load test target
-    #     "35.200.163.35",  # Replace with actual internal IPs
-    #     "34.93.68.169",  # of your 8 swarm nodes
-    #     "34.100.249.50",
-    #     "34.47.195.53",
-    #     "34.93.247.5",
-    #     "34.47.198.13",
-    #     "34.47.210.45",
-    # ]
+    # Your GCP internal IP addresses
     SWARM_NODES = [
         "10.160.0.8",  # quasar-worker-0
         "10.160.0.9",  # quasar-worker-1
@@ -425,16 +331,26 @@ if __name__ == "__main__":
         "10.160.0.22",  # quasar-worker-7
     ]
 
-    # Create monitor
-    monitor = OrganizedSwarmMonitor(
-        cadvisor_nodes=SWARM_NODES, port=9091, base_dir="DATA"
-    )
+    # Create the fast monitor
+    monitor = FastAuthMonitor(cadvisor_nodes=SWARM_NODES)
 
     try:
-        # Monitor for 10 minutes during load test
-        monitor.monitor_continuously(interval=0.5, duration=600)
+        # Monitor authentication service for 10 minutes with 1-second intervals
+        monitor.monitor_auth_fast(interval=1.0, duration=600)
+
     except KeyboardInterrupt:
         print("\n⚠️  Monitoring stopped by user")
+
     finally:
         # Show summary of collected data
-        monitor.get_data_summary()
+        node_info = monitor.get_combined_summary_stats()
+
+        print("\n💾 Data Files Created:")
+        for node_ip in SWARM_NODES:
+            safe_ip = node_ip.replace(".", "_")
+            csv_file = f"DATA/authentication/node_{safe_ip}.csv"
+            if os.path.exists(csv_file):
+                size = os.path.getsize(csv_file) / 1024
+                print(f"   📄 {csv_file} ({size:.1f} KB)")
+
+        print("✅ Fast monitoring session completed!")
