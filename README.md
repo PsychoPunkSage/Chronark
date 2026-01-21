@@ -34,29 +34,29 @@ Built upon and extending the capabilities of existing frameworks like DeathStarB
 
 ## Features
 
-### 🚀 **Zero-Touch Multi-Cloud Deployment**
+### **Zero-Touch Multi-Cloud Deployment**
 - Single-command deployment across AWS, GCP, Azure, and local servers
 - Automated Docker Swarm orchestration and configuration
 - Dynamic VM scaling without manual reconfiguration
 
-### 🔒 **Security-Aware Benchmarking**
+### **Security-Aware Benchmarking**
 - Real-world CVE implementations (Redis CVE-2022-24834, MongoDB CVE-2020-7921, Node.js CVE-2024-27983)
 - Penetration testing capabilities with exploit simulation
 - Security response and resilience evaluation
 
-### 🏦 **Banking Microservice Testbed**
+### **Banking Microservice Testbed**
 ![Reference Image](./image/ref_img.png)
 - Production-grade financial system simulation
 - Realistic operations: registration, login, fund transfer, account management
 - Regulatory compliance and fault tolerance modeling
 
-### 📊 **Comprehensive Observability**
+### **Comprehensive Observability**
 - Container-level resource monitoring with cAdvisor
 - Distributed tracing with Jaeger
 - Real-time CPU, memory, disk I/O, and network metrics
 - Custom monitoring agents for trend analysis
 
-### ⚡ **Scalable Performance Testing**
+### **Scalable Performance Testing**
 - Linear scaling validation across multiple VM configurations
 - Load testing with session-based authentication
 - Comparative performance analysis tools
@@ -76,24 +76,24 @@ Built upon and extending the capabilities of existing frameworks like DeathStarB
 
 ## Unique Features
 
-### 🎯 **Real-World Vulnerability Integration**
+### **Real-World Vulnerability Integration**
 Chronark uniquely incorporates actual CVEs into its testing environment:
 
 - **Redis CVE-2022-24834**: Lua script heap overflow exploitation (CVSS 7.0)
 - **MongoDB CVE-2020-7921**: Authorization bypass through serialization flaws (CVSS 4.6)
 - **Node.js CVE-2024-27983**: HTTP/2 denial-of-service via race conditions (CVSS 8.2)
 
-### 🔄 **Automated Security Response Testing**
+### **Automated Security Response Testing**
 - Simulates Advanced Persistent Threat (APT) attack scenarios
 - Tests intrusion detection system effectiveness
 - Validates cloud provider security feature responses
 
-### 📈 **Banking-Grade Compliance Testing**
+### **Banking-Grade Compliance Testing**
 - Implements realistic financial transaction workflows
 - Tests regulatory compliance under load
 - Evaluates data confidentiality and integrity measures
 
-### 🌐 **True Multi-Cloud Portability**
+### **True Multi-Cloud Portability**
 - Consistent deployment across heterogeneous cloud environments
 - Platform-independent architecture with cloud-specific optimizations
 - Comparative cloud provider performance analysis
